@@ -1,0 +1,56 @@
+/* assets/css/header.css */
+
+/* Root Variables for Header */
+:root {
+    --primary-blue-light: #3b82f6;
+}
+
+/* Header Styles */
+header {
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Header Buttons */
+header .btn-link {
+    color: #6b7280;
+    text-decoration: none;
+    padding: 0;
+}
+
+header .btn-link:hover {
+    color: var(--primary-blue-light);
+}
+
+/* Header Title */
+header h2 {
+    color: #1f2937;
+    font-weight: 700;
+}
+
+/* Lab Info */
+header .text-end {
+    color: #6b7280;
+}
+
+header .text-end p {
+    margin: 0;
+}
+
+header .text-end .text-muted {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Focus Styles for Header Elements */
+header a:focus,
+header button:focus {
+    outline: 2px solid var(--primary-blue-light);
+    outline-offset: 2px;
+}
+
+img{
+    width: 50px;
+    height: 50px;
+}

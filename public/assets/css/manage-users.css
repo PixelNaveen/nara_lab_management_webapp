@@ -1,0 +1,496 @@
+/* ======================================================
+   Manage Users Page Styles - SCOPED
+   Theme: Lab Management System
+   Author: naveen_the_dev
+   ====================================================== */
+
+/* ===== Root Theme Variables ===== */
+:root {
+  --primary-blue: #1e3a8a;
+  --primary-blue-dark: #1e40af;
+  --primary-blue-light: #3b82f6;
+  --success-green: #16a34a;
+  --warning-yellow: #f59e0b;
+  --danger-red: #dc2626;
+  --light-gray: #f8f9fa;
+  --border-color: #e2e8f0;
+  --text-dark: #1e293b;
+}
+
+/* ===== Base Page ===== */
+body {
+  background-color: var(--light-gray);
+  color: var(--text-dark);
+  font-family: "Poppins", sans-serif;
+}
+
+/* ===== Section Layout ===== */
+.manage-users-container {
+  padding: 20px;
+}
+
+.manage-users-card-filter {
+  border: 1px solid var(--border-color);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+/* ===== Filter Controls ===== */
+.manage-users-card-filter input,
+.manage-users-card-filter select {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  height: 38px;
+}
+
+.manage-users-btn-filter {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+  min-width: 90px;
+  height: 38px;
+  background: transparent;
+}
+
+.manage-users-btn-filter:hover {
+  background: var(--primary-blue);
+  color: #fff;
+  border-color: var(--primary-blue);
+}
+
+/* ===== New User Button ===== */
+.manage-users-btn-new {
+  background: var(--primary-blue);
+  border: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  transition: 0.2s ease-in-out;
+  height: 38px;
+  color: #fff;
+}
+
+.manage-users-btn-new:hover {
+  background: var(--primary-blue-dark);
+  color: #fff;
+}
+
+/* ===== Modal Overlay ===== */
+.manage-users-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.manage-users-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== Modal Form ===== */
+.manage-users-modal-form {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 700px;
+  padding: 0;
+  transform: scale(0.9);
+  transition: all 0.3s ease-in-out;
+}
+
+.manage-users-modal-overlay.active .manage-users-modal-form {
+  transform: scale(1);
+}
+
+/* ===== Modal Header ===== */
+.manage-users-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--border-color);
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.manage-users-modal-header h5 {
+  color: #fff;
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.manage-users-btn-close-modal {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 1.2rem;
+}
+
+.manage-users-btn-close-modal:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* ===== Modal Form Content ===== */
+.manage-users-modal-form form {
+  padding: 24px;
+}
+
+.manage-users-form-label {
+  font-weight: 500;
+  color: var(--primary-blue-dark);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  display: inline-block;
+}
+
+.manage-users-form-control {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  display: block;
+}
+
+.manage-users-form-select {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  display: block;
+}
+
+.manage-users-form-control:focus,
+.manage-users-form-select:focus {
+  border-color: var(--primary-blue-light);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
+  outline: none;
+}
+
+.manage-users-text-danger {
+  color: var(--danger-red);
+}
+
+/* ===== Modal Footer Buttons ===== */
+.manage-users-modal-footer-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.manage-users-modal-footer-btns button {
+  padding: 10px 24px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+  border: none;
+  cursor: pointer;
+}
+
+/* ===== Buttons ===== */
+.manage-users-btn-success {
+  background-color: var(--success-green);
+  border: none;
+  color: #fff;
+}
+
+.manage-users-btn-success:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.manage-users-btn-warning {
+  background-color: var(--warning-yellow);
+  border: none;
+  color: #fff;
+}
+
+.manage-users-btn-warning:hover {
+  background-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.manage-users-btn-danger {
+  background-color: var(--danger-red);
+  border: none;
+  color: #fff;
+}
+
+.manage-users-btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+.manage-users-btn-secondary {
+  background-color: #64748b;
+  border: none;
+  color: #fff;
+}
+
+.manage-users-btn-secondary:hover {
+  background-color: #475569;
+}
+
+/* ===== User Table Container ===== */
+.manage-users-table-container {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  padding: 10px;
+}
+
+/* ===== User Table ===== */
+.manage-users-table {
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  width: 100%;
+}
+
+.manage-users-table thead {
+  background-color: var(--primary-blue);
+  color: #fff;
+  border-radius: 8px;
+}
+
+.manage-users-table thead th {
+  border: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.manage-users-table tbody tr {
+  background: #fff;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.manage-users-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.manage-users-table td {
+  vertical-align: middle;
+  font-size: 0.9rem;
+  padding: 12px;
+  border: none;
+}
+
+/* ===== Action Buttons in Table ===== */
+.manage-users-btn-edit,
+.manage-users-btn-delete {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-right: 6px;
+  font-size: 0.9rem;
+}
+
+.manage-users-btn-edit {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary-blue);
+}
+
+.manage-users-btn-edit:hover {
+  background-color: var(--primary-blue);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.manage-users-btn-delete {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--danger-red);
+}
+
+.manage-users-btn-delete:hover {
+  background-color: var(--danger-red);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* ===== Status Badges ===== */
+.manage-users-badge {
+  padding: 0.45em 0.7em;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.manage-users-badge.bg-success {
+  background-color: var(--success-green) !important;
+  color: #fff;
+}
+
+.manage-users-badge.bg-secondary {
+  background-color: #64748b !important;
+  color: #fff;
+}
+
+/* ===== Bootstrap Utility Classes (Scoped) ===== */
+/* These ensure Bootstrap utilities work within manage-users context */
+.manage-users-container .d-flex {
+  display: flex !important;
+}
+
+.manage-users-container .flex-wrap {
+  flex-wrap: wrap !important;
+}
+
+.manage-users-container .gap-2 {
+  gap: 0.5rem !important;
+}
+
+.manage-users-container .align-items-center {
+  align-items: center !important;
+}
+
+.manage-users-container .mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+.manage-users-container .ms-auto {
+  margin-left: auto !important;
+}
+
+.manage-users-container .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -0.75rem;
+  margin-left: -0.75rem;
+}
+
+.manage-users-container .col-lg-12 {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.manage-users-container .col-md-6 {
+  flex: 0 0 auto;
+  width: 50%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.manage-users-container .col-md-12 {
+  flex: 0 0 auto;
+  width: 100%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.manage-users-container .g-4 {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 1.5rem;
+}
+
+.manage-users-modal-form .d-none {
+  display: none !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991.98px) {
+  .manage-users-btn-new {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+
+  .manage-users-table-container {
+    overflow-x: auto;
+  }
+
+  .manage-users-modal-form {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .manage-users-modal-footer-btns {
+    flex-direction: column;
+  }
+
+  .manage-users-modal-footer-btns button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .manage-users-container .col-md-6 {
+    width: 100%;
+  }
+  
+  .manage-users-container .col-md-12 {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .manage-users-btn-edit,
+  .manage-users-btn-delete {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+  }
+
+  .manage-users-table td {
+    font-size: 0.85rem;
+    padding: 8px;
+  }
+  
+  .manage-users-container .d-flex {
+    flex-direction: column;
+  }
+  
+  .manage-users-container .ms-auto {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+}
+
+/* ===== Smooth Transitions ===== */
+button,
+input,
+select,
+.manage-users-table tbody tr {
+  transition: all 0.2s ease-in-out;
+}

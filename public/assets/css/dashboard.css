@@ -1,0 +1,64 @@
+/* assets/css/dashboard.css */
+
+/* Custom Card Styles */
+.card-stat {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge Styles */
+.badge-status {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 1rem;
+}
+
+/* Table Responsive */
+.table-responsive {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Custom Button Styles */
+.btn-action {
+    transition: all 0.2s;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation for Page Transitions */
+.page-transition {
+    animation: fadeIn 0.3s ease-in;
+}
+
+.quick-info-section {
+    margin-bottom: 1.5rem;
+}
+
+.quick-info-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057; /* Darker shade for better readability */
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
