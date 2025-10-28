@@ -26,6 +26,7 @@ $pageMap = [
     'clients' => 'manage-clients.php',
     'manage-parameter'=> 'manage-param.php',
     'param-variants'=> 'manage-param-variants.php',
+    'swab-parameter'=> 'swab-param.php',
     // Add all other pages here
 ];
 
@@ -61,6 +62,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/manage-clients.css">
     <link rel="stylesheet" href="public/assets/css/manage-param.css">
     <link rel="stylesheet" href="public/assets/css/manage-param-variants.css">
+    <link rel="stylesheet" href="public/assets/css/swab-param.css">
 
     </div>
 </head>
