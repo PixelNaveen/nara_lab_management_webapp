@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,23 +11,74 @@
     <!-- <link href="assets/css/samples_styles.css" rel="stylesheet"> -->
     <!-- <link href="assets/css/review_styles.css" rel="stylesheet"> -->
     <style>
-        .step { display: none; }
-        .step.active { display: block; }
-        .progress-step { cursor: pointer; background-color: #ddd; border-radius: 50%; width: 30px; height: 30px; text-align: center; line-height: 30px; }
-        .progress-step.active { background-color: #0d6efd; color: white; }
-        .container { max-width: 900px; margin: auto; padding: 2rem; }
-        .card { padding: 1rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 8px; }
-        .sample-card { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
-        .param-row { margin-bottom: 1rem; }
-        .client-list { list-style: none; padding: 0; }
-        .client-list li { margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
-        .btn { margin-right: 0.5rem; }
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .progress-step {
+            cursor: pointer;
+            background-color: #ddd;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+        }
+
+        .progress-step.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 2rem;
+        }
+
+        .card {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .sample-card {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+
+        .param-row {
+            margin-bottom: 1rem;
+        }
+
+        .client-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .client-list li {
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        .btn {
+            margin-right: 0.5rem;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1 class="text-center mb-4">Sample Submission Form Demo</h1>
-        
+
         <!-- Progress Bar -->
         <div class="progress mb-4" style="height: 8px;">
             <div class="progress-bar" id="progressBar" style="width: 14.29%;"></div>
@@ -149,22 +201,51 @@
         let submissionType = '';
 
         // Simulated Clients (replace with real DB data in production)
-        const simulatedClients = [
-            { client_id: 1, client_name: 'ABC Water Company', city: 'Colombo', phone_primary: '0112345678' },
-            { client_id: 2, client_name: 'Ministry of Health', city: 'Colombo', phone_primary: '0117654321' }
+        const simulatedClients = [{
+                client_id: 1,
+                client_name: 'ABC Water Company',
+                city: 'Colombo',
+                phone_primary: '0112345678'
+            },
+            {
+                client_id: 2,
+                client_name: 'Ministry of Health',
+                city: 'Colombo',
+                phone_primary: '0117654321'
+            }
         ];
 
         // Simulated Parameters/Variants (from your SQL; add all)
-        const params = [
-            { parameter_id: 1, parameter_code: 'APC', parameter_name: 'Aerobic Plate Count', has_variants: true },
-            { parameter_id: 2, parameter_code: 'TC', parameter_name: 'Total Coliform', has_variants: false }
+        const params = [{
+                parameter_id: 1,
+                parameter_code: 'APC',
+                parameter_name: 'Aerobic Plate Count',
+                has_variants: true
+            },
+            {
+                parameter_id: 2,
+                parameter_code: 'TC',
+                parameter_name: 'Total Coliform',
+                has_variants: false
+            }
             // Add more from your test_parameters
         ];
         const variants = {
-            1: [
-                { variant_id: 1, variant_name: 'at 37°C', full_display_name: 'Aerobic Plate Count cfu/g at 37°C' },
-                { variant_id: 2, variant_name: 'at 30°C', full_display_name: 'Aerobic Plate Count cfu/g at 30°C' },
-                { variant_id: 3, variant_name: 'Swab Variant', full_display_name: 'Aerobic Plate Count per Swab' } // Swab-specific example
+            1: [{
+                    variant_id: 1,
+                    variant_name: 'at 37°C',
+                    full_display_name: 'Aerobic Plate Count cfu/g at 37°C'
+                },
+                {
+                    variant_id: 2,
+                    variant_name: 'at 30°C',
+                    full_display_name: 'Aerobic Plate Count cfu/g at 30°C'
+                },
+                {
+                    variant_id: 3,
+                    variant_name: 'Swab Variant',
+                    full_display_name: 'Aerobic Plate Count per Swab'
+                } // Swab-specific example
             ]
             // Add more
         };
@@ -204,7 +285,9 @@
             const step = steps[n - 1];
             const requireds = step.querySelectorAll('[required]');
             let valid = true;
-            requireds.forEach(input => { if (!input.value.trim()) valid = false; });
+            requireds.forEach(input => {
+                if (!input.value.trim()) valid = false;
+            });
             if (n === 1 && !form.querySelector('[name="client_name"]').value) valid = false; // Require client
             if (n === 4 && sampleCount === 0) valid = false;
             if (n === 5) {
@@ -302,9 +385,9 @@
                     if (hasVariants && variants[pid]) {
                         paramRow.innerHTML = `<label>${p.parameter_code} — ${p.parameter_name}</label>`;
                         variants[pid].forEach(v => {
-                            const showVariant = (submissionType === 'swab' && v.variant_name.includes('Swab')) || 
-                                                (submissionType === 'regular' && !v.variant_name.includes('Swab')) ||
-                                                true; // Default show all; adjust based on your variants
+                            const showVariant = (submissionType === 'swab' && v.variant_name.includes('Swab')) ||
+                                (submissionType === 'regular' && !v.variant_name.includes('Swab')) ||
+                                true; // Default show all; adjust based on your variants
                             if (showVariant) {
                                 paramRow.innerHTML += `
                                     <div class="form-check">
@@ -384,4 +467,5 @@
         showStep(1);
     </script>
 </body>
+
 </html>

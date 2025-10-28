@@ -63,26 +63,36 @@
           <button class="btn-close-modal">&times;</button>
         </div>
         <form>
-          <div class="mb-3">
-            <label class="parameters-form-label">Parameter Name</label>
-            <input type="text" class="parameters-form-control" id="paramName" placeholder="Enter name" required>
-          </div>
-          <div class="mb-3">
-            <label class="parameters-form-label">Base Unit</label>
-            <input type="text" class="parameters-form-control" id="paramBaseUnit" placeholder="Enter base unit (e.g., CFU/g, mg/L)">
-          </div>
-          <div class="mb-3">
-            <label class="parameters-form-label">Status</label>
-            <select class="parameters-form-select" id="paramStatus">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <div class="parameters-modal-footer-btns">
-            <button type="button" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-success">Save</button>
-          </div>
-        </form>
+  <div class="mb-3">
+    <label class="parameters-form-label">Parameter Name</label>
+    <input type="text" class="parameters-form-control" id="paramName" placeholder="Enter name" required>
+  </div>
+  <div class="mb-3">
+    <label class="parameters-form-label">Base Unit</label>
+    <input type="text" class="parameters-form-control" id="paramBaseUnit" placeholder="Enter base unit (e.g., CFU/g, mg/L)">
+  </div>
+  <div class="mb-3">
+    <label class="parameters-form-label">Swab Test</label>
+    <select class="parameters-form-select" id="paramSwab">
+      <option value="enabled">Select</option>
+      <option value="enabled">Enabled</option>
+      <option value="disabled">Disabled</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="parameters-form-label">Status</label>
+    <select class="parameters-form-select" id="paramStatus">
+      <option value="active">Selelct Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </div>
+  <div class="parameters-modal-footer-btns">
+    <button type="button" class="btn btn-secondary">Cancel</button>
+    <button type="submit" class="btn btn-success">Save</button>
+  </div>
+</form>
+
       </div>
     </div>
 
