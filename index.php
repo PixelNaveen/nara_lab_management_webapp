@@ -1,7 +1,7 @@
 <?php
 // index.php
 require_once __DIR__ . '/Config/Database.php';
-Database::connect();
+//Database::connect();
 
 
 session_start();
@@ -24,9 +24,10 @@ $pageMap = [
     'header-section' => 'header-section.php',
     'users' => 'manage-users.php',
     'clients' => 'manage-clients.php',
-    'manage-parameter'=> 'manage-param.php',
-    'param-variants'=> 'manage-param-variants.php',
-    'swab-parameter'=> 'swab-param.php',
+    'manage-parameter' => 'manage-param.php',
+    'param-variants' => 'manage-param-variants.php',
+    'swab-parameter' => 'swab-param.php',
+    'pricing'=> 'param-prices.php'
     // Add all other pages here
 ];
 
@@ -43,6 +44,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,6 +53,8 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
     <!-- Custom CSS -->
 
     <link rel="stylesheet" href="public/assets/css/main.css">
@@ -63,6 +67,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/manage-param.css">
     <link rel="stylesheet" href="public/assets/css/manage-param-variants.css">
     <link rel="stylesheet" href="public/assets/css/swab-param.css">
+    <link rel="stylesheet" href="public/assets/css/param-prices.css">
 
     </div>
 </head>
@@ -97,6 +102,8 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
 
     <!-- jQuery (optional) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
