@@ -1,7 +1,7 @@
 <?php
 // index.php
 require_once __DIR__ . '/Config/Database.php';
-//Database::connect();
+Database::connect();
 
 
 session_start();
@@ -27,7 +27,7 @@ $pageMap = [
     'manage-parameter' => 'manage-param.php',
     'param-variants' => 'manage-param-variants.php',
     'swab-parameter' => 'swab-param.php',
-    'pricing'=> 'param-prices.php'
+    'pricing'=> 'param-prices.php',
     // Add all other pages here
 ];
 
