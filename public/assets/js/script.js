@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarClose = document.getElementById('sidebarClose');
     const sidebarToggleDesktop = document.getElementById('sidebarToggleDesktop');
 
+    // =======================
+    // MOBILE BEHAVIOR
+    // =======================
+
     // Mobile: open sidebar
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function() {
@@ -23,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Mobile: click outside to close
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', function() {
             sidebar.classList.remove('show');
@@ -30,7 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Desktop: toggle collapsed state
+    // =======================
+    // DESKTOP BEHAVIOR
+    // =======================
+
+    // Desktop: toggle collapse state
     if (sidebarToggleDesktop) {
         sidebarToggleDesktop.addEventListener('click', function() {
             document.body.classList.toggle('sidebar-collapsed');
@@ -42,4 +51,32 @@ document.addEventListener('DOMContentLoaded', function() {
     if (localStorage.getItem('sidebarCollapsed') === 'true') {
         document.body.classList.add('sidebar-collapsed');
     }
+
+    // =======================
+    // AUTO COLLAPSE ON LINK CLICK (Desktop)
+    // =======================
+
+    const sidebarLinks = document.querySelectorAll('#sidebar a.nav-link, #sidebar a.submenu-link');
+
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const href = this.getAttribute('href');
+
+            // If not dashboard, collapse sidebar
+            if (!href.includes('page=dashboard')) {
+                document.body.classList.add('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', true);
+            } else {
+                // Keep sidebar open for dashboard
+                document.body.classList.remove('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', false);
+            }
+
+            // Also close sidebar if on mobile (extra safeguard)
+            if (window.innerWidth < 992) {
+                sidebar.classList.remove('show');
+                sidebarOverlay.classList.remove('show');
+            }
+        });
+    });
 });
