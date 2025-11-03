@@ -3,7 +3,7 @@
   <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
     <input type="text" class="form-control" id="searchInput" placeholder="Search by name, city or phone" style="max-width: 250px;" />
 
-    <select class="form-select" id="cityFilter" style="max-width: 160px;">
+    <!-- <select class="form-select" id="cityFilter" style="max-width: 160px;">
       <option>All Cities</option>
       <option>Colombo</option>
       <option>Kandy</option>
@@ -11,7 +11,7 @@
       <option>Jaffna</option>
     </select>
 
-    <button id="btnFilter" class="btn btn-outline-secondary btn-sm" style="min-width: 80px;">Filter</button>
+    <button id="btnFilter" class="btn btn-outline-secondary btn-sm" style="min-width: 80px;">Filter</button> -->
 
     <div class="ms-auto">
       <button class="btn btn-primary btn-sm" id="btnNewClient">+ New Client</button>
@@ -24,7 +24,7 @@
         <table class="table table-hover align-middle clientsTable" id="clientsTable">
           <thead>
             <tr>
-              <th>ID</th>
+              <th class="d-none">ID</th>
               <th>Client Name</th>
               <th>Address</th>
               <th>City</th>
@@ -35,45 +35,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr data-id="1" data-name="ABC Medical Center" data-address="123 Galle Road" data-city="Colombo" data-phone="0112345678" data-contact="Dr. Perera" data-regdate="2024-01-15">
-              <td>1</td>
-              <td>ABC Medical Center</td>
-              <td>123 Galle Road</td>
-              <td>Colombo</td>
-              <td>0112345678</td>
-              <td>Dr. Perera</td>
-              <td>2024-01-15</td>
-              <td>
-                <button class="btn btn-sm btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-            <tr data-id="2" data-name="City Hospital" data-address="456 Main Street" data-city="Kandy" data-phone="0812345678" data-contact="Dr. Silva" data-regdate="2024-02-20">
-              <td>2</td>
-              <td>City Hospital</td>
-              <td>456 Main Street</td>
-              <td>Kandy</td>
-              <td>0812345678</td>
-              <td>Dr. Silva</td>
-              <td>2024-02-20</td>
-              <td>
-                <button class="btn btn-sm btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-            <tr data-id="3" data-name="Green Valley Clinic" data-address="789 Beach Road" data-city="Galle" data-phone="0912345678" data-contact="Dr. Fernando" data-regdate="2024-03-10">
-              <td>3</td>
-              <td>Green Valley Clinic</td>
-              <td>789 Beach Road</td>
-              <td>Galle</td>
-              <td>0912345678</td>
-              <td>Dr. Fernando</td>
-              <td>2024-03-10</td>
-              <td>
-                <button class="btn btn-sm btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
+            <!-- Data will be loaded via AJAX -->
           </tbody>
         </table>
       </div>
@@ -89,16 +51,19 @@
       <button class="btn-close-modal" id="btnCloseModal"><i class="fas fa-times"></i></button>
     </div>
 
-    <form id="clientForm" method="post" >
+    <form id="clientForm" method="post">
       <input type="hidden" id="clientId">
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Client Name <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="clientName" placeholder="Enter client name" name="clientName" required>
+
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Contact Person <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="contactPerson" placeholder="Enter contact person" name="contactPerson" required>
+           <label id="nameError" style="display: none; color: red;">Invalid Name!</label>
+
         </div>
       </div>
       <div class="row">
@@ -115,6 +80,8 @@
         <div class="col-md-6 mb-3">
           <label class="form-label">Primary Phone <span class="text-danger">*</span></label>
           <input type="tel" class="form-control" id="phonePrimary" placeholder="Enter phone number" name="phoneNo" required>
+          <label id="phoneError" style="display: none; color: red;">Invalid Phone Number!</label>
+
         </div>
       </div>
 
@@ -152,31 +119,40 @@
 </div>
 
 <script>
+  // ===== CLIENT MANAGEMENT SCRIPT =====
+
+  // === DOM ELEMENTS ===
   const modalOverlay = document.getElementById('modalOverlay');
+  const clientForm = document.getElementById('clientForm');
   const btnNewClient = document.getElementById('btnNewClient');
   const btnCloseModal = document.getElementById('btnCloseModal');
   const btnCancel = document.getElementById('btnCancel');
-  const formTitle = document.getElementById('formTitle');
   const btnSave = document.getElementById('btnSave');
   const btnUpdate = document.getElementById('btnUpdate');
-  const clientForm = document.getElementById('clientForm');
+  const formTitle = document.getElementById('formTitle');
+  const deleteModal = document.getElementById('deleteModal');
+  const toastContainer = document.getElementById('toastContainer');
+  const nameError = document.getElementById('nameError');
+  const phoneError = document.getElementById('phoneError');
   let deleteClientId = null;
   let originalData = {};
 
+  const CONTROLLER_PATH = '../../src/Controllers/client-controller.php';
+
+  // === TOAST FUNCTION ===
   function showToast(message, type = 'success') {
-    const toastContainer = document.getElementById('toastContainer');
-    const bgColor = {
+    const colors = {
       success: 'bg-success text-white',
       warning: 'bg-warning text-dark',
       danger: 'bg-danger text-white'
-    } [type] || 'bg-success text-white';
+    };
     const toastEl = document.createElement('div');
-    toastEl.className = `toast align-items-center ${bgColor} border-0 mb-2`;
-    toastEl.role = 'alert';
-    toastEl.ariaLive = 'assertive';
-    toastEl.ariaAtomic = 'true';
-    toastEl.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" c
-    lass="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+    toastEl.className = `toast align-items-center ${colors[type] || 'bg-success text-white'} border-0 mb-2`;
+    toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
     toastContainer.appendChild(toastEl);
     const toast = new bootstrap.Toast(toastEl, {
       delay: 2500
@@ -185,27 +161,79 @@
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
   }
 
-  // Modal Open/Close
-  btnNewClient.addEventListener('click', () => openModal('create'));
-  btnCloseModal.addEventListener('click', closeModal);
-  btnCancel.addEventListener('click', closeModal);
-  modalOverlay.addEventListener('click', e => {
-    if (e.target === modalOverlay) closeModal();
-  });
+  // === AJAX HELPER ===
+  function sendAjax(action, data) {
+    return fetch(CONTROLLER_PATH, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          action,
+          ...data
+        })
+      })
+      .then(res => res.json())
+      .catch(() => ({
+        status: 'error',
+        message: 'Network error!'
+      }));
+  }
 
+  // === LOAD CLIENTS ===
+  function loadClients() {
+    sendAjax('fetchAll', {}).then(res => {
+      const tbody = document.querySelector('#clientsTable tbody');
+      tbody.innerHTML = '';
+
+      if (res.status === 'success' && Array.isArray(res.data)) {
+        res.data.forEach(client => {
+          tbody.insertAdjacentHTML('beforeend', `
+  <tr data-id="${client.client_id}"
+      data-name="${client.client_name}"
+      data-address="${client.address_line1}"
+      data-city="${client.city}"
+      data-phone="${client.phone_primary}"
+      data-contact="${client.contact_person || ''}">
+    <td class="d-none">${client.client_id}</td>  <!-- hide ID -->
+    <td>${client.client_name}</td>
+    <td>${client.address_line1}</td>
+    <td>${client.city}</td>
+    <td>${client.phone_primary}</td>
+    <td>${client.contact_person || ''}</td>
+    <td>${client.registration_date}</td>
+    <td>
+      <button class="btn btn-sm btn-warning btn-edit"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>
+`);
+
+        });
+        attachRowEvents();
+      } else {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No clients found</td></tr>`;
+      }
+    });
+  }
+
+  // === MODAL CONTROL ===
   function openModal(mode) {
     modalOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
+    nameError.style.display = "none";
+    phoneError.style.display = "none";
+
     if (mode === 'create') {
-      formTitle.textContent = 'Create New Client';
       clientForm.reset();
       document.getElementById('clientId').value = '';
       btnSave.classList.remove('d-none');
       btnUpdate.classList.add('d-none');
+      formTitle.textContent = 'Create New Client';
     } else {
-      formTitle.textContent = 'Update Client';
       btnSave.classList.add('d-none');
       btnUpdate.classList.remove('d-none');
+      formTitle.textContent = 'Update Client';
     }
   }
 
@@ -213,161 +241,188 @@
     modalOverlay.classList.remove('active');
     document.body.style.overflow = 'auto';
     clientForm.reset();
+    nameError.style.display = "none";
+    phoneError.style.display = "none";
     originalData = {};
   }
 
-  function loadClientData(row) {
-    document.getElementById('clientId').value = row.dataset.id;
-    document.getElementById('clientName').value = row.dataset.name;
-    document.getElementById('addressLine1').value = row.dataset.address;
-    document.getElementById('city').value = row.dataset.city;
-    document.getElementById('phonePrimary').value = row.dataset.phone;
-    document.getElementById('contactPerson').value = row.dataset.contact;
+  btnNewClient.onclick = () => openModal('create');
+  btnCloseModal.onclick = closeModal;
+  btnCancel.onclick = closeModal;
+  modalOverlay.onclick = e => {
+    if (e.target === modalOverlay) closeModal();
+  };
 
-    originalData = {
-      name: row.dataset.name,
-      address: row.dataset.address,
-      city: row.dataset.city,
-      phone: row.dataset.phone,
-      contact: row.dataset.contact
+  // === INSERT CLIENT ===
+  clientForm.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const data = {
+      client_name: clientForm.clientName.value.trim(),
+      address_line1: clientForm.address.value.trim(),
+      city: clientForm.city.value.trim(),
+      phone_primary: clientForm.phoneNo.value.trim(),
+      contact_person: clientForm.contactPerson.value.trim()
     };
-  }
 
-  // Edit & Delete buttons
-  function attachRowButtons() {
+    // if (!/^[0-9+\-\s()]+$/.test(data.phone_primary)) {
+    //   showToast('Please enter a valid phone number', 'warning');
+    //   return;
+    // }
+
+    // if (!/^[A-Za-z\s]+$/.test(data.client_name)) {
+    //   nameError.textContent = "Enter Valid Name";
+    //   nameError.style.display = "block";
+    //   return;
+    // } else {
+    //   nameError.style.display = "none";
+    // }
+
+    sendAjax('insert', data).then(res => {
+      if (res.status === 'success') {
+        showToast(res.message || 'Client created successfully!', 'success');
+        loadClients();
+        closeModal();
+      } else {
+        showToast(res.message || 'Failed to create client', 'danger');
+        closeModal();
+      }
+    });
+  });
+
+  // === ATTACH EDIT & DELETE EVENTS ===
+  function attachRowEvents() {
     document.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
+      btn.onclick = e => {
         const row = e.target.closest('tr');
-        loadClientData(row);
         openModal('edit');
-      });
+        document.getElementById('clientId').value = row.dataset.id;
+        clientForm.clientName.value = row.dataset.name;
+        clientForm.address.value = row.dataset.address;
+        clientForm.city.value = row.dataset.city;
+        clientForm.phoneNo.value = row.dataset.phone;
+        clientForm.contactPerson.value = row.dataset.contact;
+
+        originalData = {
+          client_name: row.dataset.name,
+          address_line1: row.dataset.address,
+          city: row.dataset.city,
+          phone_primary: row.dataset.phone,
+          contact_person: row.dataset.contact
+        };
+      };
     });
 
     document.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
+      btn.onclick = e => {
         const row = e.target.closest('tr');
         deleteClientId = row.dataset.id;
         document.getElementById('deleteClientName').textContent = row.dataset.name;
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
-      });
+        new bootstrap.Modal(deleteModal).show();
+      };
     });
   }
 
-  attachRowButtons();
-
-  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+  // === DELETE CLIENT ===
+  document.getElementById('confirmDeleteBtn').onclick = () => {
     if (!deleteClientId) return;
-    const row = document.querySelector(`tr[data-id='${deleteClientId}']`);
-    // TODO: PHP delete
-    row.remove();
-    showToast('Client deleted successfully', 'danger');
-    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-    modal.hide();
-    deleteClientId = null;
-  });
-
-  // Form submit for creating client
-  clientForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const phone = document.getElementById('phonePrimary').value;
-    if (!/^[0-9+\-\s()]+$/.test(phone)) return showToast('Please enter a valid phone number', 'warning');
-
-    const formData = {
-      clientId: document.getElementById('clientId').value,
-      clientName: document.getElementById('clientName').value,
-      addressLine1: document.getElementById('addressLine1').value,
-      city: document.getElementById('city').value,
-      phonePrimary: document.getElementById('phonePrimary').value,
-      contactPerson: document.getElementById('contactPerson').value
-    };
-
-    if (btnSave.classList.contains('d-none')) {
-      // handled by btnUpdate
-      return;
-    } else {
-      // TODO: PHP insert
-      const tbody = document.querySelector('#clientsTable tbody');
-      const newId = tbody.children.length + 1;
-      const tr = document.createElement('tr');
-      tr.dataset.id = newId;
-      tr.dataset.name = formData.clientName;
-      tr.dataset.address = formData.addressLine1;
-      tr.dataset.city = formData.city;
-      tr.dataset.phone = formData.phonePrimary;
-      tr.dataset.contact = formData.contactPerson;
-      tr.dataset.regdate = new Date().toISOString().split('T')[0];
-
-      tr.innerHTML = `
-      <td>${newId}</td>
-      <td>${formData.clientName}</td>
-      <td>${formData.addressLine1}</td>
-      <td>${formData.city}</td>
-      <td>${formData.phonePrimary}</td>
-      <td>${formData.contactPerson}</td>
-      <td>${tr.dataset.regdate}</td>
-      <td>
-        <button class="btn btn-sm btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-sm btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-      </td>`;
-      tbody.appendChild(tr);
-      attachRowButtons();
-      showToast('Client created successfully', 'success');
-    }
-
-    closeModal();
-  });
-
-  // Update button
-  btnUpdate.addEventListener('click', () => {
-    const clientId = document.getElementById('clientId').value;
-    const row = document.querySelector(`tr[data-id='${clientId}']`);
-    if (!row) return;
-
-    const newData = {
-      name: document.getElementById('clientName').value,
-      address: document.getElementById('addressLine1').value,
-      city: document.getElementById('city').value,
-      phone: document.getElementById('phonePrimary').value,
-      contact: document.getElementById('contactPerson').value
-    };
-
-    const isChanged = Object.keys(newData).some(key => newData[key] !== originalData[key]);
-    if (!isChanged) {
-      showToast('No changes detected!', 'warning');
-      closeModal();
-      return;
-    }
-
-    // TODO: PHP update
-
-    row.dataset.name = newData.name;
-    row.dataset.address = newData.address;
-    row.dataset.city = newData.city;
-    row.dataset.phone = newData.phone;
-    row.dataset.contact = newData.contact;
-
-    row.cells[1].textContent = newData.name;
-    row.cells[2].textContent = newData.address;
-    row.cells[3].textContent = newData.city;
-    row.cells[4].textContent = newData.phone;
-    row.cells[5].textContent = newData.contact;
-
-    showToast('Client updated successfully!', 'success');
-    closeModal();
-  });
-
-  // Search
-  document.getElementById('searchInput').addEventListener('input', e => {
-    const searchTerm = e.target.value.toLowerCase();
-    document.querySelectorAll('#clientsTable tbody tr').forEach(row => {
-      const name = row.dataset.name.toLowerCase(); 
-      const city = row.dataset.city.toLowerCase();
-      const phone = row.dataset.phone.toLowerCase();
-      row.style.display = (name.includes(searchTerm) || city.includes(searchTerm) || phone.includes(searchTerm)) ? '' : 'none';
+    sendAjax('delete', {
+      client_id: deleteClientId
+    }).then(res => {
+      if (res.status === 'success') {
+        showToast('Client deleted successfully!', 'danger');
+        loadClients();
+      } else {
+        showToast(res.message || 'Failed to delete client', 'danger');
+      }
+      const modal = bootstrap.Modal.getInstance(deleteModal);
+      modal.hide();
+      deleteClientId = null;
     });
+  };
+
+  // === UPDATE CLIENT ===
+  btnUpdate.onclick = () => {
+    const id = document.getElementById('clientId').value;
+    const data = {
+      client_id: id,
+      client_name: clientForm.clientName.value.trim(),
+      address_line1: clientForm.address.value.trim(),
+      city: clientForm.city.value.trim(),
+      phone_primary: clientForm.phoneNo.value.trim(),
+      contact_person: clientForm.contactPerson.value.trim()
+    };
+
+   // Strict validation
+  // const nameRegex = /^[A-Za-z\s]+$/;
+  // const phoneRegex = /^[0-9+\-\s()]+$/;
+
+  // if (!nameRegex.test(name)) {
+  //   nameError.textContent = "Enter a valid name (letters only)";
+  //   nameError.style.display = "block";
+  //   return; // stop further execution
+  // } else {
+  //   nameError.style.display = "none";
+  // }
+
+  // if (!phoneRegex.test(phone)) {
+  //   phoneError.textContent = "Invalid phone number!";
+  //   phoneError.style.display = "block";
+  //   return;
+  // } else {
+  //   phoneError.style.display = "none";
+  // }
+
+    const changed = Object.keys(data).some(key => data[key] !== originalData[key]);
+    if (!changed) {
+      showToast('No changes detected', 'warning');
+      return;
+    }
+
+    sendAjax('update', data).then(res => {
+      if (res.status === 'success') {
+        showToast('Client updated successfully!', 'success');
+        loadClients();
+        closeModal();
+      } else {
+        showToast(res.message || 'Update failed', 'danger');
+      }
+    });
+  };
+
+  // === SEARCH FILTER ===
+  document.getElementById('searchInput').addEventListener('input', e => {
+    const search = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#clientsTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(tr => {
+      const combined = `${tr.dataset.name} ${tr.dataset.city} ${tr.dataset.phone}`.toLowerCase();
+      if (combined.includes(search)) {
+        tr.style.display = '';
+        visibleCount++;
+      } else {
+        tr.style.display = 'none';
+      }
+    });
+
+    const noResultsRow = document.querySelector('#clientsTable tbody tr.no-results');
+    if (visibleCount === 0) {
+      if (!noResultsRow) {
+        document.querySelector('#clientsTable tbody').insertAdjacentHTML(
+          'beforeend',
+          `<tr class="no-results"><td colspan="8" class="text-center text-muted">No matching clients found</td></tr>`
+        );
+      }
+    } else if (noResultsRow) {
+      noResultsRow.remove();
+    }
   });
+
+
+  // === INITIAL LOAD ===
+  loadClients();
 </script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

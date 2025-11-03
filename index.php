@@ -1,8 +1,8 @@
 <?php
 // index.php
 require_once __DIR__ . '/Config/Database.php';
-Database::connect();
-
+$db = new Database();
+ $conn = $db->connect();
 
 session_start();
 
@@ -73,9 +73,6 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 </head>
 
 <body>
-
-
-
     <div class="d-flex" id="wrapper">
         <!-- Sidebar -->
         <?php include 'src/Includes/sidebar.php'; ?>

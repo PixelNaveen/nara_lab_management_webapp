@@ -1,31 +1,77 @@
 <?php
+require_once __DIR__ . '/../Models/client-model.php';
+header('Content-Type: application/json');
 
-require_once "Config/Database.php";
-require_once "src/Models/client-model.php";
-$db = new Database();  // Assuming Database class connects in __construct()
-$model = new Client_model($db);
-
-header("Content-Type: application/json");
-
-$action = $_REQUEST['action'] ?? '';
+$model = new ClientModel();
+$action = $_POST['action'] ?? '';
 
 switch ($action) {
-    case "create":
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $data = [
-                "clientName" => $_POST["clientName"] ?? '',
-                "address" => $_POST["address"] ?? '',
-                "city" => $_POST["city"] ?? '',
-                "phoneNo" => $_POST["phoneNo"] ?? '',
-                "contactPerson" => $_POST["contactPerson"] ?? ''
-            ];
-            $id = $model->insert($data);
-            echo json_encode(["status" => ($id > 0) ? "success" : "error"]);
+
+    // ========== FETCH ALL CLIENTS ==========
+    case 'fetchAll':
+        $clients = $model->getAllClients();
+        echo json_encode(['status' => 'success', 'data' => $clients]);
+        break;
+
+    // ========== INSERT CLIENT ==========
+    case 'insert':
+        $name = trim($_POST['client_name']);
+        $address = trim($_POST['address_line1']);
+        $city = trim($_POST['city']);
+        $phone = trim($_POST['phone_primary']);
+        $contact = trim($_POST['contact_person']);
+
+        if ($name === '' || $phone === '') {
+            echo json_encode(['status' => 'error', 'message' => 'Client name and phone are required.']);
+            exit;
+        }
+
+        // Prevent duplicates
+        if ($model->isDuplicate($name, $phone)) {
+            echo json_encode(['status' => 'error', 'message' => 'Client already exists!']);
+            exit;
+        }
+
+        if ($model->insertClient($name, $address, $city, $phone, $contact)) {
+            echo json_encode(['status' => 'success', 'message' => 'Client added successfully.']);
         } else {
-            echo json_encode(["status" => "error", "message" => "Invalid method"]);
+            echo json_encode(['status' => 'error', 'message' => 'Insert failed.']);
         }
         break;
+
+    // ========== UPDATE CLIENT ==========
+    case 'update':
+        $id = intval($_POST['client_id']);
+        $name = trim($_POST['client_name']);
+        $address = trim($_POST['address_line1']);
+        $city = trim($_POST['city']);
+        $phone = trim($_POST['phone_primary']);
+        $contact = trim($_POST['contact_person']);
+
+        if ($name === '' || $phone === '') {
+            echo json_encode(['status' => 'error', 'message' => 'Client name and phone are required.']);
+            exit;
+        }
+
+        if ($model->updateClient($id, $name, $address, $city, $phone, $contact)) {
+            echo json_encode(['status' => 'success', 'message' => 'Client updated successfully.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Update failed.']);
+        }
+        break;
+
+    // ========== SOFT DELETE ==========
+    case 'delete':
+        $id = intval($_POST['client_id']);
+        if ($model->softDeleteClient($id)) {
+            echo json_encode(['status' => 'success', 'message' => 'Client deleted successfully (soft delete).']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Delete failed.']);
+        }
+        break;
+
     default:
-        echo json_encode(["status" => "error", "message" => "Invalid action"]);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
         break;
 }
+?>
