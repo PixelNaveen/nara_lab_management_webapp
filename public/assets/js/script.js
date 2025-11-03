@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // =======================
 
     const sidebarLinks = document.querySelectorAll('#sidebar a.nav-link, #sidebar a.submenu-link');
-
+ 
     sidebarLinks.forEach(link => {
         link.addEventListener('click', function() {
             const href = this.getAttribute('href');
