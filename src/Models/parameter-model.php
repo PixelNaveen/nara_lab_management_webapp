@@ -9,9 +9,10 @@ class ParameterModel
     {
         $db = new Database();
         $this->conn = $db->connect();
+        $this->conn->set_charset("utf8mb4"); // Ensure UTF-8 encoding
     }
 
-    // =================== GET ALL PARAMETERS WITH VARIANT COUNT ===================
+    // =================== GET ALL PARAMETERS WITH PAGINATION ===================
     public function getAllParameters($filters = [])
     {
         $sql = "SELECT 
@@ -24,10 +25,15 @@ class ParameterModel
                     tp.swab_enabled,
                     tp.is_active,
                     tp.created_at,
-                    COUNT(pv.variant_id) as variant_count
+                    COUNT(DISTINCT pv.variant_id) as variant_count,
+                    sp.swab_price,
+                    sp.swab_param_id
                 FROM test_parameters tp
-                LEFT JOIN parameter_variants pv ON tp.parameter_id = pv.parameter_id AND pv.is_active = 1
-                WHERE 1=1";
+                LEFT JOIN parameter_variants pv ON tp.parameter_id = pv.parameter_id 
+                    AND pv.is_active = 1 AND pv.is_deleted = 0
+                LEFT JOIN swab_param sp ON tp.parameter_id = sp.param_id 
+                    AND sp.is_deleted = 0
+                WHERE tp.is_deleted = 0";
         
         $params = [];
         $types = "";
@@ -35,35 +41,75 @@ class ParameterModel
         // Filter by status
         if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $sql .= " AND tp.is_active = ?";
-            $params[] = $filters['is_active'];
+            $params[] = intval($filters['is_active']);
             $types .= "i";
         }
 
-        $sql .= " GROUP BY tp.parameter_id ORDER BY tp.parameter_id ASC";
-
-        if (!empty($params)) {
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bind_param($types, ...$params);
-            $stmt->execute();
-            $result = $stmt->get_result();
-        } else {
-            $result = $this->conn->query($sql);
+        // Search filter
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            $sql .= " AND (tp.parameter_name LIKE ? OR tp.parameter_code LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= "ss";
         }
+
+        $sql .= " GROUP BY tp.parameter_id";
+
+        // Get total count before pagination
+        $countSql = "SELECT COUNT(*) as total FROM (" . $sql . ") as counted";
+        if (!empty($params)) {
+            $stmtCount = $this->conn->prepare($countSql);
+            $stmtCount->bind_param($types, ...$params);
+            $stmtCount->execute();
+            $countResult = $stmtCount->get_result();
+            $total = $countResult->fetch_assoc()['total'];
+        } else {
+            $countResult = $this->conn->query($countSql);
+            $total = $countResult->fetch_assoc()['total'];
+        }
+
+        // Add ordering and pagination
+        $sql .= " ORDER BY tp.parameter_id ASC";
+        
+        $page = isset($filters['page']) ? intval($filters['page']) : 1;
+        $limit = isset($filters['limit']) ? intval($filters['limit']) : 50;
+        $offset = ($page - 1) * $limit;
+        
+        $sql .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
+
+        // Execute query
+        $stmt = $this->conn->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         $parameters = [];
         while ($row = $result->fetch_assoc()) {
             $parameters[] = $row;
         }
-        return $parameters;
+
+        return [
+            'data' => $parameters,
+            'total' => $total
+        ];
     }
 
     // =================== GET PARAMETER BY ID ===================
     public function getParameterById($id)
     {
-        $stmt = $this->conn->prepare("SELECT parameter_id, parameter_code, parameter_name, 
-                                      parameter_category, base_unit, has_variants, 
-                                      swab_enabled, is_active 
-                                      FROM test_parameters WHERE parameter_id = ?");
+        $stmt = $this->conn->prepare(
+            "SELECT parameter_id, parameter_code, parameter_name, 
+                    parameter_category, base_unit, has_variants, 
+                    swab_enabled, is_active 
+            FROM test_parameters 
+            WHERE parameter_id = ? AND is_deleted = 0"
+        );
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -73,104 +119,253 @@ class ParameterModel
     // =================== DUPLICATE CHECK (NAME ONLY) ===================
     public function isDuplicate($name, $excludeId = null)
     {
-        $sql = "SELECT parameter_id FROM test_parameters WHERE parameter_name = ?";
+        $sql = "SELECT parameter_id FROM test_parameters 
+                WHERE parameter_name = ? AND is_deleted = 0";
+        
+        $params = [$name];
+        $types = "s";
         
         if ($excludeId) {
             $sql .= " AND parameter_id != ?";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bind_param("si", $name, $excludeId);
-        } else {
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bind_param("s", $name);
+            $params[] = $excludeId;
+            $types .= "i";
         }
         
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->num_rows > 0;
     }
 
+    // =================== FIND DELETED RECORD BY NAME ===================
+    public function findDeletedByName($name)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT parameter_id, parameter_code 
+            FROM test_parameters 
+            WHERE parameter_name = ? AND is_deleted = 1 
+            LIMIT 1"
+        );
+        $stmt->bind_param("s", $name);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
     // =================== GET NEXT AVAILABLE CODE ===================
     public function getNextParameterCode()
     {
-        // Get the last used code
-        $result = $this->conn->query("SELECT parameter_code FROM test_parameters 
-                                      ORDER BY parameter_id DESC LIMIT 1");
+        $result = $this->conn->query(
+            "SELECT parameter_code FROM test_parameters 
+            ORDER BY parameter_id DESC LIMIT 1"
+        );
         
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            $lastCode = $row['parameter_code'];
+            $lastCode = strtoupper($row['parameter_code']);
             
-            // If it's a single letter, increment it
+            // Single letter (A-Z)
             if (strlen($lastCode) === 1 && ctype_alpha($lastCode)) {
-                $nextCode = chr(ord(strtoupper($lastCode)) + 1);
-                // If we've gone past Z, start with AA
-                if ($nextCode > 'Z') {
-                    return 'AA';
-                }
-                return $nextCode;
+                $nextCode = chr(ord($lastCode) + 1);
+                return $nextCode > 'Z' ? 'AA' : $nextCode;
             }
             
-            // If it's multi-letter (like AA, AB), increment accordingly
+            // Multi-letter (AA, AB, etc.)
             if (ctype_alpha($lastCode)) {
-                $lastCode = strtoupper($lastCode);
-                $nextCode = ++$lastCode;
-                return $nextCode;
+                return ++$lastCode;
             }
         }
         
-        // If no codes exist, start with A
-        return 'A';
+        return 'A'; // Start with A if no codes exist
     }
 
     // =================== INSERT PARAMETER ===================
-    public function insertParameter($name, $category, $baseUnit, $swabEnabled)
+    public function insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive = 1)
     {
-        // Auto-generate the next code
         $code = $this->getNextParameterCode();
         
-        $stmt = $this->conn->prepare("INSERT INTO test_parameters 
-                                      (parameter_code, parameter_name, parameter_category, 
-                                       base_unit, swab_enabled, has_variants, is_active, created_at)
-                                      VALUES (?, ?, ?, ?, ?, 0, 1, NOW())");
-        $stmt->bind_param("ssssi", $code, $name, $category, $baseUnit, $swabEnabled);
+        $stmt = $this->conn->prepare(
+            "INSERT INTO test_parameters 
+            (parameter_code, parameter_name, parameter_category, base_unit, 
+             swab_enabled, has_variants, is_active, is_deleted, created_at)
+            VALUES (?, ?, ?, ?, ?, 0, ?, 0, NOW())"
+        );
+        
+        $stmt->bind_param("ssssii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive);
+        
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
+        }
+        return false;
+    }
+
+    // =================== REACTIVATE DELETED PARAMETER ===================
+    public function reactivateParameter($id, $category, $baseUnit, $swabEnabled, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET parameter_category = ?, 
+                base_unit = ?, 
+                swab_enabled = ?,
+                is_active = ?,
+                is_deleted = 0,
+                updated_at = NOW()
+            WHERE parameter_id = ?"
+        );
+        
+        $stmt->bind_param("ssiii", $category, $baseUnit, $swabEnabled, $isActive, $id);
         return $stmt->execute();
     }
 
     // =================== UPDATE PARAMETER ===================
     public function updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)
     {
-        $stmt = $this->conn->prepare("UPDATE test_parameters 
-                                      SET parameter_code = ?, 
-                                          parameter_name = ?, 
-                                          parameter_category = ?,
-                                          base_unit = ?, 
-                                          swab_enabled = ?,
-                                          is_active = ?,
-                                          updated_at = NOW()
-                                      WHERE parameter_id = ?");
-        $stmt->bind_param("ssssiis", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $id);
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET parameter_code = ?,
+                parameter_name = ?, 
+                parameter_category = ?,
+                base_unit = ?, 
+                swab_enabled = ?,
+                is_active = ?,
+                updated_at = NOW()
+            WHERE parameter_id = ? AND is_deleted = 0"
+        );
+        
+        $stmt->bind_param("ssssiii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $id);
         return $stmt->execute();
     }
 
-    // =================== SOFT DELETE ===================
+    // =================== SOFT DELETE PARAMETER ===================
     public function softDeleteParameter($id)
     {
-        $stmt = $this->conn->prepare("UPDATE test_parameters SET is_active = 0, updated_at = NOW() 
-                                      WHERE parameter_id = ?");
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET is_deleted = 1, updated_at = NOW() 
+            WHERE parameter_id = ?"
+        );
         $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    // =================== TOGGLE STATUS ===================
+    public function toggleStatus($id, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET is_active = ?, updated_at = NOW() 
+            WHERE parameter_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("ii", $isActive, $id);
         return $stmt->execute();
     }
 
     // =================== CHECK IF PARAMETER HAS VARIANTS ===================
     public function hasActiveVariants($id)
     {
-        $stmt = $this->conn->prepare("SELECT COUNT(*) as count FROM parameter_variants 
-                                      WHERE parameter_id = ? AND is_active = 1");
+        $stmt = $this->conn->prepare(
+            "SELECT COUNT(*) as count FROM parameter_variants 
+            WHERE parameter_id = ? AND is_active = 1 AND is_deleted = 0"
+        );
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
         return $row['count'] > 0;
+    }
+
+    // =================== SWAB_PARAM METHODS ===================
+
+    // Get swab price for parameter
+    public function getSwabPrice($paramId)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT swab_param_id, swab_price, is_active 
+            FROM swab_param 
+            WHERE param_id = ? AND is_deleted = 0 
+            LIMIT 1"
+        );
+        $stmt->bind_param("i", $paramId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    // Insert swab_param record
+    public function insertSwabParam($paramId, $price)
+    {
+        $stmt = $this->conn->prepare(
+            "INSERT INTO swab_param (param_id, swab_price, is_active, is_deleted, created_at)
+            VALUES (?, ?, 1, 0, NOW())"
+        );
+        $stmt->bind_param("id", $paramId, $price);
+        return $stmt->execute();
+    }
+
+    // Reactivate swab_param record
+    public function reactivateSwabParam($paramId, $price)
+    {
+        // Check if deleted record exists
+        $stmt = $this->conn->prepare(
+            "SELECT swab_param_id FROM swab_param 
+            WHERE param_id = ? AND is_deleted = 1 
+            LIMIT 1"
+        );
+        $stmt->bind_param("i", $paramId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            // Reactivate existing
+            $row = $result->fetch_assoc();
+            $stmt2 = $this->conn->prepare(
+                "UPDATE swab_param 
+                SET swab_price = ?, is_active = 1, is_deleted = 0, updated_at = NOW()
+                WHERE swab_param_id = ?"
+            );
+            $stmt2->bind_param("di", $price, $row['swab_param_id']);
+            return $stmt2->execute();
+        } else {
+            // Insert new
+            return $this->insertSwabParam($paramId, $price);
+        }
+    }
+
+    // Update swab price
+    public function updateSwabPrice($paramId, $price)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE swab_param 
+            SET swab_price = ?, updated_at = NOW()
+            WHERE param_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("di", $price, $paramId);
+        return $stmt->execute();
+    }
+
+    // Soft delete swab_param (cascade from parameter)
+    public function deleteSwabParam($paramId)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE swab_param 
+            SET is_deleted = 1, updated_at = NOW()
+            WHERE param_id = ?"
+        );
+        $stmt->bind_param("i", $paramId);
+        return $stmt->execute();
+    }
+
+    // Sync is_active status to swab_param
+    public function syncSwabParamStatus($paramId, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE swab_param 
+            SET is_active = ?, updated_at = NOW()
+            WHERE param_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("ii", $isActive, $paramId);
+        return $stmt->execute();
     }
 }
 ?>
