@@ -3,15 +3,13 @@
       <!-- Filter + New -->
       <div class="variants-card-filter">
         <input type="text" placeholder="Search by Variant Name" class="form-control" style="max-width:250px;">
-        <select class="form-select" style="max-width:150px;">
+        <select class="form-select" id="filterParameter" style="max-width:150px;">
           <option value="">All Parameters</option>
-          <option value="APC">Aerobic Plate Count</option>
-          <option value="CT">Coliform Test</option>
         </select>
         <select class="form-select" style="max-width:120px;">
-          <option>All Status</option>
-          <option>Active</option>
-          <option>Inactive</option>
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
         </select>
         <button class="btn btn-variants-filter">Filter</button>
         <div class="ms-auto">
@@ -26,42 +24,12 @@
             <tr>
               <th>Parameter Name</th>
               <th>Variant Name</th>
-              <th>Condition Value</th>
+              <th>Full Variant Name</th>
               <th>Status</th>
               <th style="width:120px;">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Aerobic Plate Count</td>
-              <td>at 37°C</td>
-              <td>37°C</td>
-              <td><span class="badge-status bg-success">Active</span></td>
-              <td>
-                <button class="btn-variants-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-variants-delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-            <tr>
-              <td>Aerobic Plate Count</td>
-              <td>at 30°C</td>
-              <td>30°C</td>
-              <td><span class="badge-status bg-success">Active</span></td>
-              <td>
-                <button class="btn-variants-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-variants-delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-            <tr>
-              <td>Coliform Test</td>
-              <td>MPN Method</td>
-              <td>Standard</td>
-              <td><span class="badge-status bg-secondary">Inactive</span></td>
-              <td>
-                <button class="btn-variants-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-variants-delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -79,10 +47,6 @@
             <label class="variants-form-label">Parameter</label>
             <select class="variants-form-select" id="variantParameter" required>
               <option value="">Select Parameter</option>
-              <option value="Aerobic Plate Count">Aerobic Plate Count</option>
-              <option value="Coliform Test">Coliform Test</option>
-              <option value="E. coli Test">E. coli Test</option>
-              <option value="Salmonella Test">Salmonella Test</option>
             </select>
           </div>
           <div class="mb-3">
@@ -90,12 +54,9 @@
             <input type="text" class="variants-form-control" id="variantName" placeholder="Enter variant name" required>
           </div>
           <div class="mb-3">
-            <label class="variants-form-label">Condition Value</label>
-            <input type="text" class="variants-form-control" id="variantCondition" placeholder="Enter condition value (e.g., 37°C, Standard)">
-          </div>
-          <div class="mb-3">
             <label class="variants-form-label">Status</label>
             <select class="variants-form-select" id="variantStatus">
+              <option >Select Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
@@ -128,130 +89,237 @@
   </div>
 
   <script>
-    // Add/Edit Modal
-    const modalOverlay = document.getElementById('variantsModal');
-    const btnNewVariant = document.querySelector('.btn-variants-new');
-    const btnCloseModal = modalOverlay.querySelector('.btn-close-modal');
-    const btnCancelModal = modalOverlay.querySelector('.btn-secondary');
-    const modalTitle = document.getElementById('variantsModalTitle');
-    const form = modalOverlay.querySelector('form');
-    const inputParameter = document.getElementById('variantParameter');
-    const inputName = document.getElementById('variantName');
-    const inputCondition = document.getElementById('variantCondition');
-    const selectStatus = document.getElementById('variantStatus');
+// ===== VARIANT MANAGEMENT SCRIPT (fixed to match your HTML) =====
 
-    let editingRow = null;
+// === DOM ELEMENTS ===
+const variantModalOverlay = document.getElementById('variantsModal');
+const variantForm = variantModalOverlay.querySelector('form');
+const variantModalTitle = document.getElementById('variantsModalTitle');
+const btnCloseVariantModal = variantModalOverlay.querySelector('.btn-close-modal');
 
-    btnNewVariant.addEventListener('click', () => {
-      modalTitle.textContent = 'New Variant';
-      inputParameter.value = '';
-      inputName.value = '';
-      inputCondition.value = '';
-      selectStatus.value = 'active';
-      editingRow = null;
-      modalOverlay.classList.add('active');
-    });
+const deleteVariantModal = document.getElementById('deleteConfirmModal');
+const btnCancelDeleteVariant = document.getElementById('cancelDelete');
+const btnConfirmDeleteVariant = document.getElementById('confirmDelete');
+const btnCloseDeleteVariantModal = deleteVariantModal.querySelector('.btn-close-modal');
 
-    btnCloseModal.addEventListener('click', () => modalOverlay.classList.remove('active'));
-    btnCancelModal.addEventListener('click', () => modalOverlay.classList.remove('active'));
-    modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) modalOverlay.classList.remove('active');
-    });
+const btnNewVariant = document.querySelector('.btn-variants-new');
+const btnFilter = document.querySelector('.btn-variants-filter');
+const inputSearch = document.querySelector('.variants-card-filter input[type="text"]');
+const selectFilterParameter = document.getElementById('filterParameter');
+const selectStatus = document.querySelectorAll('.variants-card-filter select')[1];
 
-    // Delete Modal
-    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
-    const btnCancelDelete = document.getElementById('cancelDelete');
-    const btnConfirmDelete = document.getElementById('confirmDelete');
-    const closeDeleteModalBtn = deleteConfirmModal.querySelector('.btn-close-modal');
-    let rowToDelete = null;
+const tbody = document.querySelector('.variants-table tbody');
+const CONTROLLER_PATH_VARIANT = '../../src/Controllers/variant-controller.php';
 
-    document.querySelectorAll('.btn-variants-delete').forEach(btn => {
-      btn.addEventListener('click', () => {
-        rowToDelete = btn.closest('tr');
-        deleteConfirmModal.classList.add('active');
-      });
-    });
+// === TOAST (same as parameter manager) ===
+function showToastVariant(message, type = 'success') {
+  const colors = {
+    success: 'bg-success text-white',
+    warning: 'bg-warning text-dark',
+    danger: 'bg-danger text-white'
+  };
+  const toastContainer = document.getElementById('variantToastContainer') || document.body;
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast align-items-center ${colors[type]} border-0 position-fixed bottom-0 end-0 m-3`;
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
+    </div>`;
+  toastContainer.appendChild(toastEl);
+  const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+  toast.show();
+  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
 
-    btnCancelDelete.addEventListener('click', () => {
-      rowToDelete = null;
-      deleteConfirmModal.classList.remove('active');
-    });
+// === AJAX helper ===
+function sendAjaxVariant(action, data = {}) {
+  return fetch(CONTROLLER_PATH_VARIANT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action, ...data })
+  }).then(res => res.json()).catch(() => ({ status: 'error', message: 'Network error!' }));
+}
 
-    closeDeleteModalBtn.addEventListener('click', () => {
-      rowToDelete = null;
-      deleteConfirmModal.classList.remove('active');
-    });
+// === OPEN/CLOSE MODALS ===
+function openVariantModal(editData = null) {
+  variantModalOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
 
-    deleteConfirmModal.addEventListener('click', (e) => {
-      if (e.target === deleteConfirmModal) {
-        rowToDelete = null;
-        deleteConfirmModal.classList.remove('active');
-      }
-    });
+  variantForm.reset();
+  if (editData) {
+    variantModalTitle.textContent = 'Edit Variant';
+    variantForm.dataset.mode = 'edit';
+    variantForm.dataset.variantId = editData.variant_id;
+    document.getElementById('variantParameter').value = editData.parameter_id;
+    document.getElementById('variantName').value = editData.variant_name;
+    document.getElementById('variantStatus').value = editData.is_active == 1 ? 'active' : 'inactive';
+  } else {
+    variantModalTitle.textContent = 'New Variant';
+    variantForm.dataset.mode = 'create';
+  }
+}
 
-    btnConfirmDelete.addEventListener('click', () => {
-      if (rowToDelete) rowToDelete.remove();
-      deleteConfirmModal.classList.remove('active');
-    });
+function closeVariantModal() {
+  variantModalOverlay.classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
 
-    // Edit & Add Row
-    function attachRowListeners(row) {
-      row.querySelector('.btn-variants-delete').addEventListener('click', () => {
-        rowToDelete = row;
-        deleteConfirmModal.classList.add('active');
-      });
+// === DELETE MODAL CONTROL ===
+function openDeleteModal(variantId) {
+  deleteVariantModal.classList.add('active');
+  deleteVariantModal.dataset.id = variantId;
+}
 
-      row.querySelector('.btn-variants-edit').addEventListener('click', () => {
-        editingRow = row;
-        inputParameter.value = row.children[0].textContent;
-        inputName.value = row.children[1].textContent;
-        inputCondition.value = row.children[2].textContent;
-        selectStatus.value = row.children[3].textContent.trim() === 'Active' ? 'active' : 'inactive';
-        modalTitle.textContent = 'Edit Variant';
-        modalOverlay.classList.add('active');
+function closeDeleteModal() {
+  deleteVariantModal.classList.remove('active');
+  deleteVariantModal.dataset.id = '';
+}
+
+// === LOAD PARAMETERS FOR SELECTS ===
+function loadParametersForSelect(selectId) {
+  sendAjaxVariant('fetchParams').then(res => {
+    if (res.status === 'success' && Array.isArray(res.data)) {
+      const select = document.getElementById(selectId);
+      select.innerHTML = selectId === 'filterParameter' ? '<option value="">All Parameters</option>' : '<option value="">Select Parameter</option>';
+      res.data.forEach(p => {
+        select.insertAdjacentHTML('beforeend', `<option value="${p.parameter_id}">${p.parameter_name}</option>`);
       });
     }
+  });
+}
 
-    document.querySelectorAll('.variants-table tbody tr').forEach(attachRowListeners);
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const parameter = inputParameter.value.trim();
-      const name = inputName.value.trim();
-      const condition = inputCondition.value.trim();
-      const status = selectStatus.value;
-      
-      if (!parameter || !name) {
-        alert('Please fill in all required fields');
-        return;
-      }
-
-      if (editingRow) {
-        editingRow.children[0].textContent = parameter;
-        editingRow.children[1].textContent = name;
-        editingRow.children[2].textContent = condition || '--';
-        editingRow.children[3].innerHTML = status === 'active'
-          ? '<span class="badge-status bg-success">Active</span>'
-          : '<span class="badge-status bg-secondary">Inactive</span>';
-      } else {
-        const tableBody = document.querySelector('.variants-table tbody');
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${parameter}</td>
-            <td>${name}</td>
-            <td>${condition || '--'}</td>
-            <td>${status === 'active'
-            ? '<span class="badge-status bg-success">Active</span>'
-            : '<span class="badge-status bg-secondary">Inactive</span>'}</td>
+// === LOAD VARIANTS ===
+function loadVariants(filters = {}) {
+  sendAjaxVariant('fetchAll', filters).then(res => {
+    tbody.innerHTML = '';
+    if (res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
+      res.data.forEach(v => {
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr data-id="${v.variant_id}" data-parameter-id="${v.parameter_id}">
+            <td>${v.parameter_name}</td>
+            <td>${v.variant_name}</td>
+            <td>${v.full_variant_name || '--'}</td>
             <td>
-                <button class="btn-variants-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-variants-delete"><i class="fas fa-trash"></i></button>
+              <span class="badge-status bg-${v.is_active == 1 ? 'success' : 'secondary'}">
+                ${v.is_active == 1 ? 'Active' : 'Inactive'}
+              </span>
             </td>
-        `;
-        tableBody.appendChild(newRow);
-        attachRowListeners(newRow);
-      }
+            <td>
+              <button class="btn-variants-edit"><i class="fas fa-edit"></i></button>
+              <button class="btn-variants-delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `);
+      });
+      attachRowEvents();
+    } else {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No variants found</td></tr>`;
+    }
+  });
+}
 
-      modalOverlay.classList.remove('active');
-    });
+// === ATTACH EDIT/DELETE EVENTS ===
+function attachRowEvents() {
+  document.querySelectorAll('.btn-variants-edit').forEach(btn => {
+    btn.onclick = e => {
+      const row = e.target.closest('tr');
+      const data = {
+        variant_id: row.dataset.id,
+        parameter_id: row.dataset.parameterId,
+        variant_name: row.children[1].textContent,
+        is_active: row.children[3].querySelector('.badge-status').classList.contains('bg-success') ? 1 : 0
+      };
+      openVariantModal(data);
+    };
+  });
+
+  document.querySelectorAll('.btn-variants-delete').forEach(btn => {
+    btn.onclick = e => {
+      const row = e.target.closest('tr');
+      openDeleteModal(row.dataset.id);
+    };
+  });
+}
+
+// === SAVE (INSERT/UPDATE) ===
+variantForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const mode = variantForm.dataset.mode;
+  const data = {
+    variant_id: variantForm.dataset.variantId || '',
+    parameter_id: document.getElementById('variantParameter').value.trim(),
+    variant_name: document.getElementById('variantName').value.trim(),
+    is_active: document.getElementById('variantStatus').value === 'active' ? 1 : 0
+  };
+
+  if (!data.parameter_id || !data.variant_name) {
+    showToastVariant('Please fill all required fields', 'warning');
+    return;
+  }
+
+  const action = mode === 'edit' ? 'update' : 'insert';
+  sendAjaxVariant(action, data).then(res => {
+    if (res.status === 'success') {
+      showToastVariant(res.message || 'Saved successfully!', 'success');
+      loadVariants();
+      closeVariantModal();
+    } else {
+      showToastVariant(res.message || 'Failed to save variant', 'danger');
+    }
+  });
+});
+
+variantForm.querySelector('.btn-secondary').addEventListener('click', closeVariantModal);
+
+// === DELETE CONFIRMATION ===
+btnConfirmDeleteVariant.onclick = () => {
+  const id = deleteVariantModal.dataset.id;
+  if (!id) return;
+  sendAjaxVariant('delete', { variant_id: id }).then(res => {
+    if (res.status === 'success') {
+      showToastVariant(res.message || 'Variant deleted', 'danger');
+      loadVariants();
+    } else {
+      showToastVariant(res.message || 'Failed to delete', 'danger');
+    }
+    closeDeleteModal();
+  });
+};
+
+btnCancelDeleteVariant.onclick = closeDeleteModal;
+btnCloseDeleteVariantModal.onclick = closeDeleteModal;
+deleteVariantModal.addEventListener('click', e => {
+  if (e.target === deleteVariantModal) closeDeleteModal();
+});
+
+// === OPEN/CLOSE CREATE MODAL ===
+btnNewVariant.onclick = () => openVariantModal();
+btnCloseVariantModal.onclick = closeVariantModal;
+variantModalOverlay.addEventListener('click', e => {
+  if (e.target === variantModalOverlay) closeVariantModal();
+});
+
+// === FILTER (simple status + search) ===
+btnFilter.onclick = () => {
+  const filters = {};
+  if (selectFilterParameter.value) filters.parameter_id = selectFilterParameter.value;
+  if (selectStatus.value === 'Active') filters.is_active = 1;
+  else if (selectStatus.value === 'Inactive') filters.is_active = 0;
+  loadVariants(filters);
+};
+
+inputSearch.addEventListener('input', e => {
+  const search = e.target.value.toLowerCase();
+  document.querySelectorAll('.variants-table tbody tr').forEach(tr => {
+    const name = tr.children[1]?.textContent?.toLowerCase() || '';
+    tr.style.display = name.includes(search) ? '' : 'none';
+  });
+});
+
+// === INITIAL LOAD ===
+loadParametersForSelect('variantParameter');
+loadParametersForSelect('filterParameter');
+loadVariants();
+
   </script>

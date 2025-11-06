@@ -192,42 +192,50 @@
       }));
   }
 
-  // === LOAD PARAMETERS ===
-  function loadParameters(filters = {}) {
-    sendAjax('fetchAll', filters).then(res => {
-      const tbody = document.querySelector('#parametersTable tbody');
-      tbody.innerHTML = '';
+ // === LOAD PARAMETERS ===
+function loadParameters(filters = {}) {
+  sendAjax('fetchAll', filters).then(res => {
+    const tbody = document.querySelector('#parametersTable tbody');
+    tbody.innerHTML = '';
 
-      if (res.status === 'success' && Array.isArray(res.data)) {
-        res.data.forEach(param => {
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr data-id="${param.parameter_id}"
-                data-code="${param.parameter_code}"
-                data-name="${param.parameter_name}"
-                data-category="${param.parameter_category || ''}"
-                data-unit="${param.base_unit || ''}"
-                data-swab="${param.swab_enabled}"
-                data-active="${param.is_active}">
-              <td>${param.parameter_name}</td>
-              <td>${param.parameter_code}</td>
-              <td>${param.parameter_category || '--'}</td>
-              <td>${param.base_unit || '--'}</td>
-              <td><span class="badge bg-${param.swab_enabled ? 'info' : 'secondary'}">${param.swab_enabled ? 'Yes' : 'No'}</span></td>
-              <td>${param.variant_count || 0}</td>
-              <td><span class="badge-status bg-${param.is_active ? 'success' : 'secondary'}">${param.is_active ? 'Active' : 'Inactive'}</span></td>
-              <td>
-                <button class="btn-parameters-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-parameters-delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-          `);
-        });
-        attachRowEvents();
-      } else {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No parameters found</td></tr>`;
-      }
-    });
-  }
+    if (res.status === 'success' && Array.isArray(res.data)) {
+      res.data.forEach(param => {
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr data-id="${param.parameter_id}"
+              data-code="${param.parameter_code}"
+              data-name="${param.parameter_name}"
+              data-category="${param.parameter_category || ''}"
+              data-unit="${param.base_unit || ''}"
+              data-swab="${param.swab_enabled}"
+              data-active="${param.is_active}">
+            <td>${param.parameter_name}</td>
+            <td>${param.parameter_code}</td>
+            <td>${param.parameter_category || '--'}</td>
+            <td>${param.base_unit || '--'}</td>
+            <td>
+              <span class="badge bg-${param.swab_enabled == "1" ? 'info' : 'danger'}">
+                ${param.swab_enabled == "1" ? 'Yes' : 'No'}
+              </span>
+            </td>
+            <td>${param.variant_count || 0}</td>
+            <td>
+              <span class="badge-status bg-${param.is_active == "1" ? 'success' : 'secondary'}">
+                ${param.is_active == "1" ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td>
+              <button class="btn-parameters-edit"><i class="fas fa-edit"></i></button>
+              <button class="btn-parameters-delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `);
+      });
+      attachRowEvents();
+    } else {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No parameters found</td></tr>`;
+    }
+  });
+}
 
   // === MODAL CONTROL ===
   function openModal(mode) {

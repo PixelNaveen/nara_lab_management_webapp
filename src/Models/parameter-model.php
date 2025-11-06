@@ -39,7 +39,7 @@ class ParameterModel
             $types .= "i";
         }
 
-        $sql .= " GROUP BY tp.parameter_id ORDER BY tp.parameter_id DESC";
+        $sql .= " GROUP BY tp.parameter_id ORDER BY tp.parameter_id ASC";
 
         if (!empty($params)) {
             $stmt = $this->conn->prepare($sql);
