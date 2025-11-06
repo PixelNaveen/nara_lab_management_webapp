@@ -1,4 +1,3 @@
-
 <div class="page-swab-parameters">
   <div class="swab-parameters-container container">
     <!-- Filter + New -->
@@ -53,7 +52,10 @@
       <form>
         <div class="mb-3">
           <label class="swab-parameters-form-label">Parameter Name</label>
-          <input type="text" class="swab-parameters-form-control" id="swabParameterName" placeholder="Enter parameter name" required>
+          <select id="swabParameterSelect" class="swab-parameters-form-control" required>
+            <option value="">-- Select Parameter --</option>
+            <!-- Options loaded by JS -->
+          </select>
         </div>
         <!-- <div class="mb-3">
           <label class="swab-parameters-form-label">Parameter Code</label>
@@ -98,223 +100,279 @@
 </div>
 
 <script>
-  // ===== SWAB PARAMETER MANAGEMENT SCRIPT =====
+ // ===== swab.js =====
+// Matches your UI code style and controller API
 
-  // === DOM ELEMENTS ===
-  const swabModalOverlay = document.getElementById('swabParametersModal');
-  const swabForm = swabModalOverlay.querySelector('form');
-  const swabModalTitle = document.getElementById('swabParametersModalTitle');
-  const btnCloseSwabModal = swabModalOverlay.querySelector('.btn-close-modal');
+const CONTROLLER_PATH_SWAB = '../../src/Controllers/swab-controller.php';
 
-  const deleteSwabModal = document.getElementById('swabDeleteConfirmModal');
-  const btnCancelDeleteSwab = document.getElementById('swabCancelDelete');
-  const btnConfirmDeleteSwab = document.getElementById('swabConfirmDelete');
-  const btnCloseDeleteSwabModal = deleteSwabModal.querySelector('.btn-close-modal');
+// DOM
+const swabModalOverlay = document.getElementById('swabParametersModal');
+const swabForm = swabModalOverlay.querySelector('form');
+const swabModalTitle = document.getElementById('swabParametersModalTitle');
+const btnCloseSwabModal = swabModalOverlay.querySelector('.btn-close-modal');
 
-  const btnNewSwab = document.querySelector('.btn-swab-parameters-new');
-  const btnFilter = document.querySelector('.btn-swab-parameters-filter');
-  const inputSearch = document.querySelector('.swab-parameters-card-filter input[type="text"]');
-  const selectStatus = document.querySelectorAll('.swab-parameters-card-filter select')[0];
+const deleteSwabModal = document.getElementById('swabDeleteConfirmModal');
+const btnCancelDeleteSwab = document.getElementById('swabCancelDelete');
+const btnConfirmDeleteSwab = document.getElementById('swabConfirmDelete');
+const btnCloseDeleteSwabModal = deleteSwabModal.querySelector('.btn-close-modal');
 
-  const tbody = document.querySelector('.swab-parameters-table tbody');
-  const CONTROLLER_PATH_SWAB = '../../src/Controllers/swab-controller.php'; // Assume a controller for swab
+const btnNewSwab = document.querySelector('.btn-swab-parameters-new');
+const btnFilter = document.querySelector('.btn-swab-parameters-filter');
+const inputSearch = document.querySelector('.swab-parameters-card-filter input[type="text"]');
+const selectStatus = document.querySelectorAll('.swab-parameters-card-filter select')[0];
 
-  // === TOAST ===
-  function showToastSwab(message, type = 'success') {
-    const colors = {
-      success: 'bg-success text-white',
-      warning: 'bg-warning text-dark',
-      danger: 'bg-danger text-white'
-    };
-    const toastContainer = document.getElementById('swabToastContainer') || document.body;
-    const toastEl = document.createElement('div');
-    toastEl.className = `toast align-items-center ${colors[type]} border-0 position-fixed bottom-0 end-0 m-3`;
-    toastEl.innerHTML = `
-      <div class="d-flex">
-        <div class="toast-body">${message}</div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
-      </div>`;
-    toastContainer.appendChild(toastEl);
-    const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
-    toast.show();
-    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+const tbody = document.querySelector('.swab-parameters-table tbody');
+
+const swabParameterSelect = document.getElementById('swabParameterSelect'); // select dropdown
+const swabParameterPrice = document.getElementById('swabParameterPrice');
+const swabParameterStatus = document.getElementById('swabParameterStatus');
+
+// Toast
+function showToastSwab(message, type = 'success') {
+  const colors = {
+    success: 'bg-success text-white',
+    warning: 'bg-warning text-dark',
+    danger: 'bg-danger text-white'
+  };
+  const toastContainer = document.getElementById('swabToastContainer') || document.body;
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast align-items-center ${colors[type]} border-0 position-fixed bottom-0 end-0 m-3`;
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
+    </div>`;
+  toastContainer.appendChild(toastEl);
+  const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+  toast.show();
+  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+// AJAX helper
+function sendAjaxSwab(action, data = {}) {
+  return fetch(CONTROLLER_PATH_SWAB, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action, ...data })
+  }).then(res => res.json()).catch(() => ({ status: 'error', message: 'Network error!' }));
+}
+
+// Open/Close modal
+function openSwabModal(editData = null) {
+  swabModalOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  swabForm.reset();
+
+  // Ensure dropdown options are loaded
+  loadParameterDropdown();
+
+  if (editData) {
+    swabModalTitle.textContent = 'Edit Parameter';
+    swabForm.dataset.mode = 'edit';
+    swabForm.dataset.swabId = editData.swab_param_id || editData.swab_id || '';
+    // set selected param in dropdown (param_id may be provided)
+    if (editData.param_id) {
+      // wait if dropdown not loaded yet - loadParameterDropdown ensures it's loaded
+      setTimeout(() => {
+        swabParameterSelect.value = editData.param_id;
+      }, 150);
+    }
+    swabParameterPrice.value = editData.price || '';
+    swabParameterStatus.value = editData.is_active == 1 ? 'active' : 'inactive';
+    // When editing, disable changing parameter selection (optional). If you want to allow change, remove next line.
+    swabParameterSelect.disabled = true;
+  } else {
+    swabModalTitle.textContent = 'New Parameter';
+    swabForm.dataset.mode = 'create';
+    swabForm.dataset.swabId = '';
+    swabParameterSelect.disabled = false;
   }
+}
 
-  // === AJAX helper ===
-  function sendAjaxSwab(action, data = {}) {
-    return fetch(CONTROLLER_PATH_SWAB, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ action, ...data })
-    }).then(res => res.json()).catch(() => ({ status: 'error', message: 'Network error!' }));
-  }
+function closeSwabModal() {
+  swabModalOverlay.classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
 
-  // === OPEN/CLOSE MODALS ===
-  function openSwabModal(editData = null) {
-    swabModalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
+// Delete modal control
+function openDeleteSwabModal(swabId) {
+  deleteSwabModal.classList.add('active');
+  deleteSwabModal.dataset.id = swabId;
+}
 
-    swabForm.reset();
-    if (editData) {
-      swabModalTitle.textContent = 'Edit Parameter';
-      swabForm.dataset.mode = 'edit';
-      swabForm.dataset.swabId = editData.swab_id;
-      document.getElementById('swabParameterName').value = editData.name;
-      document.getElementById('swabParameterCode').value = editData.code;
-      document.getElementById('swabParameterPrice').value = editData.price;
-      document.getElementById('swabParameterStatus').value = editData.is_active == 1 ? 'active' : 'inactive';
+function closeDeleteSwabModal() {
+  deleteSwabModal.classList.remove('active');
+  deleteSwabModal.dataset.id = '';
+}
+
+// Load table
+function loadSwabParameters(filters = {}) {
+  sendAjaxSwab('fetchAll', filters).then(res => {
+    tbody.innerHTML = '';
+    if (res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
+      res.data.forEach(v => {
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr data-id="${v.swab_param_id}">
+            <td>${v.name}</td>
+            <td>${v.code || '--'}</td>
+            <td>${v.price ? ( v.price) : '--'}</td>
+            <td>
+              <span class="badge-status bg-${v.is_active == 1 ? 'success' : 'secondary'}">
+                ${v.is_active == 1 ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td>
+              <button class="btn-swab-parameters-edit" data-id="${v.swab_param_id}"><i class="fas fa-edit"></i></button>
+              <button class="btn-swab-parameters-delete" data-id="${v.swab_param_id}"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `);
+      });
+      attachRowEvents();
     } else {
-      swabModalTitle.textContent = 'New Parameter';
-      swabForm.dataset.mode = 'create';
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No parameters found</td></tr>`;
     }
-  }
+  });
+}
 
-  function closeSwabModal() {
-    swabModalOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
-  }
-
-  // === DELETE MODAL CONTROL ===
-  function openDeleteSwabModal(swabId) {
-    deleteSwabModal.classList.add('active');
-    deleteSwabModal.dataset.id = swabId;
-  }
-
-  function closeDeleteSwabModal() {
-    deleteSwabModal.classList.remove('active');
-    deleteSwabModal.dataset.id = '';
-  }
-
-  // === LOAD SWAB PARAMETERS ===
-  function loadSwabParameters(filters = {}) {
-    sendAjaxSwab('fetchAll', filters).then(res => {
-      tbody.innerHTML = '';
-      if (res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
-        res.data.forEach(v => {
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr data-id="${v.swab_id}">
-              <td>${v.name}</td>
-              <td>${v.code}</td>
-              <td>${v.price || '--'}</td>
-              <td>
-                <span class="badge-status bg-${v.is_active == 1 ? 'success' : 'secondary'}">
-                  ${v.is_active == 1 ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td>
-                <button class="btn-swab-parameters-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-swab-parameters-delete"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-          `);
-        });
-        attachRowEvents();
-      } else {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No parameters found</td></tr>`;
-      }
-    });
-  }
-
-  // === ATTACH EDIT/DELETE EVENTS ===
-  function attachRowEvents() {
-    document.querySelectorAll('.btn-swab-parameters-edit').forEach(btn => {
-      btn.onclick = e => {
-        const row = e.target.closest('tr');
-        const data = {
-          swab_id: row.dataset.id,
-          name: row.children[0].textContent,
-          code: row.children[1].textContent,
-          price: row.children[2].textContent.replace('$', ''),
-          is_active: row.children[3].querySelector('.badge-status').classList.contains('bg-success') ? 1 : 0
-        };
-        openSwabModal(data);
-      };
-    });
-
-    document.querySelectorAll('.btn-swab-parameters-delete').forEach(btn => {
-      btn.onclick = e => {
-        const row = e.target.closest('tr');
-        openDeleteSwabModal(row.dataset.id);
-      };
-    });
-  }
-
-  // === SAVE (INSERT/UPDATE) ===
-  swabForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const mode = swabForm.dataset.mode;
-    const data = {
-      swab_id: swabForm.dataset.swabId || '',
-      name: document.getElementById('swabParameterName').value.trim(),
-      code: document.getElementById('swabParameterCode').value.trim(),
-      price: document.getElementById('swabParameterPrice').value.trim(),
-      is_active: document.getElementById('swabParameterStatus').value === 'active' ? 1 : 0
-    };
-
-    if (!data.name || !data.price) {
-      showToastSwab('Please fill all required fields', 'warning');
-      return;
-    }
-
-    const action = mode === 'edit' ? 'update' : 'insert';
-    sendAjaxSwab(action, data).then(res => {
+// Attach edit/delete events
+function attachRowEvents() {
+  document.querySelectorAll('.btn-swab-parameters-edit').forEach(btn => {
+    btn.onclick = async (e) => {
+      const swabId = btn.dataset.id;
+      const res = await sendAjaxSwab('getById', { swab_param_id: swabId });
       if (res.status === 'success') {
-        showToastSwab(res.message || 'Saved successfully!', 'success');
+        openSwabModal(res.data);
+      } else {
+        showToastSwab(res.message || 'Failed to load record', 'danger');
+      }
+    };
+  });
+
+  document.querySelectorAll('.btn-swab-parameters-delete').forEach(btn => {
+    btn.onclick = (e) => {
+      const row = e.target.closest('tr');
+      openDeleteSwabModal(row.dataset.id);
+    };
+  });
+}
+
+// Save (insert/update)
+swabForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const mode = swabForm.dataset.mode;
+  const swabId = swabForm.dataset.swabId || '';
+  const paramId = swabParameterSelect.value;
+  const priceVal = swabParameterPrice.value.trim();
+  const isActive = swabParameterStatus.value === 'active' ? 1 : 0;
+
+  if (!paramId) {
+    showToastSwab('Please select a parameter', 'warning');
+    return;
+  }
+
+  if (priceVal === '') {
+    showToastSwab('Please enter price (or 0.00)', 'warning');
+    return;
+  }
+
+  const data = {
+    csrf_token: document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '',
+    price: priceVal,
+    is_active: isActive
+  };
+
+  if (mode === 'edit') {
+    data.swab_param_id = swabId;
+    // update
+    sendAjaxSwab('update', data).then(res => {
+      if (res.status === 'success') {
+        showToastSwab(res.message || 'Updated', 'success');
         loadSwabParameters();
         closeSwabModal();
       } else {
-        showToastSwab(res.message || 'Failed to save parameter', 'danger');
+        showToastSwab(res.message || 'Update failed', 'danger');
       }
     });
-  });
-
-  swabForm.querySelector('.btn-secondary').addEventListener('click', closeSwabModal);
-
-  // === DELETE CONFIRMATION ===
-  btnConfirmDeleteSwab.onclick = () => {
-    const id = deleteSwabModal.dataset.id;
-    if (!id) return;
-    sendAjaxSwab('delete', { swab_id: id }).then(res => {
+  } else {
+    // create
+    data.param_id = paramId;
+    sendAjaxSwab('insert', data).then(res => {
       if (res.status === 'success') {
-        showToastSwab(res.message || 'Parameter deleted', 'danger');
+        showToastSwab(res.message || 'Inserted', 'success');
+        loadSwabParameters();
+        closeSwabModal();
+      } else {
+        showToastSwab(res.message || 'Insert failed', 'danger');
+      }
+    });
+  }
+});
+
+// Delete confirmation
+btnConfirmDeleteSwab.onclick = () => {
+  const id = deleteSwabModal.dataset.id;
+  if (!id) return;
+  sendAjaxSwab('delete', { csrf_token: document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '', swab_param_id: id })
+    .then(res => {
+      if (res.status === 'success') {
+        showToastSwab(res.message || 'Deleted', 'danger');
         loadSwabParameters();
       } else {
-        showToastSwab(res.message || 'Failed to delete', 'danger');
+        showToastSwab(res.message || 'Delete failed', 'danger');
       }
       closeDeleteSwabModal();
     });
-  };
+};
 
-  btnCancelDeleteSwab.onclick = closeDeleteSwabModal;
-  btnCloseDeleteSwabModal.onclick = closeDeleteSwabModal;
-  deleteSwabModal.addEventListener('click', e => {
-    if (e.target === deleteSwabModal) closeDeleteSwabModal();
+// Cancel buttons / modal controls
+btnCancelDeleteSwab.onclick = closeDeleteSwabModal;
+btnCloseDeleteSwabModal.onclick = closeDeleteSwabModal;
+deleteSwabModal.addEventListener('click', e => { if (e.target === deleteSwabModal) closeDeleteSwabModal(); });
+
+btnNewSwab.onclick = () => openSwabModal();
+btnCloseSwabModal.onclick = closeSwabModal;
+swabModalOverlay.addEventListener('click', e => { if (e.target === swabModalOverlay) closeSwabModal(); });
+
+// Filter
+btnFilter.onclick = () => {
+  const filters = {};
+  if (selectStatus.value === 'Active') filters.is_active = 1;
+  else if (selectStatus.value === 'Inactive') filters.is_active = 0;
+  loadSwabParameters(filters);
+};
+
+inputSearch.addEventListener('input', e => {
+  const search = e.target.value.toLowerCase();
+  document.querySelectorAll('.swab-parameters-table tbody tr').forEach(tr => {
+    const name = tr.children[0]?.textContent?.toLowerCase() || '';
+    tr.style.display = name.includes(search) ? '' : 'none';
   });
+});
 
-  // === OPEN/CLOSE CREATE MODAL ===
-  btnNewSwab.onclick = () => openSwabModal();
-  btnCloseSwabModal.onclick = closeSwabModal;
-  swabModalOverlay.addEventListener('click', e => {
-    if (e.target === swabModalOverlay) closeSwabModal();
+// Load parameters dropdown for selection
+let _dropdownLoaded = false;
+function loadParameterDropdown(force = false) {
+  if (_dropdownLoaded && !force) return Promise.resolve();
+  // clear existing
+  if (!swabParameterSelect) return Promise.resolve();
+  swabParameterSelect.innerHTML = '<option value="">-- Select Parameter --</option>';
+  return sendAjaxSwab('fetchDropdown').then(res => {
+    if (res.status === 'success' && Array.isArray(res.data)) {
+      res.data.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.parameter_id;
+        opt.textContent = `${p.parameter_name} (${p.parameter_code || ''})`;
+        swabParameterSelect.appendChild(opt);
+      });
+      _dropdownLoaded = true;
+    } else {
+      showToastSwab(res.message || 'Failed to load parameters', 'danger');
+    }
   });
+}
 
-  // === FILTER (simple status + search) ===
-  btnFilter.onclick = () => {
-    const filters = {};
-    if (selectStatus.value === 'Active') filters.is_active = 1;
-    else if (selectStatus.value === 'Inactive') filters.is_active = 0;
-    loadSwabParameters(filters);
-  };
-
-  inputSearch.addEventListener('input', e => {
-    const search = e.target.value.toLowerCase();
-    document.querySelectorAll('.swab-parameters-table tbody tr').forEach(tr => {
-      const name = tr.children[0]?.textContent?.toLowerCase() || '';
-      tr.style.display = name.includes(search) ? '' : 'none';
-    });
-  });
-
-  // === INITIAL LOAD ===
-  loadSwabParameters();
+// Initial load
+loadParameterDropdown().then(() => loadSwabParameters());
 
 </script>
