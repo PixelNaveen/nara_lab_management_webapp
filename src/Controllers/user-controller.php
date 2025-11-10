@@ -1,4 +1,4 @@
-// src/Controllers/user-controller.php
+// user-controller.php
 <?php
 require_once __DIR__ . '/../Models/user-model.php';
 header('Content-Type: application/json');
@@ -61,12 +61,6 @@ switch ($action) {
 
         if (!in_array($role, ['LabTechnician', 'Assistant', 'Admin'])) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid role.']);
-            exit;
-        }
-
-        // Prevent duplicates excluding self
-        if ($model->isDuplicateExcludeId($username, $email, $id)) {
-            echo json_encode(['status' => 'error', 'message' => 'Username or email already exists!']);
             exit;
         }
 

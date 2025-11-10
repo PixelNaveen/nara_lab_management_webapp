@@ -1,4 +1,4 @@
-// src/Models/user-model.php
+// user-model.php
 <?php
 require_once __DIR__ . '/../../Config/Database.php';
 
@@ -30,16 +30,6 @@ class UserModel
     {
         $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE username = ? OR email = ?");
         $stmt->bind_param("ss", $username, $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->num_rows > 0;
-    }
-
-    // =================== DUPLICATE CHECK EXCLUDING SELF ===================
-    public function isDuplicateExcludeId($username, $email, $id)
-    {
-        $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE (username = ? OR email = ?) AND user_id != ?");
-        $stmt->bind_param("ssi", $username, $email, $id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->num_rows > 0;
