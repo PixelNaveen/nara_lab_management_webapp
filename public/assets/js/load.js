@@ -14,3 +14,5 @@ window.addEventListener("load", function() {
     }, remainingTime);
   }
 });
+
+console.log(1);

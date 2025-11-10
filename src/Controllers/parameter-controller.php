@@ -1,16 +1,10 @@
 <?php
 session_start();
 
-// Authentication check
-// if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', ['admin', 'manager'])) {
-//     echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-//     exit;
-// }
-
 require_once __DIR__ . '/../Models/parameter-model.php';
 header('Content-Type: application/json');
 
-// CSRF Token validation for state-changing operations
+// CSRF validation for state-changing operations
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if (!in_array($action, ['fetchAll', 'getById'])) {
@@ -26,7 +20,7 @@ $action = $_POST['action'] ?? '';
 
 try {
     switch ($action) {
-        // ========== FETCH ALL PARAMETERS ==========
+        // ========== FETCH ALL ==========
         case 'fetchAll':
             $filters = [];
             if (isset($_POST['is_active']) && $_POST['is_active'] !== '') {
@@ -36,7 +30,6 @@ try {
                 $filters['search'] = trim($_POST['search']);
             }
             
-            // Pagination
             $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
             $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 50;
             $filters['page'] = $page;
@@ -52,7 +45,7 @@ try {
             ]);
             break;
 
-        // ========== GET PARAMETER BY ID ==========
+        // ========== GET BY ID ==========
         case 'getById':
             $id = intval($_POST['parameter_id'] ?? 0);
             if ($id <= 0) {
@@ -61,17 +54,13 @@ try {
             
             $parameter = $model->getParameterById($id);
             if ($parameter) {
-                // Get swab price if exists
-                $swabData = $model->getSwabPrice($id);
-                $parameter['swab_price'] = $swabData ? $swabData['swab_price'] : null;
-                
                 echo json_encode(['status' => 'success', 'data' => $parameter]);
             } else {
                 throw new Exception('Parameter not found');
             }
             break;
 
-        // ========== INSERT PARAMETER ==========
+        // ========== INSERT ==========
         case 'insert':
             $name = trim($_POST['parameter_name'] ?? '');
             $category = trim($_POST['parameter_category'] ?? '');
@@ -81,16 +70,15 @@ try {
                          ? floatval($_POST['swab_price']) : 0.00;
             $isActive = isset($_POST['is_active']) ? intval($_POST['is_active']) : 1;
 
-            // Validation
             if ($name === '') {
                 throw new Exception('Parameter name is required');
             }
 
-            // Check for deleted record with same name (reactivation logic)
+            // Check for deleted record
             $deletedRecord = $model->findDeletedByName($name);
             
             if ($deletedRecord) {
-                // Reactivate existing deleted record
+                // Reactivate
                 $result = $model->reactivateParameter(
                     $deletedRecord['parameter_id'],
                     $category,
@@ -102,9 +90,9 @@ try {
                 if ($result) {
                     $paramId = $deletedRecord['parameter_id'];
                     
-                    // Handle swab_param reactivation
+                    // Handle swab price on reactivation
                     if ($swabEnabled == 1) {
-                        $model->reactivateSwabParam($paramId, $swabPrice);
+                        $model->reactivateSwabPrice($paramId, $swabPrice);
                     }
                     
                     echo json_encode([
@@ -116,18 +104,18 @@ try {
                     throw new Exception('Failed to reactivate parameter');
                 }
             } else {
-                // Check for active duplicate
+                // Check active duplicate
                 if ($model->isDuplicate($name)) {
                     throw new Exception('Parameter with this name already exists');
                 }
 
-                // Insert new parameter
+                // Insert new
                 $paramId = $model->insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive);
                 
                 if ($paramId) {
-                    // Insert swab_param if swab is enabled
+                    // Create initial swab price if enabled
                     if ($swabEnabled == 1) {
-                        $model->insertSwabParam($paramId, $swabPrice);
+                        $model->createInitialSwabPrice($paramId, $swabPrice);
                     }
                     
                     echo json_encode([
@@ -141,7 +129,7 @@ try {
             }
             break;
 
-        // ========== UPDATE PARAMETER ==========
+        // ========== UPDATE ==========
         case 'update':
             $id = intval($_POST['parameter_id'] ?? 0);
             $code = trim($_POST['parameter_code'] ?? '');
@@ -149,11 +137,8 @@ try {
             $category = trim($_POST['parameter_category'] ?? '');
             $baseUnit = trim($_POST['base_unit'] ?? '');
             $swabEnabled = intval($_POST['swab_enabled'] ?? 0);
-            $swabPrice = isset($_POST['swab_price']) && $_POST['swab_price'] !== '' 
-                         ? floatval($_POST['swab_price']) : null;
             $isActive = intval($_POST['is_active'] ?? 1);
 
-            // Validation
             if ($id <= 0) {
                 throw new Exception('Invalid parameter ID');
             }
@@ -161,7 +146,7 @@ try {
                 throw new Exception('Parameter name is required');
             }
 
-            // Check duplicate (excluding current record)
+            // Check duplicate
             if ($model->isDuplicate($name, $id)) {
                 throw new Exception('Another parameter with this name already exists');
             }
@@ -173,21 +158,17 @@ try {
             // Update parameter
             if ($model->updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)) {
                 
-                // Handle swab_param changes
+                // Handle swab changes
                 if ($swabEnabled == 1 && $wasSwabEnabled == 0) {
-                    // Swab was disabled, now enabled → create swab_param
-                    $model->insertSwabParam($id, $swabPrice ?? 0.00);
+                    // Swab enabled now -> create entry
+                    $model->createInitialSwabPrice($id, 0.00);
                     
                 } elseif ($swabEnabled == 0 && $wasSwabEnabled == 1) {
-                    // Swab was enabled, now disabled → soft delete swab_param
-                    $model->deleteSwabParam($id);
-                    
-                } elseif ($swabEnabled == 1 && $wasSwabEnabled == 1 && $swabPrice !== null) {
-                    // Swab still enabled, update price if provided
-                    $model->updateSwabPrice($id, $swabPrice);
+                    // Swab disabled now -> soft delete
+                    $model->disableSwabParam($id);
                 }
 
-                // Sync is_active status to swab_param
+                // Sync status
                 if ($swabEnabled == 1) {
                     $model->syncSwabParamStatus($id, $isActive);
                 }
@@ -201,14 +182,13 @@ try {
             }
             break;
 
-        // ========== SOFT DELETE ==========
+        // ========== DELETE ==========
         case 'delete':
             $id = intval($_POST['parameter_id'] ?? 0);
             if ($id <= 0) {
                 throw new Exception('Invalid parameter ID');
             }
             
-            // Check if parameter has active variants
             if ($model->hasActiveVariants($id)) {
                 echo json_encode([
                     'status' => 'warning',
@@ -217,9 +197,8 @@ try {
                 exit;
             }
 
-            // Soft delete parameter and cascade to swab_param
             if ($model->softDeleteParameter($id)) {
-                $model->deleteSwabParam($id); // Cascade soft delete
+                $model->disableSwabParam($id);
                 
                 echo json_encode([
                     'status' => 'success',
@@ -230,7 +209,7 @@ try {
             }
             break;
 
-        // ========== TOGGLE STATUS (Activate/Deactivate) ==========
+        // ========== TOGGLE STATUS ==========
         case 'toggleStatus':
             $id = intval($_POST['parameter_id'] ?? 0);
             $isActive = intval($_POST['is_active'] ?? 1);
@@ -240,7 +219,6 @@ try {
             }
 
             if ($model->toggleStatus($id, $isActive)) {
-                // Sync to swab_param
                 $model->syncSwabParamStatus($id, $isActive);
                 
                 echo json_encode([

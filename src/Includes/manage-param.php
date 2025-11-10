@@ -18,22 +18,21 @@
     <!-- Table -->
     <div class="parameters-table-container">
       <table class="parameters-table table table-hover align-middle" id="parametersTable">
-       <thead>
-  <tr>
-    <th>Parameter Name</th>
-    <th>Parameter Code</th>
-    <th>Category</th>
-    <th>Base Unit</th>
-    <th>Swab Enabled</th>
-    <th>No. of Variants</th>
-    <th>Status</th>
-    <th style="width:120px;">Actions</th>
-  </tr>
-</thead>
-
+        <thead>
+          <tr>
+            <th>Parameter Name</th>
+            <th>Parameter Code</th>
+            <th>Category</th>
+            <th>Base Unit</th>
+            <th>Swab Enabled</th>
+            <th>No. of Variants</th>
+            <th>Status</th>
+            <th style="width:120px;">Actions</th>
+          </tr>
+        </thead>
         <tbody>
           <tr>
-            <td colspan="9" class="text-center">
+            <td colspan="8" class="text-center">
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
               </div>
@@ -42,14 +41,6 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Pagination -->
-    <!-- <div class="d-flex justify-content-between align-items-center mt-3">
-      <div id="paginationInfo">Loading...</div>
-      <nav>
-        <ul class="pagination mb-0" id="pagination"></ul>
-      </nav>
-    </div> -->
   </div>
 
   <!-- Add/Edit Modal -->
@@ -109,11 +100,12 @@
           </div>
         </div>
 
+        <!-- Only show on CREATE when swab enabled -->
         <div class="row" id="swabPriceRow" style="display: none;">
           <div class="col-md-12 mb-3">
-            <label class="parameters-form-label">Swab Price (Optional)</label>
+            <label class="parameters-form-label">Initial Swab Price (Optional)</label>
             <input type="number" step="0.01" min="0" class="parameters-form-control" id="paramSwabPrice" placeholder="0.00">
-            <small class="text-muted" id="swabPriceNote">Leave empty to set price as 0.00</small>
+            <small class="text-muted">Set initial price (can be updated later in Swab Prices page)</small>
           </div>
         </div>
 
@@ -150,7 +142,6 @@
 </div>
 
 <script>
-// ===== PARAMETER MANAGEMENT SCRIPT =====
 const CONTROLLER_PATH = '../../src/Controllers/parameter-controller.php';
 
 // DOM Elements
@@ -170,23 +161,17 @@ const btnReset = document.getElementById('btnReset');
 const paramSwab = document.getElementById('paramSwab');
 const swabPriceRow = document.getElementById('swabPriceRow');
 const tbody = document.querySelector('#parametersTable tbody');
-const paginationEl = document.getElementById('pagination');
-const paginationInfo = document.getElementById('paginationInfo');
 
 let deleteParamId = null;
 let currentPage = 1;
-let totalPages = 1;
 let currentFilters = {};
 
-// === SHOW/HIDE SWAB PRICE ===
+// === SWAB PRICE VISIBILITY ===
 paramSwab.addEventListener('change', () => {
   const mode = document.getElementById('formMode').value;
-  if (paramSwab.value === '1') {
+  // Only show price field when creating AND swab is enabled
+  if (mode === 'create' && paramSwab.value === '1') {
     swabPriceRow.style.display = 'block';
-    document.getElementById('swabPriceNote').textContent = 
-      mode === 'create' 
-        ? 'Leave empty to set price as 0.00' 
-        : 'Optional: Update swab price or leave unchanged';
   } else {
     swabPriceRow.style.display = 'none';
   }
@@ -216,7 +201,7 @@ function showToast(message, type = 'success') {
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// === AJAX HELPER ===
+// === AJAX ===
 async function sendAjax(action, data = {}) {
   try {
     const formData = new URLSearchParams({ action, ...data });
@@ -237,24 +222,22 @@ async function loadParameters(page = 1) {
   currentPage = page;
   const filters = { ...currentFilters, page, limit: 50 };
   
-  tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner-border text-primary"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div></td></tr>';
   
   const result = await sendAjax('fetchAll', filters);
   
   if (result.status === 'success') {
-    totalPages = result.totalPages || 1;
     renderTable(result.data);
-    renderPagination(result.total, page);
   } else {
     showToast(result.message || 'Failed to load parameters', 'danger');
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error loading data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading data</td></tr>';
   }
 }
 
 // === RENDER TABLE ===
 function renderTable(data) {
   if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No parameters found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No parameters found</td></tr>';
     return;
   }
 
@@ -288,50 +271,6 @@ function renderTable(data) {
 
   attachRowEvents();
 }
-
-
-// === RENDER PAGINATION ===
-// function renderPagination(total, page) {
-
-//   paginationInfo.textContent = `Showing page ${page} of ${totalPages} (${total} total records)`;
-  
-//   if (totalPages <= 1) {
-//     paginationEl.innerHTML = '';
-//     return;
-//   }
-  
-//   let html = `
-//     <li class="page-item ${page === 1 ? 'disabled' : ''}">
-//       <a class="page-link" href="#" data-page="${page - 1}">Previous</a>
-//     </li>
-//   `;
-  
-//   for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-//     html += `
-//       <li class="page-item ${i === page ? 'active' : ''}">
-//         <a class="page-link" href="#" data-page="${i}">${i}</a>
-//       </li>
-//     `;
-//   }
-  
-//   html += `
-//     <li class="page-item ${page === totalPages ? 'disabled' : ''}">
-//       <a class="page-link" href="#" data-page="${page + 1}">Next</a>
-//     </li>
-//   `;
-  
-//   paginationEl.innerHTML = html;
-  
-//   paginationEl.querySelectorAll('a').forEach(link => {
-//     link.addEventListener('click', (e) => {
-//       e.preventDefault();
-//       const targetPage = parseInt(link.dataset.page);
-//       if (targetPage >= 1 && targetPage <= totalPages) {
-//         loadParameters(targetPage);
-//       }
-//     });
-//   });
-// }
 
 // === OPEN/CLOSE MODAL ===
 function openModal(mode = 'create') {
@@ -367,18 +306,14 @@ async function editParameter(id) {
     document.getElementById('paramSwab').value = data.swab_enabled;
     document.getElementById('paramStatus').value = data.is_active;
     
-    if (data.swab_enabled == 1) {
-      swabPriceRow.style.display = 'block';
-      document.getElementById('paramSwabPrice').value = data.swab_price || '';
-      document.getElementById('swabPriceNote').textContent = 
-        'Optional: Update swab price or leave unchanged';
-    }
+    // Note: Swab price editing is handled in separate Swab Prices page
+    swabPriceRow.style.display = 'none';
   } else {
     showToast(result.message || 'Failed to load parameter', 'danger');
   }
 }
 
-// === ATTACH EDIT & DELETE EVENTS ===
+// === ATTACH EVENTS ===
 function attachRowEvents() {
   document.querySelectorAll('.btn-parameters-edit').forEach(btn => {
     btn.addEventListener('click', () => editParameter(btn.dataset.id));
@@ -416,8 +351,8 @@ parameterForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Include swab price if swab is enabled and price is entered
-  if (data.swab_enabled === '1') {
+  // Include initial swab price only when creating AND swab is enabled
+  if (mode === 'create' && data.swab_enabled === '1') {
     const priceValue = document.getElementById('paramSwabPrice').value.trim();
     data.swab_price = priceValue !== '' ? priceValue : '0.00';
   }
@@ -439,7 +374,7 @@ parameterForm.addEventListener('submit', async (e) => {
   }
 });
 
-// === DELETE PARAMETER ===
+// === DELETE ===
 btnConfirmDelete.addEventListener('click', async () => {
   if (!deleteParamId) return;
   

@@ -1,16 +1,23 @@
 <div class="page-swab-parameters">
   <div class="swab-parameters-container container">
+    <!-- Info Banner -->
+    <div class="alert alert-info mb-3">
+      <i class="fas fa-info-circle"></i> This page manages swab pricing for swab-enabled parameters. 
+      To enable/disable swab feature for a parameter, use the <strong>Parameters Management</strong> page.
+    </div>
+
     <!-- Filter + New -->
     <div class="swab-parameters-card-filter">
-      <input type="text" placeholder="Search by Parameter Name" class="form-control" style="max-width:250px;">
-      <select class="form-select" style="max-width:120px;">
+      <input type="text" id="searchInput" placeholder="Search by Parameter Name" class="form-control" style="max-width:250px;">
+      <select class="form-select" id="statusFilter" style="max-width:120px;">
         <option value="">All Status</option>
-        <option value="Active">Active</option>
-        <option value="Inactive">Inactive</option>
+        <option value="1">Active</option>
+        <option value="0">Inactive</option>
       </select>
-      <button class="btn btn-swab-parameters-filter">Filter</button>
+      <button class="btn btn-swab-parameters-filter" id="btnFilter">Filter</button>
+      <button class="btn btn-outline-secondary" id="btnReset">Reset</button>
       <div class="ms-auto">
-        <button class="btn-swab-parameters-new">+ New Parameter</button>
+        <button class="btn-swab-parameters-new" id="btnNewSwab">+ New Swab Param</button>
       </div>
     </div>
 
@@ -28,13 +35,10 @@
         </thead>
         <tbody>
           <tr>
-            <td>Swab Test A</td>
-            <td>STA</td>
-            <td>$50</td>
-            <td><span class="badge-status bg-success">Active</span></td>
-            <td>
-              <button class="btn-swab-parameters-edit"><i class="fas fa-edit"></i></button>
-              <button class="btn-swab-parameters-delete"><i class="fas fa-trash"></i></button>
+            <td colspan="5" class="text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -46,333 +50,381 @@
   <div class="swab-parameters-modal-overlay" id="swabParametersModal">
     <div class="swab-parameters-modal-form">
       <div class="swab-parameters-modal-header">
-        <h5 id="swabParametersModalTitle">New Parameter</h5>
-        <button class="btn-close-modal">&times;</button>
+        <h5 id="swabModalTitle">New Swab Parameter</h5>
+        <button class="btn-close-modal" id="btnCloseModal">&times;</button>
       </div>
-      <form>
-        <div class="mb-3">
-          <label class="swab-parameters-form-label">Parameter Name</label>
-          <select id="swabParameterSelect" class="swab-parameters-form-control" required>
+      <form id="swabPriceForm">
+        <input type="hidden" id="csrfToken" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+        <input type="hidden" id="swabParamId">
+        <input type="hidden" id="formMode" value="create">
+
+        <!-- Parameter Dropdown (only for create mode) -->
+        <div class="mb-3" id="parameterSelectRow">
+          <label class="swab-parameters-form-label">Parameter <span class="text-danger">*</span></label>
+          <select class="swab-parameters-form-select" id="parameterSelect">
             <option value="">-- Select Parameter --</option>
-            <!-- Options loaded by JS -->
           </select>
+          <small class="text-muted">Only swab-enabled parameters without swab pricing are shown</small>
         </div>
-        <!-- <div class="mb-3">
+
+        <!-- Read-only fields (only for edit mode) -->
+        <div class="mb-3" id="parameterNameRow" style="display: none;">
+          <label class="swab-parameters-form-label">Parameter Name</label>
+          <input type="text" class="swab-parameters-form-control" id="parameterName" readonly style="background-color: #f0f0f0;">
+        </div>
+
+        <div class="mb-3" id="parameterCodeRow" style="display: none;">
           <label class="swab-parameters-form-label">Parameter Code</label>
-          <input type="text" class="swab-parameters-form-control" id="swabParameterCode" placeholder="Enter parameter code">
-        </div> -->
-        <div class="mb-3">
-          <label class="swab-parameters-form-label">Price</label>
-          <input type="text" class="swab-parameters-form-control" id="swabParameterPrice" placeholder="Enter price">
+          <input type="text" class="swab-parameters-form-control" id="parameterCode" readonly style="background-color: #f0f0f0;">
         </div>
+
+        <div class="mb-3">
+          <label class="swab-parameters-form-label">Price <span class="text-danger">*</span></label>
+          <input type="number" step="0.01" min="0" class="swab-parameters-form-control" id="swabPrice" placeholder="0.00" required>
+        </div>
+
         <div class="mb-3">
           <label class="swab-parameters-form-label">Status</label>
-          <select class="swab-parameters-form-select" id="swabParameterStatus">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+          <select class="swab-parameters-form-select" id="swabStatus">
+            <option value="0">Select Status</option>
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
           </select>
         </div>
+
         <div class="swab-parameters-modal-footer-btns">
-          <button type="button" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn btn-success">Save</button>
+          <button type="button" class="btn btn-secondary" id="btnCancel">Cancel</button>
+          <button type="submit" class="btn btn-success" id="btnSave">Save</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="swab-parameters-modal-overlay" id="swabDeleteConfirmModal">
+  <div class="swab-parameters-modal-overlay" id="deleteConfirmModal">
     <div class="swab-parameters-modal-form">
       <div class="swab-parameters-modal-header">
         <h5>Confirm Delete</h5>
-        <button class="btn-close-modal">&times;</button>
+        <button class="btn-close-modal" id="btnCloseDeleteModal">&times;</button>
       </div>
       <div style="padding:24px;">
-        <p>Are you sure you want to delete this parameter?</p>
+        <p>Are you sure you want to delete swab pricing for <strong id="deleteParamName"></strong>?</p>
         <div class="swab-parameters-modal-footer-btns">
-          <button type="button" class="btn btn-secondary" id="swabCancelDelete">Cancel</button>
-          <button type="button" class="btn btn-danger" id="swabConfirmDelete">Delete</button>
+          <button type="button" class="btn btn-secondary" id="cancelDelete">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+  <div id="toastContainer"></div>
 </div>
 
 <script>
- // ===== swab.js =====
-// Matches your UI code style and controller API
-
 const CONTROLLER_PATH_SWAB = '../../src/Controllers/swab-controller.php';
 
-// DOM
+// DOM Elements
 const swabModalOverlay = document.getElementById('swabParametersModal');
-const swabForm = swabModalOverlay.querySelector('form');
-const swabModalTitle = document.getElementById('swabParametersModalTitle');
-const btnCloseSwabModal = swabModalOverlay.querySelector('.btn-close-modal');
-
-const deleteSwabModal = document.getElementById('swabDeleteConfirmModal');
-const btnCancelDeleteSwab = document.getElementById('swabCancelDelete');
-const btnConfirmDeleteSwab = document.getElementById('swabConfirmDelete');
-const btnCloseDeleteSwabModal = deleteSwabModal.querySelector('.btn-close-modal');
-
-const btnNewSwab = document.querySelector('.btn-swab-parameters-new');
-const btnFilter = document.querySelector('.btn-swab-parameters-filter');
-const inputSearch = document.querySelector('.swab-parameters-card-filter input[type="text"]');
-const selectStatus = document.querySelectorAll('.swab-parameters-card-filter select')[0];
-
+const swabPriceForm = document.getElementById('swabPriceForm');
+const btnCloseModal = document.getElementById('btnCloseModal');
+const btnCancel = document.getElementById('btnCancel');
+const btnNewSwab = document.getElementById('btnNewSwab');
+const btnFilter = document.getElementById('btnFilter');
+const btnReset = document.getElementById('btnReset');
+const searchInput = document.getElementById('searchInput');
+const statusFilter = document.getElementById('statusFilter');
 const tbody = document.querySelector('.swab-parameters-table tbody');
+const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+const btnCancelDelete = document.getElementById('cancelDelete');
+const btnConfirmDelete = document.getElementById('confirmDelete');
+const btnCloseDeleteModal = document.getElementById('btnCloseDeleteModal');
 
-const swabParameterSelect = document.getElementById('swabParameterSelect'); // select dropdown
-const swabParameterPrice = document.getElementById('swabParameterPrice');
-const swabParameterStatus = document.getElementById('swabParameterStatus');
+let currentFilters = {};
+let deleteSwabId = null;
 
-// Toast
-function showToastSwab(message, type = 'success') {
+// === TOAST ===
+function showToast(message, type = 'success') {
   const colors = {
     success: 'bg-success text-white',
     warning: 'bg-warning text-dark',
-    danger: 'bg-danger text-white'
+    danger: 'bg-danger text-white',
+    info: 'bg-info text-white'
   };
-  const toastContainer = document.getElementById('swabToastContainer') || document.body;
+  
   const toastEl = document.createElement('div');
-  toastEl.className = `toast align-items-center ${colors[type]} border-0 position-fixed bottom-0 end-0 m-3`;
+  toastEl.className = `toast align-items-center ${colors[type]} border-0`;
+  toastEl.setAttribute('role', 'alert');
   toastEl.innerHTML = `
     <div class="d-flex">
       <div class="toast-body">${message}</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
+      <button type="button" class="btn-close ${type === 'warning' ? 'btn-close-black' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>`;
-  toastContainer.appendChild(toastEl);
-  const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+  
+  document.getElementById('toastContainer').appendChild(toastEl);
+  const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
   toast.show();
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// AJAX helper
-function sendAjaxSwab(action, data = {}) {
-  return fetch(CONTROLLER_PATH_SWAB, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ action, ...data })
-  }).then(res => res.json()).catch(() => ({ status: 'error', message: 'Network error!' }));
-}
-
-// Open/Close modal
-function openSwabModal(editData = null) {
-  swabModalOverlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
-  swabForm.reset();
-
-  // Ensure dropdown options are loaded
-  loadParameterDropdown();
-
-  if (editData) {
-    swabModalTitle.textContent = 'Edit Parameter';
-    swabForm.dataset.mode = 'edit';
-    swabForm.dataset.swabId = editData.swab_param_id || editData.swab_id || '';
-    // set selected param in dropdown (param_id may be provided)
-    if (editData.param_id) {
-      // wait if dropdown not loaded yet - loadParameterDropdown ensures it's loaded
-      setTimeout(() => {
-        swabParameterSelect.value = editData.param_id;
-      }, 150);
-    }
-    swabParameterPrice.value = editData.price || '';
-    swabParameterStatus.value = editData.is_active == 1 ? 'active' : 'inactive';
-    // When editing, disable changing parameter selection (optional). If you want to allow change, remove next line.
-    swabParameterSelect.disabled = true;
-  } else {
-    swabModalTitle.textContent = 'New Parameter';
-    swabForm.dataset.mode = 'create';
-    swabForm.dataset.swabId = '';
-    swabParameterSelect.disabled = false;
+// === AJAX ===
+async function sendAjax(action, data = {}) {
+  try {
+    const formData = new URLSearchParams({ action, ...data });
+    const response = await fetch(CONTROLLER_PATH_SWAB, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData
+    });
+    
+    const result = await response.json();
+    console.log(`Action: ${action}`, result); // Debug logging
+    return result;
+  } catch (error) {
+    console.error('AJAX Error:', error);
+    return { status: 'error', message: 'Network error occurred' };
   }
 }
 
-function closeSwabModal() {
+// === LOAD PARAMETERS DROPDOWN ===
+async function loadParametersDropdown() {
+  const result = await sendAjax('fetchDropdown');
+  const select = document.getElementById('parameterSelect');
+  
+  select.innerHTML = '<option value="">-- Select Parameter --</option>';
+  
+  if (result.status === 'success') {
+    if (result.data && result.data.length > 0) {
+      result.data.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.parameter_id;
+        option.textContent = `${p.parameter_name} (${p.parameter_code})`;
+        select.appendChild(option);
+      });
+    } else {
+      select.innerHTML = '<option value="">No available parameters</option>';
+      showToast('All swab-enabled parameters already have pricing configured', 'info');
+    }
+  } else {
+    console.error('Failed to load dropdown:', result);
+    showToast('Failed to load parameters', 'danger');
+  }
+}
+
+// === LOAD SWAB PRICES ===
+async function loadSwabPrices() {
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary"></div></td></tr>';
+  
+  const result = await sendAjax('fetchAll', currentFilters);
+  
+  if (result.status === 'success') {
+    renderTable(result.data);
+  } else {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+  }
+}
+
+// === RENDER TABLE ===
+function renderTable(data) {
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No swab parameters found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(v => `
+    <tr data-id="${v.swab_param_id}" data-name="${v.name}">
+      <td>${v.name}</td>
+      <td>${v.code || '--'}</td>
+      <td>${v.price}</td>
+      <td>
+        <span class="badge-status bg-${v.is_active == 1 ? 'success' : 'secondary'}">
+          ${v.is_active == 1 ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+      <td>
+        <button class="btn-swab-parameters-edit" data-id="${v.swab_param_id}" title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn-swab-parameters-delete" data-id="${v.swab_param_id}" title="Delete">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  attachRowEvents();
+}
+
+// === ATTACH EVENTS ===
+function attachRowEvents() {
+  document.querySelectorAll('.btn-swab-parameters-edit').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const swabId = btn.dataset.id;
+      const result = await sendAjax('getById', { swab_param_id: swabId });
+      
+      if (result.status === 'success') {
+        openEditModal(result.data);
+      } else {
+        showToast(result.message || 'Failed to load record', 'danger');
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-swab-parameters-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const row = e.target.closest('tr');
+      const name = row.dataset.name;
+      deleteSwabId = btn.dataset.id;
+      document.getElementById('deleteParamName').textContent = name;
+      deleteConfirmModal.classList.add('active');
+    });
+  });
+}
+
+// === OPEN/CLOSE MODAL ===
+function openCreateModal() {
+  swabModalOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  swabPriceForm.reset();
+  
+  document.getElementById('formMode').value = 'create';
+  document.getElementById('swabModalTitle').textContent = 'New Swab Parameter';
+  document.getElementById('swabParamId').value = '';
+  document.getElementById('btnSave').textContent = 'Save';
+  
+  // Show dropdown, hide read-only fields
+  document.getElementById('parameterSelectRow').style.display = 'block';
+  document.getElementById('parameterNameRow').style.display = 'none';
+  document.getElementById('parameterCodeRow').style.display = 'none';
+  
+  loadParametersDropdown();
+}
+
+function openEditModal(data) {
+  swabModalOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  
+  document.getElementById('formMode').value = 'edit';
+  document.getElementById('swabModalTitle').textContent = 'Edit Swab Parameter';
+  document.getElementById('swabParamId').value = data.swab_param_id;
+  document.getElementById('swabPrice').value = data.swab_price;
+  document.getElementById('swabStatus').value = data.is_active;
+  document.getElementById('btnSave').textContent = 'Update';
+  
+  // Hide dropdown, show read-only fields
+  document.getElementById('parameterSelectRow').style.display = 'none';
+  document.getElementById('parameterNameRow').style.display = 'block';
+  document.getElementById('parameterCodeRow').style.display = 'block';
+  document.getElementById('parameterName').value = data.parameter_name;
+  document.getElementById('parameterCode').value = data.parameter_code;
+}
+
+function closeModal() {
   swabModalOverlay.classList.remove('active');
   document.body.style.overflow = 'auto';
 }
 
-// Delete modal control
-function openDeleteSwabModal(swabId) {
-  deleteSwabModal.classList.add('active');
-  deleteSwabModal.dataset.id = swabId;
-}
-
-function closeDeleteSwabModal() {
-  deleteSwabModal.classList.remove('active');
-  deleteSwabModal.dataset.id = '';
-}
-
-// Load table
-function loadSwabParameters(filters = {}) {
-  sendAjaxSwab('fetchAll', filters).then(res => {
-    tbody.innerHTML = '';
-    if (res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
-      res.data.forEach(v => {
-        tbody.insertAdjacentHTML('beforeend', `
-          <tr data-id="${v.swab_param_id}">
-            <td>${v.name}</td>
-            <td>${v.code || '--'}</td>
-            <td>${v.price ? ( v.price) : '--'}</td>
-            <td>
-              <span class="badge-status bg-${v.is_active == 1 ? 'success' : 'secondary'}">
-                ${v.is_active == 1 ? 'Active' : 'Inactive'}
-              </span>
-            </td>
-            <td>
-              <button class="btn-swab-parameters-edit" data-id="${v.swab_param_id}"><i class="fas fa-edit"></i></button>
-              <button class="btn-swab-parameters-delete" data-id="${v.swab_param_id}"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-        `);
-      });
-      attachRowEvents();
-    } else {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No parameters found</td></tr>`;
-    }
-  });
-}
-
-// Attach edit/delete events
-function attachRowEvents() {
-  document.querySelectorAll('.btn-swab-parameters-edit').forEach(btn => {
-    btn.onclick = async (e) => {
-      const swabId = btn.dataset.id;
-      const res = await sendAjaxSwab('getById', { swab_param_id: swabId });
-      if (res.status === 'success') {
-        openSwabModal(res.data);
-      } else {
-        showToastSwab(res.message || 'Failed to load record', 'danger');
-      }
-    };
-  });
-
-  document.querySelectorAll('.btn-swab-parameters-delete').forEach(btn => {
-    btn.onclick = (e) => {
-      const row = e.target.closest('tr');
-      openDeleteSwabModal(row.dataset.id);
-    };
-  });
-}
-
-// Save (insert/update)
-swabForm.addEventListener('submit', e => {
+// === SAVE (INSERT/UPDATE) ===
+swabPriceForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const mode = swabForm.dataset.mode;
-  const swabId = swabForm.dataset.swabId || '';
-  const paramId = swabParameterSelect.value;
-  const priceVal = swabParameterPrice.value.trim();
-  const isActive = swabParameterStatus.value === 'active' ? 1 : 0;
-
-  if (!paramId) {
-    showToastSwab('Please select a parameter', 'warning');
+  
+  const mode = document.getElementById('formMode').value;
+  const price = document.getElementById('swabPrice').value.trim();
+  
+  if (!price || parseFloat(price) < 0) {
+    showToast('Please enter a valid price', 'warning');
     return;
   }
-
-  if (priceVal === '') {
-    showToastSwab('Please enter price (or 0.00)', 'warning');
-    return;
-  }
-
+  
   const data = {
-    csrf_token: document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '',
-    price: priceVal,
-    is_active: isActive
+    csrf_token: document.getElementById('csrfToken').value,
+    price: price,
+    is_active: document.getElementById('swabStatus').value
   };
 
-  if (mode === 'edit') {
-    data.swab_param_id = swabId;
-    // update
-    sendAjaxSwab('update', data).then(res => {
-      if (res.status === 'success') {
-        showToastSwab(res.message || 'Updated', 'success');
-        loadSwabParameters();
-        closeSwabModal();
-      } else {
-        showToastSwab(res.message || 'Update failed', 'danger');
-      }
-    });
-  } else {
-    // create
+  if (mode === 'create') {
+    const paramId = document.getElementById('parameterSelect').value;
+    
+    if (!paramId) {
+      showToast('Please select a parameter', 'warning');
+      return;
+    }
+    
     data.param_id = paramId;
-    sendAjaxSwab('insert', data).then(res => {
-      if (res.status === 'success') {
-        showToastSwab(res.message || 'Inserted', 'success');
-        loadSwabParameters();
-        closeSwabModal();
-      } else {
-        showToastSwab(res.message || 'Insert failed', 'danger');
-      }
-    });
+  } else {
+    data.swab_param_id = document.getElementById('swabParamId').value;
+  }
+
+  const action = mode === 'create' ? 'insert' : 'update';
+  const result = await sendAjax(action, data);
+  
+  if (result.status === 'success') {
+    showToast(result.message, 'success');
+    closeModal();
+    loadSwabPrices();
+  } else {
+    showToast(result.message || 'Failed to save', 'danger');
   }
 });
 
-// Delete confirmation
-btnConfirmDeleteSwab.onclick = () => {
-  const id = deleteSwabModal.dataset.id;
-  if (!id) return;
-  sendAjaxSwab('delete', { csrf_token: document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '', swab_param_id: id })
-    .then(res => {
-      if (res.status === 'success') {
-        showToastSwab(res.message || 'Deleted', 'danger');
-        loadSwabParameters();
-      } else {
-        showToastSwab(res.message || 'Delete failed', 'danger');
-      }
-      closeDeleteSwabModal();
-    });
-};
-
-// Cancel buttons / modal controls
-btnCancelDeleteSwab.onclick = closeDeleteSwabModal;
-btnCloseDeleteSwabModal.onclick = closeDeleteSwabModal;
-deleteSwabModal.addEventListener('click', e => { if (e.target === deleteSwabModal) closeDeleteSwabModal(); });
-
-btnNewSwab.onclick = () => openSwabModal();
-btnCloseSwabModal.onclick = closeSwabModal;
-swabModalOverlay.addEventListener('click', e => { if (e.target === swabModalOverlay) closeSwabModal(); });
-
-// Filter
-btnFilter.onclick = () => {
-  const filters = {};
-  if (selectStatus.value === 'Active') filters.is_active = 1;
-  else if (selectStatus.value === 'Inactive') filters.is_active = 0;
-  loadSwabParameters(filters);
-};
-
-inputSearch.addEventListener('input', e => {
-  const search = e.target.value.toLowerCase();
-  document.querySelectorAll('.swab-parameters-table tbody tr').forEach(tr => {
-    const name = tr.children[0]?.textContent?.toLowerCase() || '';
-    tr.style.display = name.includes(search) ? '' : 'none';
+// === DELETE ===
+btnConfirmDelete.addEventListener('click', async () => {
+  if (!deleteSwabId) return;
+  
+  const result = await sendAjax('delete', {
+    csrf_token: document.getElementById('csrfToken').value,
+    swab_param_id: deleteSwabId
   });
+  
+  if (result.status === 'success') {
+    showToast(result.message, 'success');
+    deleteConfirmModal.classList.remove('active');
+    loadSwabPrices();
+  } else {
+    showToast(result.message || 'Failed to delete', 'danger');
+  }
+  
+  deleteSwabId = null;
 });
 
-// Load parameters dropdown for selection
-let _dropdownLoaded = false;
-function loadParameterDropdown(force = false) {
-  if (_dropdownLoaded && !force) return Promise.resolve();
-  // clear existing
-  if (!swabParameterSelect) return Promise.resolve();
-  swabParameterSelect.innerHTML = '<option value="">-- Select Parameter --</option>';
-  return sendAjaxSwab('fetchDropdown').then(res => {
-    if (res.status === 'success' && Array.isArray(res.data)) {
-      res.data.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.parameter_id;
-        opt.textContent = `${p.parameter_name} (${p.parameter_code || ''})`;
-        swabParameterSelect.appendChild(opt);
-      });
-      _dropdownLoaded = true;
-    } else {
-      showToastSwab(res.message || 'Failed to load parameters', 'danger');
-    }
-  });
-}
+// === FILTER ===
+btnFilter.addEventListener('click', () => {
+  currentFilters = {
+    search: searchInput.value.trim(),
+    is_active: statusFilter.value
+  };
+  loadSwabPrices();
+});
 
-// Initial load
-loadParameterDropdown().then(() => loadSwabParameters());
+btnReset.addEventListener('click', () => {
+  searchInput.value = '';
+  statusFilter.value = '';
+  currentFilters = {};
+  loadSwabPrices();
+});
 
+searchInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') btnFilter.click();
+});
+
+// === MODAL CONTROLS ===
+btnNewSwab.addEventListener('click', openCreateModal);
+btnCloseModal.addEventListener('click', closeModal);
+btnCancel.addEventListener('click', closeModal);
+swabModalOverlay.addEventListener('click', (e) => {
+  if (e.target === swabModalOverlay) closeModal();
+});
+
+btnCancelDelete.addEventListener('click', () => deleteConfirmModal.classList.remove('active'));
+btnCloseDeleteModal.addEventListener('click', () => deleteConfirmModal.classList.remove('active'));
+deleteConfirmModal.addEventListener('click', (e) => {
+  if (e.target === deleteConfirmModal) deleteConfirmModal.classList.remove('active');
+});
+
+// === INITIAL LOAD ===
+loadSwabPrices();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

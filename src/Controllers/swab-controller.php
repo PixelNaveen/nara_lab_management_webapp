@@ -3,10 +3,11 @@ session_start();
 require_once __DIR__ . '/../Models/swab-model.php';
 header('Content-Type: application/json');
 
-// For non-read actions validate CSRF token
+// CSRF validation for state-changing operations
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    if (!in_array($action, ['fetchAll', 'fetchDropdown', 'getById'])) {
+    // FIX: Added 'fetchDropdown' to the list of read-only actions that skip CSRF check
+    if (!in_array($action, ['fetchAll', 'getById', 'fetchDropdown'])) {
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid security token']);
             exit;
@@ -19,7 +20,7 @@ $action = $_POST['action'] ?? '';
 
 try {
     switch ($action) {
-        // Fetch table rows
+        // ========== FETCH ALL SWAB PRICES ==========
         case 'fetchAll':
             $filters = [];
             if (isset($_POST['is_active']) && $_POST['is_active'] !== '') {
@@ -32,16 +33,17 @@ try {
             echo json_encode(['status' => 'success', 'data' => $rows]);
             break;
 
-        // Fetch dropdown for parameter select
+        // ========== GET PARAMETERS DROPDOWN ==========
         case 'fetchDropdown':
             $params = $model->getParametersDropdown();
             echo json_encode(['status' => 'success', 'data' => $params]);
             break;
 
-        // Get single swab row by id
+        // ========== GET SWAB BY ID ==========
         case 'getById':
             $id = intval($_POST['swab_param_id'] ?? 0);
             if ($id <= 0) throw new Exception('Invalid ID');
+            
             $row = $model->getSwabById($id);
             if ($row) {
                 echo json_encode(['status' => 'success', 'data' => $row]);
@@ -50,59 +52,63 @@ try {
             }
             break;
 
-        // Insert new (or reactivate deleted)
+        // ========== INSERT NEW SWAB PARAM ==========
         case 'insert':
             $paramId = intval($_POST['param_id'] ?? 0);
             $price = isset($_POST['price']) && $_POST['price'] !== '' ? floatval($_POST['price']) : 0.00;
             $isActive = (isset($_POST['is_active']) && ($_POST['is_active'] === '1' || $_POST['is_active'] == 1)) ? 1 : 0;
 
             if ($paramId <= 0) throw new Exception('Parameter is required');
+            if ($price < 0) throw new Exception('Price cannot be negative');
 
-            // Check existing
+            // Check if already exists
             $existing = $model->findByParamId($paramId);
             if ($existing) {
-                // If active and not deleted -> conflict
-                if (intval($existing['is_deleted']) === 0) {
-                    echo json_encode(['status' => 'error', 'message' => 'Swab param already exists for this parameter']);
-                    exit;
+                // If deleted, reactivate
+                if (intval($existing['is_deleted']) === 1) {
+                    if ($model->reactivateSwabByParam($paramId, $price, $isActive)) {
+                        echo json_encode(['status' => 'success', 'message' => 'Swab parameter restored successfully']);
+                    } else {
+                        echo json_encode(['status' => 'error', 'message' => 'Failed to restore swab parameter']);
+                    }
+                } else {
+                    // Active record exists
+                    echo json_encode(['status' => 'error', 'message' => 'Swab parameter already exists for this parameter']);
                 }
-
-                // Reactivate deleted record
-                $ok = $model->reactivateSwabByParam($paramId, $price, $isActive);
-                if ($ok) echo json_encode(['status' => 'success', 'message' => 'Swab parameter restored successfully']);
-                else echo json_encode(['status' => 'error', 'message' => 'Failed to restore swab parameter']);
                 exit;
             }
 
             // Insert new
             if ($model->insertSwab($paramId, $price, $isActive)) {
-                echo json_encode(['status' => 'success', 'message' => 'Swab parameter inserted successfully']);
+                echo json_encode(['status' => 'success', 'message' => 'Swab parameter added successfully']);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Insert failed']);
             }
             break;
 
-        // Update existing
+        // ========== UPDATE PRICE ==========
         case 'update':
             $swabId = intval($_POST['swab_param_id'] ?? 0);
             $price = isset($_POST['price']) && $_POST['price'] !== '' ? floatval($_POST['price']) : 0.00;
             $isActive = (isset($_POST['is_active']) && ($_POST['is_active'] === '1' || $_POST['is_active'] == 1)) ? 1 : 0;
 
             if ($swabId <= 0) throw new Exception('Invalid ID');
+            if ($price < 0) throw new Exception('Price cannot be negative');
 
-            if ($model->updateSwabById($swabId, $price, $isActive)) {
-                echo json_encode(['status' => 'success', 'message' => 'Swab parameter updated successfully']);
+            if ($model->updateSwabPrice($swabId, $price, $isActive)) {
+                echo json_encode(['status' => 'success', 'message' => 'Swab price updated successfully']);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Update failed']);
             }
             break;
 
-        // Soft delete by swab_param_id
+        // ========== DELETE SWAB PARAM ==========
         case 'delete':
             $swabId = intval($_POST['swab_param_id'] ?? 0);
             if ($swabId <= 0) throw new Exception('Invalid ID');
+            
             if ($model->softDeleteById($swabId)) {
-                echo json_encode(['status' => 'success', 'message' => 'Swab parameter deleted']);
+                echo json_encode(['status' => 'success', 'message' => 'Swab parameter deleted successfully']);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Delete failed']);
             }

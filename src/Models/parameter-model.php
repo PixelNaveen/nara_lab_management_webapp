@@ -9,7 +9,7 @@ class ParameterModel
     {
         $db = new Database();
         $this->conn = $db->connect();
-        $this->conn->set_charset("utf8mb4"); // Ensure UTF-8 encoding
+        $this->conn->set_charset("utf8mb4");
     }
 
     // =================== GET ALL PARAMETERS WITH PAGINATION ===================
@@ -25,27 +25,21 @@ class ParameterModel
                     tp.swab_enabled,
                     tp.is_active,
                     tp.created_at,
-                    COUNT(DISTINCT pv.variant_id) as variant_count,
-                    sp.swab_price,
-                    sp.swab_param_id
+                    COUNT(DISTINCT pv.variant_id) as variant_count
                 FROM test_parameters tp
                 LEFT JOIN parameter_variants pv ON tp.parameter_id = pv.parameter_id 
                     AND pv.is_active = 1 AND pv.is_deleted = 0
-                LEFT JOIN swab_param sp ON tp.parameter_id = sp.param_id 
-                    AND sp.is_deleted = 0
                 WHERE tp.is_deleted = 0";
         
         $params = [];
         $types = "";
 
-        // Filter by status
         if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $sql .= " AND tp.is_active = ?";
             $params[] = intval($filters['is_active']);
             $types .= "i";
         }
 
-        // Search filter
         if (isset($filters['search']) && $filters['search'] !== '') {
             $sql .= " AND (tp.parameter_name LIKE ? OR tp.parameter_code LIKE ?)";
             $searchTerm = '%' . $filters['search'] . '%';
@@ -54,9 +48,9 @@ class ParameterModel
             $types .= "ss";
         }
 
-        $sql .= " GROUP BY tp.parameter_id";
+        $sql .= " GROUP BY tp.parameter_id ORDER BY tp.parameter_id ASC";
 
-        // Get total count before pagination
+        // Get total count
         $countSql = "SELECT COUNT(*) as total FROM (" . $sql . ") as counted";
         if (!empty($params)) {
             $stmtCount = $this->conn->prepare($countSql);
@@ -69,9 +63,7 @@ class ParameterModel
             $total = $countResult->fetch_assoc()['total'];
         }
 
-        // Add ordering and pagination
-        $sql .= " ORDER BY tp.parameter_id ASC";
-        
+        // Add pagination
         $page = isset($filters['page']) ? intval($filters['page']) : 1;
         $limit = isset($filters['limit']) ? intval($filters['limit']) : 50;
         $offset = ($page - 1) * $limit;
@@ -81,7 +73,6 @@ class ParameterModel
         $params[] = $offset;
         $types .= "ii";
 
-        // Execute query
         $stmt = $this->conn->prepare($sql);
         if (!empty($params)) {
             $stmt->bind_param($types, ...$params);
@@ -116,7 +107,7 @@ class ParameterModel
         return $result->fetch_assoc();
     }
 
-    // =================== DUPLICATE CHECK (NAME ONLY) ===================
+    // =================== DUPLICATE CHECK ===================
     public function isDuplicate($name, $excludeId = null)
     {
         $sql = "SELECT parameter_id FROM test_parameters 
@@ -138,7 +129,7 @@ class ParameterModel
         return $result->num_rows > 0;
     }
 
-    // =================== FIND DELETED RECORD BY NAME ===================
+    // =================== FIND DELETED RECORD ===================
     public function findDeletedByName($name)
     {
         $stmt = $this->conn->prepare(
@@ -153,7 +144,7 @@ class ParameterModel
         return $result->fetch_assoc();
     }
 
-    // =================== GET NEXT AVAILABLE CODE ===================
+    // =================== GET NEXT CODE ===================
     public function getNextParameterCode()
     {
         $result = $this->conn->query(
@@ -165,19 +156,17 @@ class ParameterModel
             $row = $result->fetch_assoc();
             $lastCode = strtoupper($row['parameter_code']);
             
-            // Single letter (A-Z)
             if (strlen($lastCode) === 1 && ctype_alpha($lastCode)) {
                 $nextCode = chr(ord($lastCode) + 1);
                 return $nextCode > 'Z' ? 'AA' : $nextCode;
             }
             
-            // Multi-letter (AA, AB, etc.)
             if (ctype_alpha($lastCode)) {
                 return ++$lastCode;
             }
         }
         
-        return 'A'; // Start with A if no codes exist
+        return 'A';
     }
 
     // =================== INSERT PARAMETER ===================
@@ -200,7 +189,7 @@ class ParameterModel
         return false;
     }
 
-    // =================== REACTIVATE DELETED PARAMETER ===================
+    // =================== REACTIVATE PARAMETER ===================
     public function reactivateParameter($id, $category, $baseUnit, $swabEnabled, $isActive)
     {
         $stmt = $this->conn->prepare(
@@ -237,7 +226,7 @@ class ParameterModel
         return $stmt->execute();
     }
 
-    // =================== SOFT DELETE PARAMETER ===================
+    // =================== SOFT DELETE ===================
     public function softDeleteParameter($id)
     {
         $stmt = $this->conn->prepare(
@@ -261,7 +250,7 @@ class ParameterModel
         return $stmt->execute();
     }
 
-    // =================== CHECK IF PARAMETER HAS VARIANTS ===================
+    // =================== CHECK VARIANTS ===================
     public function hasActiveVariants($id)
     {
         $stmt = $this->conn->prepare(
@@ -275,25 +264,10 @@ class ParameterModel
         return $row['count'] > 0;
     }
 
-    // =================== SWAB_PARAM METHODS ===================
-
-    // Get swab price for parameter
-    public function getSwabPrice($paramId)
-    {
-        $stmt = $this->conn->prepare(
-            "SELECT swab_param_id, swab_price, is_active 
-            FROM swab_param 
-            WHERE param_id = ? AND is_deleted = 0 
-            LIMIT 1"
-        );
-        $stmt->bind_param("i", $paramId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
-    }
-
-    // Insert swab_param record
-    public function insertSwabParam($paramId, $price)
+    // =================== SWAB PRICE MANAGEMENT ===================
+    // Only called from parameter operations when swab is initially enabled
+    
+    public function createInitialSwabPrice($paramId, $price = 0.00)
     {
         $stmt = $this->conn->prepare(
             "INSERT INTO swab_param (param_id, swab_price, is_active, is_deleted, created_at)
@@ -303,10 +277,8 @@ class ParameterModel
         return $stmt->execute();
     }
 
-    // Reactivate swab_param record
-    public function reactivateSwabParam($paramId, $price)
+    public function reactivateSwabPrice($paramId, $price = 0.00)
     {
-        // Check if deleted record exists
         $stmt = $this->conn->prepare(
             "SELECT swab_param_id FROM swab_param 
             WHERE param_id = ? AND is_deleted = 1 
@@ -317,7 +289,6 @@ class ParameterModel
         $result = $stmt->get_result();
         
         if ($result->num_rows > 0) {
-            // Reactivate existing
             $row = $result->fetch_assoc();
             $stmt2 = $this->conn->prepare(
                 "UPDATE swab_param 
@@ -326,26 +297,12 @@ class ParameterModel
             );
             $stmt2->bind_param("di", $price, $row['swab_param_id']);
             return $stmt2->execute();
-        } else {
-            // Insert new
-            return $this->insertSwabParam($paramId, $price);
         }
+        
+        return $this->createInitialSwabPrice($paramId, $price);
     }
 
-    // Update swab price
-    public function updateSwabPrice($paramId, $price)
-    {
-        $stmt = $this->conn->prepare(
-            "UPDATE swab_param 
-            SET swab_price = ?, updated_at = NOW()
-            WHERE param_id = ? AND is_deleted = 0"
-        );
-        $stmt->bind_param("di", $price, $paramId);
-        return $stmt->execute();
-    }
-
-    // Soft delete swab_param (cascade from parameter)
-    public function deleteSwabParam($paramId)
+    public function disableSwabParam($paramId)
     {
         $stmt = $this->conn->prepare(
             "UPDATE swab_param 
@@ -356,7 +313,6 @@ class ParameterModel
         return $stmt->execute();
     }
 
-    // Sync is_active status to swab_param
     public function syncSwabParamStatus($paramId, $isActive)
     {
         $stmt = $this->conn->prepare(

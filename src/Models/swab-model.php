@@ -13,8 +13,8 @@ class SwabModel
     }
 
     /**
-     * Get all swab_param records (non-deleted), optionally filtered by is_active.
-     * Joins with test_parameters to get name/code.
+     * Get all swab_param records (only non-deleted, swab-enabled parameters)
+     * This page is ONLY for updating prices of existing swab-enabled parameters
      */
     public function getAllSwabParams($filters = [])
     {
@@ -22,13 +22,12 @@ class SwabModel
                     sp.swab_param_id,
                     sp.param_id,
                     sp.swab_price,
-                    sp.is_active AS sp_is_active,
+                    sp.is_active,
                     tp.parameter_name,
-                    tp.parameter_code,
-                    tp.is_active AS tp_is_active
+                    tp.parameter_code
                 FROM swab_param sp
                 INNER JOIN test_parameters tp ON sp.param_id = tp.parameter_id
-                WHERE sp.is_deleted = 0";
+                WHERE sp.is_deleted = 0 AND tp.is_deleted = 0";
 
         $params = [];
         $types = "";
@@ -47,7 +46,7 @@ class SwabModel
             $types .= "ss";
         }
 
-        $sql .= " ORDER BY tp.parameter_id ASC";
+        $sql .= " ORDER BY tp.parameter_name ASC";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
@@ -68,7 +67,7 @@ class SwabModel
                 'name' => $r['parameter_name'],
                 'code' => $r['parameter_code'],
                 'price' => number_format((float)$r['swab_price'], 2, '.', ''),
-                'is_active' => intval($r['sp_is_active'])
+                'is_active' => intval($r['is_active'])
             ];
         }
 
@@ -76,97 +75,7 @@ class SwabModel
     }
 
     /**
-     * Find swab record by param_id (any deleted state).
-     */
-    public function findByParamId($paramId)
-    {
-        $stmt = $this->conn->prepare("SELECT * FROM swab_param WHERE param_id = ? LIMIT 1");
-        $stmt->bind_param("i", $paramId);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        return $res->fetch_assoc();
-    }
-
-    /**
-     * Insert new swab record.
-     */
-    public function insertSwab($paramId, $price, $isActive = 1)
-    {
-        $stmt = $this->conn->prepare(
-            "INSERT INTO swab_param (param_id, swab_price, is_active, is_deleted, created_at, updated_at)
-             VALUES (?, ?, ?, 0, NOW(), NOW())"
-        );
-        $stmt->bind_param("idi", $paramId, $price, $isActive);
-        return $stmt->execute();
-    }
-
-    /**
-     * Reactivate previously deleted swab record (by param_id).
-     * If found deleted, update price/is_active and set is_deleted=0.
-     * Returns true on success.
-     */
-    public function reactivateSwabByParam($paramId, $price, $isActive = 1)
-    {
-        // find deleted record
-        $stmt = $this->conn->prepare("SELECT swab_param_id FROM swab_param WHERE param_id = ? AND is_deleted = 1 LIMIT 1");
-        $stmt->bind_param("i", $paramId);
-        $stmt->execute();
-        $res = $stmt->get_result();
-
-        if ($res && $res->num_rows > 0) {
-            $row = $res->fetch_assoc();
-            $stmt2 = $this->conn->prepare(
-                "UPDATE swab_param SET swab_price = ?, is_active = ?, is_deleted = 0, updated_at = NOW()
-                 WHERE swab_param_id = ?"
-            );
-            $stmt2->bind_param("dii", $price, $isActive, $row['swab_param_id']);
-            return $stmt2->execute();
-        }
-
-        // no deleted record, insert new
-        return $this->insertSwab($paramId, $price, $isActive);
-    }
-
-    /**
-     * Update an existing swab record by swab_param_id.
-     */
-    public function updateSwabById($swabParamId, $price, $isActive)
-    {
-        $stmt = $this->conn->prepare(
-            "UPDATE swab_param
-             SET swab_price = ?, is_active = ?, updated_at = NOW()
-             WHERE swab_param_id = ? AND is_deleted = 0"
-        );
-        $stmt->bind_param("dii", $price, $isActive, $swabParamId);
-        return $stmt->execute();
-    }
-
-    /**
-     * Soft delete by swab_param_id (set is_deleted = 1)
-     */
-    public function softDeleteById($swabParamId)
-    {
-        $stmt = $this->conn->prepare(
-            "UPDATE swab_param SET is_deleted = 1, updated_at = NOW() WHERE swab_param_id = ?"
-        );
-        $stmt->bind_param("i", $swabParamId);
-        return $stmt->execute();
-    }
-
-    /**
-     * Soft delete by param_id (used when cascading from parameter delete)
-     */
-    public function softDeleteByParamId($paramId)
-    {
-        $stmt = $this->conn->prepare(
-            "UPDATE swab_param SET is_deleted = 1, updated_at = NOW() WHERE param_id = ?"
-        );
-        $stmt->bind_param("i", $paramId);
-        return $stmt->execute();
-    }
-
-    /**
-     * Get single swab record by swab_param_id (display/edit)
+     * Get single swab record by swab_param_id for editing
      */
     public function getSwabById($swabParamId)
     {
@@ -185,14 +94,31 @@ class SwabModel
     }
 
     /**
-     * Get parameters list for dropdown (only non-deleted test_parameters)
+     * Update swab price and status
+     */
+    public function updateSwabPrice($swabParamId, $price, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE swab_param
+             SET swab_price = ?, is_active = ?, updated_at = NOW()
+             WHERE swab_param_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("dii", $price, $isActive, $swabParamId);
+        return $stmt->execute();
+    }
+
+    /**
+     * Get parameters dropdown (only swab-enabled parameters WITHOUT existing swab_param records)
      */
     public function getParametersDropdown()
     {
-        $sql = "SELECT parameter_id, parameter_name, parameter_code
-                FROM test_parameters
-                WHERE is_deleted = 0
-                ORDER BY parameter_id ASC";
+        $sql = "SELECT tp.parameter_id, tp.parameter_name, tp.parameter_code
+                FROM test_parameters tp
+                LEFT JOIN swab_param sp ON tp.parameter_id = sp.param_id AND sp.is_deleted = 0
+                WHERE tp.is_deleted = 0 
+                AND tp.swab_enabled = 1
+                AND sp.swab_param_id IS NULL
+                ORDER BY tp.parameter_name ASC";
         $res = $this->conn->query($sql);
         $rows = [];
         while ($r = $res->fetch_assoc()) {
@@ -200,4 +126,65 @@ class SwabModel
         }
         return $rows;
     }
+
+    /**
+     * Check if swab_param already exists for a parameter
+     */
+    public function findByParamId($paramId)
+    {
+        $stmt = $this->conn->prepare("SELECT swab_param_id, is_deleted FROM swab_param WHERE param_id = ? LIMIT 1");
+        $stmt->bind_param("i", $paramId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        return $res->fetch_assoc();
+    }
+
+    /**
+     * Insert new swab_param record
+     */
+    public function insertSwab($paramId, $price, $isActive = 1)
+    {
+        $stmt = $this->conn->prepare(
+            "INSERT INTO swab_param (param_id, swab_price, is_active, is_deleted, created_at, updated_at)
+             VALUES (?, ?, ?, 0, NOW(), NOW())"
+        );
+        $stmt->bind_param("idi", $paramId, $price, $isActive);
+        return $stmt->execute();
+    }
+
+    /**
+     * Reactivate previously deleted swab record
+     */
+    public function reactivateSwabByParam($paramId, $price, $isActive = 1)
+    {
+        $stmt = $this->conn->prepare("SELECT swab_param_id FROM swab_param WHERE param_id = ? AND is_deleted = 1 LIMIT 1");
+        $stmt->bind_param("i", $paramId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        if ($res && $res->num_rows > 0) {
+            $row = $res->fetch_assoc();
+            $stmt2 = $this->conn->prepare(
+                "UPDATE swab_param SET swab_price = ?, is_active = ?, is_deleted = 0, updated_at = NOW()
+                 WHERE swab_param_id = ?"
+            );
+            $stmt2->bind_param("dii", $price, $isActive, $row['swab_param_id']);
+            return $stmt2->execute();
+        }
+
+        return $this->insertSwab($paramId, $price, $isActive);
+    }
+
+    /**
+     * Soft delete by swab_param_id
+     */
+    public function softDeleteById($swabParamId)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE swab_param SET is_deleted = 1, updated_at = NOW() WHERE swab_param_id = ?"
+        );
+        $stmt->bind_param("i", $swabParamId);
+        return $stmt->execute();
+    }
 }
+?>
