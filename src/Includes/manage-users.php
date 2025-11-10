@@ -66,7 +66,7 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      
+
       <form id="manageUsersForm">
         <input type="hidden" id="manageUsersUserId">
 
@@ -102,14 +102,25 @@
         <div class="row manage-users-password-fields">
           <div class="col-md-6 mb-3">
             <label class="manage-users-form-label">Password <span class="manage-users-text-danger">*</span></label>
-            <input type="password" class="manage-users-form-control form-control" id="manageUsersPassword" placeholder="Enter password">
+            <div class="input-group">
+              <input type="password" class="manage-users-form-control form-control" id="manageUsersPassword" placeholder="Enter password">
+              <button type="button" class="btn btn-outline-secondary toggle-password" data-target="manageUsersPassword">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="manage-users-form-label">Confirm Password <span class="manage-users-text-danger">*</span></label>
-            <input type="password" class="manage-users-form-control form-control" id="manageUsersConfirmPassword" placeholder="Re-enter password">
+            <div class="input-group">
+              <input type="password" class="manage-users-form-control form-control" id="manageUsersConfirmPassword" placeholder="Re-enter password">
+              <button type="button" class="btn btn-outline-secondary toggle-password" data-target="manageUsersConfirmPassword">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
           </div>
         </div>
+
 
         <div class="manage-users-modal-footer-btns">
           <button type="button" class="btn manage-users-btn-secondary" id="manageUsersBtnCancel">Cancel</button>
@@ -441,6 +452,25 @@
       noResultsRow.remove();
     }
   }
+
+  // ==== SHOW / HIDE PASSWORD ====
+document.querySelectorAll('.toggle-password').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetInput = document.getElementById(btn.dataset.target);
+    const icon = btn.querySelector('i');
+
+    if (targetInput.type === 'password') {
+      targetInput.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      targetInput.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  });
+});
+
 
   // === INITIAL LOAD ===
   loadUsers();

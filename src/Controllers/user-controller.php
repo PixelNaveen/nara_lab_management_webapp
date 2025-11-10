@@ -1,4 +1,3 @@
-// user-controller.php
 <?php
 require_once __DIR__ . '/../Models/user-model.php';
 header('Content-Type: application/json');
@@ -83,34 +82,6 @@ switch ($action) {
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Deactivation failed.']);
         }
-        break;
-
-    // ========== LOGIN ==========
-    case 'login':
-        session_start();
-        $identifier = trim($_POST['identifier'] ?? '');
-        $password = $_POST['password'] ?? '';
-
-        if (empty($identifier) || empty($password)) {
-            echo json_encode(['status' => 'error', 'message' => 'Identifier and password are required.']);
-            exit;
-        }
-
-        $user = $model->getUserByIdentifier($identifier);
-
-        if (!$user || !password_verify($password, $user['password_hash'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid credentials.']);
-            exit;
-        }
-
-        $_SESSION['user'] = [
-            'id' => $user['user_id'],
-            'name' => $user['fullname'],
-            'role' => $user['role'],
-            'initials' => strtoupper(implode('', array_map(fn($word) => $word[0], explode(' ', $user['fullname']))))
-        ];
-
-        echo json_encode(['status' => 'success', 'message' => 'Login successful.']);
         break;
 
     default:
