@@ -379,7 +379,7 @@ btnConfirmDelete.addEventListener('click', async () => {
   });
   
   if (result.status === 'success') {
-    showToast(result.message, 'success');
+    showToast(result.message, 'danger');
     deleteConfirmModal.classList.remove('active');
     loadSwabPrices();
   } else {
