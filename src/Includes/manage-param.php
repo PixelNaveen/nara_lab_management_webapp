@@ -73,6 +73,15 @@
             <input type="text" class="parameters-form-control" id="paramCategory" placeholder="Optional">
           </div>
         </div>
+<div class="row">
+  <div class="col-md-12 mb-3">
+    <label class="parameters-form-label">Method</label>
+    <select class="parameters-form-select" id="paramMethod">
+      <option value="">Select Method</option>
+    </select>
+  </div>
+</div>
+
 
         <div class="row">
           <div class="col-md-12 mb-3">
@@ -217,6 +226,26 @@ async function sendAjax(action, data = {}) {
   }
 }
 
+// === LOAD ACTIVE TEST METHODS ===
+async function loadActiveTestMethods() {
+  const result = await sendAjax('fetchActiveMethods', {});
+  const methodSelect = document.getElementById('paramMethod');
+  
+  methodSelect.innerHTML = '<option value="">Select Method</option>';
+  
+  if (result.status === 'success' && Array.isArray(result.data)) {
+    result.data.forEach(method => {
+      const displayText = method.standard_body 
+        ? `${method.method_name} (${method.standard_body})`
+        : method.method_name;
+      
+      methodSelect.insertAdjacentHTML('beforeend', 
+        `<option value="${method.method_id}">${displayText}</option>`
+      );
+    });
+  }
+}
+
 // === LOAD PARAMETERS ===
 async function loadParameters(page = 1) {
   currentPage = page;
@@ -273,7 +302,7 @@ function renderTable(data) {
 }
 
 // === OPEN/CLOSE MODAL ===
-function openModal(mode = 'create') {
+async function openModal(mode = 'create') {
   modalOverlay.classList.add('active');
   document.body.style.overflow = 'hidden';
   parameterForm.reset();
@@ -283,6 +312,9 @@ function openModal(mode = 'create') {
   document.getElementById('parameterId').value = '';
   document.getElementById('paramCode').value = '';
   swabPriceRow.style.display = 'none';
+  
+  // Load active test methods when opening modal
+  await loadActiveTestMethods();
 }
 
 function closeModal() {
@@ -296,7 +328,7 @@ async function editParameter(id) {
   
   if (result.status === 'success') {
     const data = result.data;
-    openModal('edit');
+    await openModal('edit');
     
     document.getElementById('parameterId').value = data.parameter_id;
     document.getElementById('paramCode').value = data.parameter_code;
@@ -305,6 +337,11 @@ async function editParameter(id) {
     document.getElementById('paramBaseUnit').value = data.base_unit || '';
     document.getElementById('paramSwab').value = data.swab_enabled;
     document.getElementById('paramStatus').value = data.is_active;
+    
+    // Set method_id after methods are loaded
+    setTimeout(() => {
+      document.getElementById('paramMethod').value = data.method_id || '';
+    }, 100);
     
     // Note: Swab price editing is handled in separate Swab Prices page
     swabPriceRow.style.display = 'none';
@@ -340,6 +377,7 @@ parameterForm.addEventListener('submit', async (e) => {
   const data = {
     csrf_token: document.getElementById('csrfToken').value,
     parameter_name: document.getElementById('paramName').value.trim(),
+    method_id: document.getElementById('paramMethod').value, // Include method_id
     parameter_category: document.getElementById('paramCategory').value.trim(),
     base_unit: document.getElementById('paramBaseUnit').value.trim(),
     swab_enabled: document.getElementById('paramSwab').value,

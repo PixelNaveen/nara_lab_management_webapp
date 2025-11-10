@@ -28,6 +28,7 @@ $pageMap = [
     'param-variants' => 'manage-param-variants.php',
     'swab-parameter' => 'swab-param.php',
     'pricing'=> 'param-prices.php',
+    'methods' => 'manage-test-methods.php'
     // Add all other pages here
 ];
 
@@ -39,7 +40,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"gi content="width=device-width, initial-scale=1.0">
     <title>NARA Lab Management System</title>
 
     <!-- Bootstrap CSS -->
