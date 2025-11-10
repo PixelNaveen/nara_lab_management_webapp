@@ -1,3 +1,4 @@
+// src/Models/user-model.php
 <?php
 require_once __DIR__ . '/../../Config/Database.php';
 
@@ -29,6 +30,16 @@ class UserModel
     {
         $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE username = ? OR email = ?");
         $stmt->bind_param("ss", $username, $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
+
+    // =================== DUPLICATE CHECK EXCLUDING SELF ===================
+    public function isDuplicateExcludeId($username, $email, $id)
+    {
+        $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE (username = ? OR email = ?) AND user_id != ?");
+        $stmt->bind_param("ssi", $username, $email, $id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->num_rows > 0;
@@ -68,6 +79,17 @@ class UserModel
         $stmt = $this->conn->prepare("UPDATE users SET status = 'inactive' WHERE user_id = ?");
         $stmt->bind_param("i", $id);
         return $stmt->execute();
+    }
+
+    // =================== GET USER BY IDENTIFIER ===================
+    public function getUserByIdentifier($identifier)
+    {
+        $stmt = $this->conn->prepare("SELECT user_id, fullname, username, email, role, status, password_hash 
+                                      FROM users WHERE (username = ? OR email = ?) AND status = 'active'");
+        $stmt->bind_param("ss", $identifier, $identifier);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
     }
 }
 ?>

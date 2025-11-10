@@ -8,20 +8,20 @@
         type="text"
         class="form-control"
         id="manageUsersSearchInput"
-        placeholder="Search by name or email"
+        placeholder="Search by name, username or email"
         style="max-width: 250px;" />
 
       <select class="form-select" id="manageUsersRoleFilter" style="max-width: 160px;">
-        <option>All Roles</option>
-        <option>Lab Technician</option>
-        <option>Assistant</option>
-        <option>Admin</option>
+        <option value="All Roles">All Roles</option>
+        <option value="LabTechnician">Lab Technician</option>
+        <option value="Assistant">Assistant</option>
+        <option value="Admin">Admin</option>
       </select>
 
       <select class="form-select" id="manageUsersStatusFilter" style="max-width: 120px;">
-        <option>All Status</option>
-        <option>Active</option>
-        <option>Inactive</option>
+        <option value="All Status">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
       </select>
 
       <button id="manageUsersBtnFilter" class="btn btn-outline-secondary btn-sm manage-users-btn-filter">Filter</button>
@@ -39,7 +39,7 @@
           <table class="manage-users-table table table-hover align-middle" id="manageUsersTable">
             <thead>
               <tr>
-                <th>ID</th>
+                <th class="d-none">ID</th>
                 <th>Full Name</th>
                 <th>Username</th>
                 <th>Email</th>
@@ -49,38 +49,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr data-id="1" data-fullname="John Doe" data-username="johnd" data-email="john@example.com" data-role="LabTechnician" data-status="active">
-                <td>1</td>
-                <td>John Doe</td>
-                <td>johnd</td>
-                <td>john@example.com</td>
-                <td>Lab Technician</td>
-                <td><span class="manage-users-badge bg-success">Active</span></td>
-                <td>
-                  <button class="btn btn-sm manage-users-btn-edit" title="Edit">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn btn-sm manage-users-btn-delete" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-id="2" data-fullname="Jane Smith" data-username="janes" data-email="jane@example.com" data-role="Assistant" data-status="inactive">
-                <td>2</td>
-                <td>Jane Smith</td>
-                <td>janes</td>
-                <td>jane@example.com</td>
-                <td>Assistant</td>
-                <td><span class="manage-users-badge bg-secondary">Inactive</span></td>
-                <td>
-                  <button class="btn btn-sm manage-users-btn-edit" title="Edit">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn btn-sm manage-users-btn-delete" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
+              <!-- Data will be loaded via AJAX -->
             </tbody>
           </table>
         </div>
@@ -151,114 +120,328 @@
     </div>
   </div>
 
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="manageUsersDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title">Confirm Deactivation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to deactivate <span id="manageUsersDeleteUserName"></span>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="manageUsersConfirmDeleteBtn">Deactivate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+    <div id="manageUsersToastContainer"></div>
+  </div>
+
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-  // Scope all selectors to the page wrapper
-  const wrapper = document.querySelector('.page-manage-users');
-  const manageUsersModalOverlay = wrapper.querySelector('#manageUsersModalOverlay');
-  const manageUsersBtnNewUser = wrapper.querySelector('#manageUsersBtnNewUser');
-  const manageUsersBtnCloseModal = wrapper.querySelector('#manageUsersBtnCloseModal');
-  const manageUsersBtnCancel = wrapper.querySelector('#manageUsersBtnCancel');
-  const manageUsersFormTitle = wrapper.querySelector('#manageUsersFormTitle');
-  const manageUsersBtnSave = wrapper.querySelector('#manageUsersBtnSave');
-  const manageUsersBtnUpdate = wrapper.querySelector('#manageUsersBtnUpdate');
-  const manageUsersForm = wrapper.querySelector('#manageUsersForm');
-  const manageUsersPasswordFields = wrapper.querySelectorAll('.manage-users-password-fields');
+  // ===== USER MANAGEMENT SCRIPT =====
 
-  // Open modal for new user
-  manageUsersBtnNewUser.addEventListener('click', () => {
-    openManageUsersModal('create');
-  });
+  // === DOM ELEMENTS ===
+  const manageUsersModalOverlay = document.getElementById('manageUsersModalOverlay');
+  const manageUsersForm = document.getElementById('manageUsersForm');
+  const manageUsersBtnNewUser = document.getElementById('manageUsersBtnNewUser');
+  const manageUsersBtnCloseModal = document.getElementById('manageUsersBtnCloseModal');
+  const manageUsersBtnCancel = document.getElementById('manageUsersBtnCancel');
+  const manageUsersBtnSave = document.getElementById('manageUsersBtnSave');
+  const manageUsersBtnUpdate = document.getElementById('manageUsersBtnUpdate');
+  const manageUsersFormTitle = document.getElementById('manageUsersFormTitle');
+  const manageUsersDeleteModal = document.getElementById('manageUsersDeleteModal');
+  const manageUsersToastContainer = document.getElementById('manageUsersToastContainer');
+  let manageUsersDeleteUserId = null;
+  let manageUsersOriginalData = {};
 
-  // Close modal
-  manageUsersBtnCloseModal.addEventListener('click', closeManageUsersModal);
-  manageUsersBtnCancel.addEventListener('click', closeManageUsersModal);
-  
-  // Close modal when clicking outside
-  manageUsersModalOverlay.addEventListener('click', (e) => {
-    if (e.target === manageUsersModalOverlay) {
-      closeManageUsersModal();
-    }
-  });
+  const CONTROLLER_PATH = '../../src/Controllers/user-controller.php';
 
-  // Edit button click
-  wrapper.querySelectorAll('.manage-users-btn-edit').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const row = e.target.closest('tr');
-      loadManageUsersData(row);
-      openManageUsersModal('edit');
+  // === TOAST FUNCTION ===
+  function showUserToast(message, type = 'success') {
+    const colors = {
+      success: 'bg-success text-white',
+      warning: 'bg-warning text-dark',
+      danger: 'bg-danger text-white'
+    };
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center ${colors[type] || 'bg-success text-white'} border-0 mb-2`;
+    toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
+    manageUsersToastContainer.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, {
+      delay: 2500
     });
-  });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+  }
 
-  // Delete button click
-  wrapper.querySelectorAll('.manage-users-btn-delete').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const row = e.target.closest('tr');
-      const userName = row.dataset.fullname;
-      if (confirm(`Are you sure you want to delete ${userName}?`)) {
-        row.remove();
+  // === AJAX HELPER ===
+  function sendUserAjax(action, data) {
+    return fetch(CONTROLLER_PATH, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          action,
+          ...data
+        })
+      })
+      .then(res => res.json())
+      .catch(() => ({
+        status: 'error',
+        message: 'Network error!'
+      }));
+  }
+
+  // === LOAD USERS ===
+  function loadUsers() {
+    sendUserAjax('fetchAll', {}).then(res => {
+      const tbody = document.querySelector('#manageUsersTable tbody');
+      tbody.innerHTML = '';
+
+      if (res.status === 'success' && Array.isArray(res.data)) {
+        res.data.forEach(user => {
+          const roleDisplay = user.role.replace(/([A-Z])/g, ' $1').trim();
+          const statusBadge = user.status === 'active' ? 'bg-success' : 'bg-secondary';
+          const statusText = user.status.charAt(0).toUpperCase() + user.status.slice(1);
+          tbody.insertAdjacentHTML('beforeend', `
+  <tr data-id="${user.user_id}"
+      data-fullname="${user.fullname}"
+      data-username="${user.username}"
+      data-email="${user.email}"
+      data-role="${user.role}"
+      data-status="${user.status}">
+    <td class="d-none">${user.user_id}</td>
+    <td>${user.fullname}</td>
+    <td>${user.username}</td>
+    <td>${user.email}</td>
+    <td>${roleDisplay}</td>
+    <td><span class="badge ${statusBadge}">${statusText}</span></td>
+    <td>
+      <button class="btn btn-sm btn-warning btn-edit"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>
+`);
+        });
+        attachUserRowEvents();
+        applyUserFilters(); // Apply filters after loading
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>`;
+      }
+    });
+  }
+
+  // === MODAL CONTROL ===
+  function openUserModal(mode) {
+    manageUsersModalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    if (mode === 'create') {
+      manageUsersForm.reset();
+      document.getElementById('manageUsersUserId').value = '';
+      manageUsersBtnSave.classList.remove('d-none');
+      manageUsersBtnUpdate.classList.add('d-none');
+      manageUsersFormTitle.textContent = 'Create New User';
+      document.querySelector('.manage-users-password-fields').classList.remove('d-none');
+      document.getElementById('manageUsersPassword').required = true;
+      document.getElementById('manageUsersConfirmPassword').required = true;
+    } else {
+      manageUsersBtnSave.classList.add('d-none');
+      manageUsersBtnUpdate.classList.remove('d-none');
+      manageUsersFormTitle.textContent = 'Update User';
+      document.querySelector('.manage-users-password-fields').classList.add('d-none');
+      document.getElementById('manageUsersPassword').required = false;
+      document.getElementById('manageUsersConfirmPassword').required = false;
+    }
+  }
+
+  function closeUserModal() {
+    manageUsersModalOverlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    manageUsersForm.reset();
+    manageUsersOriginalData = {};
+  }
+
+  manageUsersBtnNewUser.onclick = () => openUserModal('create');
+  manageUsersBtnCloseModal.onclick = closeUserModal;
+  manageUsersBtnCancel.onclick = closeUserModal;
+  manageUsersModalOverlay.onclick = e => {
+    if (e.target === manageUsersModalOverlay) closeUserModal();
+  };
+
+  // === INSERT USER ===
+  manageUsersForm.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const password = document.getElementById('manageUsersPassword').value;
+    const confirmPassword = document.getElementById('manageUsersConfirmPassword').value;
+
+    if (!document.getElementById('manageUsersUserId').value && password !== confirmPassword) {
+      showUserToast('Passwords do not match!', 'warning');
+      return;
+    }
+
+    const data = {
+      fullname: manageUsersForm.manageUsersFullName.value.trim(),
+      username: manageUsersForm.manageUsersUsername.value.trim(),
+      email: manageUsersForm.manageUsersEmail.value.trim(),
+      role: manageUsersForm.manageUsersRole.value
+    };
+
+    if (!document.getElementById('manageUsersUserId').value) {
+      data.password = password;
+    }
+
+    sendUserAjax('insert', data).then(res => {
+      if (res.status === 'success') {
+        showUserToast(res.message || 'User created successfully!', 'success');
+        loadUsers();
+        closeUserModal();
+      } else {
+        showUserToast(res.message || 'Failed to create user', 'danger');
       }
     });
   });
 
-  // Form submission
-  manageUsersForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const password = wrapper.querySelector('#manageUsersPassword').value;
-    const confirmPassword = wrapper.querySelector('#manageUsersConfirmPassword').value;
-    
-    if (!wrapper.querySelector('#manageUsersUserId').value && password !== confirmPassword) {
-      alert('Passwords do not match!');
+  // === ATTACH EDIT & DELETE EVENTS ===
+  function attachUserRowEvents() {
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+      btn.onclick = e => {
+        const row = e.target.closest('tr');
+        openUserModal('edit');
+        document.getElementById('manageUsersUserId').value = row.dataset.id;
+        manageUsersForm.manageUsersFullName.value = row.dataset.fullname;
+        manageUsersForm.manageUsersUsername.value = row.dataset.username;
+        manageUsersForm.manageUsersEmail.value = row.dataset.email;
+        manageUsersForm.manageUsersRole.value = row.dataset.role;
+
+        manageUsersOriginalData = {
+          fullname: row.dataset.fullname,
+          username: row.dataset.username,
+          email: row.dataset.email,
+          role: row.dataset.role
+        };
+      };
+    });
+
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.onclick = e => {
+        const row = e.target.closest('tr');
+        manageUsersDeleteUserId = row.dataset.id;
+        document.getElementById('manageUsersDeleteUserName').textContent = row.dataset.fullname;
+        new bootstrap.Modal(manageUsersDeleteModal).show();
+      };
+    });
+  }
+
+  // === DEACTIVATE USER ===
+  document.getElementById('manageUsersConfirmDeleteBtn').onclick = () => {
+    if (!manageUsersDeleteUserId) return;
+    sendUserAjax('delete', {
+      user_id: manageUsersDeleteUserId
+    }).then(res => {
+      if (res.status === 'success') {
+        showUserToast('User deactivated successfully!', 'danger');
+        loadUsers();
+      } else {
+        showUserToast(res.message || 'Failed to deactivate user', 'danger');
+      }
+      const modal = bootstrap.Modal.getInstance(manageUsersDeleteModal);
+      modal.hide();
+      manageUsersDeleteUserId = null;
+    });
+  };
+
+  // === UPDATE USER ===
+  manageUsersBtnUpdate.onclick = () => {
+    const id = document.getElementById('manageUsersUserId').value;
+    const data = {
+      user_id: id,
+      fullname: manageUsersForm.manageUsersFullName.value.trim(),
+      username: manageUsersForm.manageUsersUsername.value.trim(),
+      email: manageUsersForm.manageUsersEmail.value.trim(),
+      role: manageUsersForm.manageUsersRole.value
+    };
+
+    const changed = Object.keys(data).some(key => data[key] !== manageUsersOriginalData[key]);
+    if (!changed) {
+      showUserToast('No changes detected', 'warning');
       return;
     }
-    
-    console.log('Form submitted');
-    closeManageUsersModal();
-  });
 
-  // Update button click
-  manageUsersBtnUpdate.addEventListener('click', () => {
-    console.log('User updated');
-    closeManageUsersModal();
-  });
+    sendUserAjax('update', data).then(res => {
+      if (res.status === 'success') {
+        showUserToast('User updated successfully!', 'success');
+        loadUsers();
+        closeUserModal();
+      } else {
+        showUserToast(res.message || 'Update failed', 'danger');
+      }
+    });
+  };
 
-  function openManageUsersModal(mode) {
-    manageUsersModalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    
-    if (mode === 'create') {
-      manageUsersFormTitle.textContent = 'Create New User';
-      manageUsersForm.reset();
-      manageUsersBtnSave.classList.remove('d-none');
-      manageUsersBtnUpdate.classList.add('d-none');
-      manageUsersPasswordFields.forEach(el => el.classList.remove('d-none'));
-      wrapper.querySelector('#manageUsersPassword').required = true;
-      wrapper.querySelector('#manageUsersConfirmPassword').required = true;
-    } else if (mode === 'edit') {
-      manageUsersFormTitle.textContent = 'Update User';
-      manageUsersBtnSave.classList.add('d-none');
-      manageUsersBtnUpdate.classList.remove('d-none');
-      manageUsersPasswordFields.forEach(el => el.classList.add('d-none'));
-      wrapper.querySelector('#manageUsersPassword').required = false;
-      wrapper.querySelector('#manageUsersConfirmPassword').required = false;
+  // === FILTERS ===
+  const manageUsersSearchInput = document.getElementById('manageUsersSearchInput');
+  const manageUsersRoleFilter = document.getElementById('manageUsersRoleFilter');
+  const manageUsersStatusFilter = document.getElementById('manageUsersStatusFilter');
+  const manageUsersBtnFilter = document.getElementById('manageUsersBtnFilter');
+
+  manageUsersSearchInput.addEventListener('input', applyUserFilters);
+  manageUsersBtnFilter.onclick = applyUserFilters;
+  manageUsersRoleFilter.addEventListener('change', applyUserFilters);
+  manageUsersStatusFilter.addEventListener('change', applyUserFilters);
+
+  function applyUserFilters() {
+    const search = manageUsersSearchInput.value.toLowerCase();
+    const role = manageUsersRoleFilter.value;
+    const status = manageUsersStatusFilter.value;
+    const rows = document.querySelectorAll('#manageUsersTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(tr => {
+      if (tr.classList.contains('no-results')) return;
+      const combined = `${tr.dataset.fullname} ${tr.dataset.username} ${tr.dataset.email}`.toLowerCase();
+      const matchSearch = combined.includes(search);
+      const matchRole = (role === 'All Roles') || (tr.dataset.role === role);
+      const matchStatus = (status === 'All Status') || (tr.dataset.status === status);
+
+      if (matchSearch && matchRole && matchStatus) {
+        tr.style.display = '';
+        visibleCount++;
+      } else {
+        tr.style.display = 'none';
+      }
+    });
+
+    const noResultsRow = document.querySelector('#manageUsersTable tbody tr.no-results');
+    if (visibleCount === 0) {
+      if (!noResultsRow) {
+        document.querySelector('#manageUsersTable tbody').insertAdjacentHTML(
+          'beforeend',
+          `<tr class="no-results"><td colspan="7" class="text-center text-muted">No matching users found</td></tr>`
+        );
+      }
+    } else if (noResultsRow) {
+      noResultsRow.remove();
     }
   }
 
-  function closeManageUsersModal() {
-    manageUsersModalOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
-    manageUsersForm.reset();
-  }
-
-  function loadManageUsersData(row) {
-    wrapper.querySelector('#manageUsersUserId').value = row.dataset.id;
-    wrapper.querySelector('#manageUsersFullName').value = row.dataset.fullname;
-    wrapper.querySelector('#manageUsersUsername').value = row.dataset.username;
-    wrapper.querySelector('#manageUsersEmail').value = row.dataset.email;
-    wrapper.querySelector('#manageUsersRole').value = row.dataset.role;
-  }
+  // === INITIAL LOAD ===
+  loadUsers();
 </script>

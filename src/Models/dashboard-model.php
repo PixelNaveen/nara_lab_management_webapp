@@ -12,15 +12,15 @@ class Dashboard_model{
 
     }
 
-    public function getPendingResults(){
+    // public function getPendingResults(){
 
-        $query = "SELECT * FROM samples WHERE status= 'Submitted'";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $result;
+    //     $query = "SELECT * FROM samples WHERE status= 'Submitted'";
+    //     $stmt = $this->conn->prepare($query);
+    //     $stmt->execute();
+    //     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    //     return $result;
 
-    }
+    // }
 }
 
 ?>

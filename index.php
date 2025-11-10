@@ -1,17 +1,19 @@
+// index.php
 <?php
 // index.php
 require_once __DIR__ . '/Config/Database.php';
 $db = new Database();
- $conn = $db->connect();
+$conn = $db->connect();
 
 session_start();
 
-// Example user data
-$user = [
-    'name' => 'Kavidu Naveen',
-    'role' => 'Lab Technician',
-    'initials' => 'KN'
-];
+// Check if user is logged in
+if (!isset($_SESSION['user'])) {
+    header('Location: src/Views/login.php');
+    exit;
+}
+
+$user = $_SESSION['user'];
 
 // Get current page from URL parameter
 $page = $_GET['page'] ?? 'dashboard';
@@ -69,7 +71,6 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/swab-param.css">
     <link rel="stylesheet" href="public/assets/css/param-prices.css">
 
-    </div>
 </head>
 
 <body>
