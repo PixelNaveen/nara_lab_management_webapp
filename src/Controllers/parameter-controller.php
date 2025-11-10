@@ -74,7 +74,7 @@ try {
                 throw new Exception('Parameter name is required');
             }
 
-            // Check for deleted record
+            // Check deleted record first
             $deletedRecord = $model->findDeletedByName($name);
             
             if ($deletedRecord) {
@@ -146,7 +146,7 @@ try {
                 throw new Exception('Parameter name is required');
             }
 
-            // Check duplicate
+            // Check duplicate excluding current
             if ($model->isDuplicate($name, $id)) {
                 throw new Exception('Another parameter with this name already exists');
             }

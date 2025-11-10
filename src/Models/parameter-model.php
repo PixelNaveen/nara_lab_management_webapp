@@ -30,7 +30,7 @@ class ParameterModel
                 LEFT JOIN parameter_variants pv ON tp.parameter_id = pv.parameter_id 
                     AND pv.is_active = 1 AND pv.is_deleted = 0
                 WHERE tp.is_deleted = 0";
-        
+
         $params = [];
         $types = "";
 
@@ -67,7 +67,7 @@ class ParameterModel
         $page = isset($filters['page']) ? intval($filters['page']) : 1;
         $limit = isset($filters['limit']) ? intval($filters['limit']) : 50;
         $offset = ($page - 1) * $limit;
-        
+
         $sql .= " LIMIT ? OFFSET ?";
         $params[] = $limit;
         $params[] = $offset;
@@ -112,16 +112,16 @@ class ParameterModel
     {
         $sql = "SELECT parameter_id FROM test_parameters 
                 WHERE parameter_name = ? AND is_deleted = 0";
-        
+
         $params = [$name];
         $types = "s";
-        
+
         if ($excludeId) {
             $sql .= " AND parameter_id != ?";
             $params[] = $excludeId;
             $types .= "i";
         }
-        
+
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param($types, ...$params);
         $stmt->execute();
@@ -151,21 +151,21 @@ class ParameterModel
             "SELECT parameter_code FROM test_parameters 
             ORDER BY parameter_id DESC LIMIT 1"
         );
-        
+
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $lastCode = strtoupper($row['parameter_code']);
-            
+
             if (strlen($lastCode) === 1 && ctype_alpha($lastCode)) {
                 $nextCode = chr(ord($lastCode) + 1);
                 return $nextCode > 'Z' ? 'AA' : $nextCode;
             }
-            
+
             if (ctype_alpha($lastCode)) {
                 return ++$lastCode;
             }
         }
-        
+
         return 'A';
     }
 
@@ -173,16 +173,16 @@ class ParameterModel
     public function insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive = 1)
     {
         $code = $this->getNextParameterCode();
-        
+
         $stmt = $this->conn->prepare(
             "INSERT INTO test_parameters 
             (parameter_code, parameter_name, parameter_category, base_unit, 
              swab_enabled, has_variants, is_active, is_deleted, created_at)
             VALUES (?, ?, ?, ?, ?, 0, ?, 0, NOW())"
         );
-        
+
         $stmt->bind_param("ssssii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive);
-        
+
         if ($stmt->execute()) {
             return $this->conn->insert_id;
         }
@@ -202,7 +202,7 @@ class ParameterModel
                 updated_at = NOW()
             WHERE parameter_id = ?"
         );
-        
+
         $stmt->bind_param("ssiii", $category, $baseUnit, $swabEnabled, $isActive, $id);
         return $stmt->execute();
     }
@@ -221,7 +221,7 @@ class ParameterModel
                 updated_at = NOW()
             WHERE parameter_id = ? AND is_deleted = 0"
         );
-        
+
         $stmt->bind_param("ssssiii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $id);
         return $stmt->execute();
     }
@@ -265,8 +265,6 @@ class ParameterModel
     }
 
     // =================== SWAB PRICE MANAGEMENT ===================
-    // Only called from parameter operations when swab is initially enabled
-    
     public function createInitialSwabPrice($paramId, $price = 0.00)
     {
         $stmt = $this->conn->prepare(
@@ -287,7 +285,7 @@ class ParameterModel
         $stmt->bind_param("i", $paramId);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $stmt2 = $this->conn->prepare(
@@ -298,7 +296,7 @@ class ParameterModel
             $stmt2->bind_param("di", $price, $row['swab_param_id']);
             return $stmt2->execute();
         }
-        
+
         return $this->createInitialSwabPrice($paramId, $price);
     }
 
@@ -324,4 +322,3 @@ class ParameterModel
         return $stmt->execute();
     }
 }
-?>
