@@ -170,18 +170,18 @@ class ParameterModel
     }
 
     // =================== INSERT PARAMETER ===================
-    public function insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive = 1)
+    public function insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive = 1, $methodId = null)
     {
         $code = $this->getNextParameterCode();
 
         $stmt = $this->conn->prepare(
             "INSERT INTO test_parameters 
             (parameter_code, parameter_name, parameter_category, base_unit, 
-             swab_enabled, has_variants, is_active, is_deleted, created_at)
-            VALUES (?, ?, ?, ?, ?, 0, ?, 0, NOW())"
+             swab_enabled, has_variants, is_active, is_deleted,method_id, created_at)
+            VALUES (?, ?, ?, ?, ?, 0, ?, 0,?, NOW())"
         );
 
-        $stmt->bind_param("ssssii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive);
+$stmt->bind_param("ssssiii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $methodId ?? 0);
 
         if ($stmt->execute()) {
             return $this->conn->insert_id;
@@ -308,7 +308,7 @@ class ParameterModel
             WHERE param_id = ?"
         );
         $stmt->bind_param("i", $paramId);
-        return $stmt->execute();
+        return $stmt->execute(); 
     }
 
     public function syncSwabParamStatus($paramId, $isActive)
@@ -317,8 +317,42 @@ class ParameterModel
             "UPDATE swab_param 
             SET is_active = ?, updated_at = NOW()
             WHERE param_id = ? AND is_deleted = 0"
-        );
+        );   
         $stmt->bind_param("ii", $isActive, $paramId);
         return $stmt->execute();
     }
+
+    public function getActiveMethods()
+{
+    $sql = "SELECT method_id, method_name 
+            FROM test_methods
+            WHERE is_active = 1 AND is_deleted = 0
+            ORDER BY method_name ASC";
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $methods = [];
+    while ($row = $result->fetch_assoc()) {
+        $methods[] = $row;
+    }
+    return $methods;
+}
+
+// =================== GET METHOD ID BY NAME ===================
+public function getMethodIdByName($methodName)
+{
+    $stmt = $this->conn->prepare(
+        "SELECT method_id FROM test_methods 
+         WHERE method_name = ? AND is_deleted = 0 LIMIT 1"
+    );
+    $stmt->bind_param("s", $methodName);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row ? intval($row['method_id']) : false;
+}
+
+
 }
