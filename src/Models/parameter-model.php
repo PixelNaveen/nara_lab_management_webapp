@@ -210,4 +210,22 @@ class ParameterModel
         }
         return false;
     }
+
+     // =================== REACTIVATE PARAMETER ===================
+    public function reactivateParameter($id, $category, $baseUnit, $swabEnabled, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET parameter_category = ?, 
+                base_unit = ?, 
+                swab_enabled = ?,
+                is_active = ?,
+                is_deleted = 0,
+                updated_at = NOW()
+            WHERE parameter_id = ?"
+        );
+
+        $stmt->bind_param("ssiii", $category, $baseUnit, $swabEnabled, $isActive, $id);
+        return $stmt->execute();
+    }
 }
