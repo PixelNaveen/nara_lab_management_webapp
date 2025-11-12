@@ -2,18 +2,29 @@
   <div class="parameters-container container">
     <!-- Filter + New -->
     <div class="parameters-card-filter">
-      <input type="text" id="searchInput" placeholder="Search by Parameter Name" class="form-control" style="max-width:250px;">
-      <select class="form-select" id="statusFilter" style="max-width:120px;">
-        <option value="">All Status</option>
-        <option value="1">Active</option>
-        <option value="0">Inactive</option>
-      </select>
-      <button class="btn btn-parameters-filter" id="btnFilter">Filter</button>
-      <button class="btn btn-outline-secondary" id="btnReset">Reset</button>
-      <div class="ms-auto">
-        <button class="btn-parameters-new" id="btnNewParam">+ New Parameter</button>
-      </div>
-    </div>
+  <input type="text" id="searchInput" placeholder="Search by Parameter Name" class="form-control" style="max-width:250px;">
+  <select class="form-select" id="statusFilter" style="max-width:120px;">
+    <option value="">All Status</option>
+    <option value="1">Active</option>
+    <option value="0">Inactive</option>
+  </select>
+  <button class="btn btn-parameters-filter" id="btnFilter">Filter</button>
+  <button class="btn btn-outline-secondary" id="btnReset">Reset</button>
+  
+  <div class="ms-auto">
+    <button class="btn btn-outline-primary me-2" id="btnTableView">Table View</button>
+    
+    <button class="btn-parameters-new" id="btnNewParam">+ New Parameter</button>
+  </div>
+</div>
+
+<!-- <div id="tableOverlay" class="overlay">
+  <div class="overlay-content">
+    <button id="closeOverlay" class="btn btn-danger mb-2">Close</button>
+    <div id="tableContainer"></div> 
+  </div>
+</div> -->
+
 
     <!-- Table -->
     <div class="parameters-table-container">

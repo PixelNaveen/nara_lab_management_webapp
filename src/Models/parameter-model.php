@@ -412,4 +412,27 @@ class ParameterModel
         $row = $result->fetch_assoc();
         return $row ? intval($row['method_id']) : false;
     }
+
+    // =================== GET METHODS BY PARAMETER ===================
+public function getMethodsByParameter($paramId)
+{
+    $stmt = $this->conn->prepare(
+        "SELECT tm.method_id, tm.method_name
+         FROM parameter_methods pm
+         INNER JOIN test_methods tm ON pm.method_id = tm.method_id
+         WHERE pm.parameter_id = ? AND tm.is_deleted = 0 AND tm.is_active = 1
+         ORDER BY pm.sequence_order ASC, tm.method_name ASC"
+    );
+
+    $stmt->bind_param("i", $paramId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $methods = [];
+    while ($row = $result->fetch_assoc()) {
+        $methods[] = $row;
+    }
+
+    return $methods; // Returns array of ['method_id'=>..., 'method_name'=>...]
+}
 }
