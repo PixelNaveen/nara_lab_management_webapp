@@ -19,7 +19,7 @@ switch ($action) {
     $standard_body = trim($_POST['standard_body']);
     $status = $_POST['status'];
 
-    if ($method_name === '' || $standard_body === '') {
+    if ($method_name === '' ) {
         echo json_encode(['status' => 'error', 'message' => 'Method name and standard body are required.']);
         exit;
     }

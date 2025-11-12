@@ -2,7 +2,7 @@
 // index.php
 require_once __DIR__ . '/Config/Database.php';
 $db = new Database();
- $conn = $db->connect();
+$conn = $db->connect();
 
 session_start();
 
@@ -27,7 +27,7 @@ $pageMap = [
     'manage-parameter' => 'manage-param.php',
     'param-variants' => 'manage-param-variants.php',
     'swab-parameter' => 'swab-param.php',
-    'pricing'=> 'param-prices.php',
+    'pricing' => 'param-prices.php',
     'methods' => 'manage-test-methods.php'
     // Add all other pages here
 ];
@@ -40,12 +40,13 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"gi content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" gi content="width=device-width, initial-scale=1.0">
     <title>NARA Lab Management System</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

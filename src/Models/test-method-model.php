@@ -16,7 +16,7 @@ class TestMethodModel
     {
         $sql = "SELECT method_id, method_name, standard_body, 
                 IF(is_active = 1, 'active', 'inactive') AS status
-                FROM test_methods WHERE is_deleted = 0 ORDER BY method_id DESC";
+                FROM test_methods WHERE is_deleted = 0 ORDER BY method_id ASC";
         $result = $this->conn->query($sql);
         $testMethods = [];
         while ($row = $result->fetch_assoc()) {

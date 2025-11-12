@@ -61,10 +61,11 @@
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Standard Body <span class="text-danger">*</span></label>
-          <select class="form-select" id="standardBody" name="standardBody" required>
+          <select class="form-select" id="standardBody" name="standardBody" >
             <option value="">Select Standard Body</option>
             <option value="ISO">ISO</option>
             <option value="SLS">SLS</option>
+            <option value="APHA">APHA</option>
           </select>
         </div>
       </div>
@@ -194,7 +195,7 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
     data-standard-body="${testMethod.standard_body}"
     data-status="${testMethod.status}">
   <td class="d-none">${testMethod.method_id}</td>
-  <td>${testMethod.method_name}</td>
+  <td>${testMethod.method_name || '<em class="text-muted">--</em>'}</td>
   <td>${testMethod.standard_body}</td>
   <td>${statusBadge}</td>
   <td>
