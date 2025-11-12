@@ -127,4 +127,27 @@ class ParameterModel
         }
         return $methodIds;
     }
+
+        // =================== DUPLICATE CHECK ===================
+
+         public function isDuplicate($name, $excludeId = null)
+    {
+        $sql = "SELECT parameter_id FROM test_parameters 
+                WHERE parameter_name = ? AND is_deleted = 0";
+
+        $params = [$name];
+        $types = "s";
+
+        if ($excludeId) {
+            $sql .= " AND parameter_id != ?";
+            $params[] = $excludeId;
+            $types .= "i";
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
 }
