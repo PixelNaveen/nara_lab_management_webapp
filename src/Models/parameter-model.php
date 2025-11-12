@@ -228,4 +228,23 @@ class ParameterModel
         $stmt->bind_param("ssiii", $category, $baseUnit, $swabEnabled, $isActive, $id);
         return $stmt->execute();
     }
+
+     // =================== UPDATE PARAMETER ===================
+    public function updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET parameter_code = ?,
+                parameter_name = ?, 
+                parameter_category = ?,
+                base_unit = ?, 
+                swab_enabled = ?,
+                is_active = ?,
+                updated_at = NOW()
+            WHERE parameter_id = ? AND is_deleted = 0"
+        );
+
+        $stmt->bind_param("ssssiii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $id);
+        return $stmt->execute();
+    }
 }
