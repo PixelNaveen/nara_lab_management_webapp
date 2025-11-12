@@ -11,7 +11,7 @@ class ParameterModel
         $db = new Database();
         $this->conn = $db->connect();
         $this->conn->set_charset("utf8mb4");
-    } 
+    }
     // ============= GET ALL PARAMETERS WITH PAGINATION (Pagination not used) =============
     public function getAllParameters($filters = [])
     {
@@ -77,7 +77,7 @@ class ParameterModel
         $types .= "ii";
 
         $stmt = $this->conn->prepare($sql);
-        if(!empty($params)){
+        if (!empty($params)) {
             $stmt->bind_param($types, ...$params);
         }
 
@@ -85,13 +85,30 @@ class ParameterModel
         $result = $stmt->get_result();
 
         $parameters = [];
-        while($row = $result->fetch_assoc()){
+        while ($row = $result->fetch_assoc()) {
             $parameters[] = $row;
         }
 
-        return[
+        return [
             'data' => $parameters,
             'total' => $total
         ];
+    }
+
+    // =================== GET PARAMETER BY ID ===================
+
+    public function getParameterById($id)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT parameter_id, parameter_code, parameter_name, 
+                    parameter_category, base_unit, has_variants, 
+                    swab_enabled, is_active 
+            FROM test_parameters 
+            WHERE parameter_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
     }
 }
