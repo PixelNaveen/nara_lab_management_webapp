@@ -247,4 +247,16 @@ class ParameterModel
         $stmt->bind_param("ssssiii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $id);
         return $stmt->execute();
     }
+
+    // =================== SOFT DELETE ===================
+    public function softDeleteParameter($id)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET is_deleted = 1, updated_at = NOW() 
+            WHERE parameter_id = ?"
+        );
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
 }
