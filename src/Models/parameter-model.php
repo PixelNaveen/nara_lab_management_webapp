@@ -259,4 +259,16 @@ class ParameterModel
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
+
+        // =================== TOGGLE STATUS ===================
+    public function toggleStatus($id, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE test_parameters 
+            SET is_active = ?, updated_at = NOW() 
+            WHERE parameter_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("ii", $isActive, $id);
+        return $stmt->execute();
+    }
 }
