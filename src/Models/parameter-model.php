@@ -165,4 +165,29 @@ class ParameterModel
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
+
+        // =================== GET NEXT CODE ===================
+    public function getNextParameterCode()
+    {
+        $result = $this->conn->query(
+            "SELECT parameter_code FROM test_parameters 
+            ORDER BY parameter_id DESC LIMIT 1"
+        );
+
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $lastCode = strtoupper($row['parameter_code']);
+
+            if (strlen($lastCode) === 1 && ctype_alpha($lastCode)) {
+                $nextCode = chr(ord($lastCode) + 1);
+                return $nextCode > 'Z' ? 'AA' : $nextCode;
+            }
+
+            if (ctype_alpha($lastCode)) {
+                return ++$lastCode;
+            }
+        }
+
+        return 'A';
+    }
 }
