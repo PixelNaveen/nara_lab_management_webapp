@@ -150,4 +150,19 @@ class ParameterModel
         $result = $stmt->get_result();
         return $result->num_rows > 0;
     }
+
+        // =================== FIND DELETED RECORD ===================
+    public function findDeletedByName($name)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT parameter_id, parameter_code 
+            FROM test_parameters 
+            WHERE parameter_name = ? AND is_deleted = 1 
+            LIMIT 1"
+        );
+        $stmt->bind_param("s", $name);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
 }
