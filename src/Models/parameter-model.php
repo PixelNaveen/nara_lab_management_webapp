@@ -111,4 +111,20 @@ class ParameterModel
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
+
+    // Get array of method_ids for a parameter (ordered by sequence)
+
+    public function getParameterMethodIds($id)
+    {
+        $stmt = $this->conn->prepare("SELECT method_id FROM parameter_methods WHERE parameter_id = ? ORDER BY sequence_order, method_id");
+
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $methodIds = [];
+        while ($row = $result->fetch_assoc()) {
+            $methodIds[] = $row['method_id'];
+        }
+        return $methodIds;
+    }
 }
