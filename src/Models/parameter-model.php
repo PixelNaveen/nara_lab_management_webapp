@@ -190,4 +190,24 @@ class ParameterModel
 
         return 'A';
     }
+
+     // =================== INSERT PARAMETER ===================
+    public function insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive = 1)
+    {
+        $code = $this->getNextParameterCode();
+
+        $stmt = $this->conn->prepare(
+            "INSERT INTO test_parameters 
+            (parameter_code, parameter_name, parameter_category, base_unit, 
+             swab_enabled, has_variants, is_active, is_deleted, created_at)
+            VALUES (?, ?, ?, ?, ?, 0, ?, 0, NOW())"
+        );
+
+        $stmt->bind_param("ssssii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive);
+
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
+        }
+        return false;
+    }
 }
