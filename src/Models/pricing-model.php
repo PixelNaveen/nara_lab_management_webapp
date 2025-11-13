@@ -113,16 +113,35 @@ class PricingModel
      * Find deleted individual price by parameter_id
      */
 
-    public function findDeletedIndividualPrice($param_id){
+    public function findDeletedIndividualPrice($param_id)
+    {
         $sql = "SELECT pricing_id FROM parameter_pricing
         WHERE parameter_id = ? AND is_deleted = 1 
         LIMIT 1";
         $stmt = $this->conn->prepare($sql);
-        
+
         $stmt->bind_param("i", $param_id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
 
+    /**
+     * Insert individual price
+     */
+
+    public function insertIndividualPrice($parameter_id, $test_charge, $is_active = 1)
+    {
+
+        $sql = "INSERT INTO parameter_pricing(parameter_id, test_charge, is_active, is_deleted,created_at) 
+        VALUES (?, ?, ?, 0, NOW())";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("idi", $parameter_id, $test_charge, $is_active);
+
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
+        }
+        return false;
+    }
 }
