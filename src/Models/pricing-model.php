@@ -144,4 +144,20 @@ class PricingModel
         }
         return false;
     }
+
+    /**
+     * Reactivate deleted individual price
+     */
+
+     public function reactivateIndividualPrice($pricing_id, $test_charge, $is_active)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE parameter_pricing 
+            SET test_charge = ?, is_active = ?, is_deleted = 0, updated_at = NOW()
+            WHERE pricing_id = ?"
+        );
+        $stmt->bind_param("dii", $test_charge, $is_active, $pricing_id);
+        return $stmt->execute();
+    }
+
 }
