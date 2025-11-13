@@ -77,11 +77,35 @@ class PricingModel
         FROM parameter_pricing pp 
         INNER JOIN test_parameters tp ON pp.parameter_id = tp.parameter_id 
         WHERE pp.pricing_id = ? AND pp.is_deleted = 0";
-        
+
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $pricing_id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
+    }
+
+    /**
+     * Check if parameter already has pricing
+     */
+
+    public function hasIndividualPrice($parameter_id, $exclude_pricing_id = null)
+    {
+        $sql = "SELECT pricing_id FROM parameter_pricing WHERE parameter_id = ? AND is_deleted = 0";
+
+        $params = [$parameter_id];
+        $types = "i";
+
+        if ($exclude_pricing_id) {
+            $sql .= " AND pricing_id != ?";
+            $params[] = $exclude_pricing_id;
+            $types .= "i";
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$parameter_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
     }
 }
