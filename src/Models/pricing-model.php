@@ -66,4 +66,22 @@ class PricingModel
         }
         return $prices;
     }
+
+    /**
+     * Get individual price by ID
+     */
+
+    public function getIndividualPricesById($pricing_id)
+    {
+        $sql = "SELECT pp.*, tp.parameter_name, tp.parameter_code 
+        FROM parameter_pricing pp 
+        INNER JOIN test_parameters tp ON pp.parameter_id = tp.parameter_id 
+        WHERE pp.pricing_id = ? AND pp.is_deleted = 0";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $pricing_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
 }
