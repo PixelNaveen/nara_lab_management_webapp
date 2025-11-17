@@ -324,6 +324,22 @@ try {
             ]);
             break;
 
+             case 'previewComboName':
+            $parameter_ids = isset($_POST['parameter_ids']) && is_array($_POST['parameter_ids'])
+                ? array_filter(array_map('intval', $_POST['parameter_ids']))
+                : [];
+
+            if (empty($parameter_ids)) {
+                throw new Exception('No parameters selected');
+            }
+
+            $combo_name = $model->generateComboName($parameter_ids);
+            echo json_encode([
+                'status' => 'success',
+                'combo_name' => $combo_name
+            ]);
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
