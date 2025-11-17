@@ -415,4 +415,46 @@ class PricingModel
         
         return $combos;
     }
+
+    /**
+     * Get combo by ID with parameter IDs
+     */
+    public function getComboPriceById($combo_id)
+    {
+        // Get combo details
+        $stmt1 = $this->conn->prepare(
+            "SELECT pc.*, cp.test_charge, cp.is_active
+            FROM parameter_combinations pc
+            INNER JOIN combination_pricing cp ON pc.combo_id = cp.combo_id
+            WHERE pc.combo_id = ? AND pc.is_deleted = 0 AND cp.is_deleted = 0"
+        );
+        $stmt1->bind_param("i", $combo_id);
+        $stmt1->execute();
+        $result1 = $stmt1->get_result();
+        $combo = $result1->fetch_assoc();
+
+        if (!$combo) {
+            return null;
+        }
+
+        // Get parameter IDs
+        $stmt2 = $this->conn->prepare(
+            "SELECT parameter_id 
+            FROM combination_items 
+            WHERE combo_id = ?
+            ORDER BY sequence_order"
+        );
+        $stmt2->bind_param("i", $combo_id);
+        $stmt2->execute();
+        $result2 = $stmt2->get_result();
+
+        $parameter_ids = [];
+        while ($row = $result2->fetch_assoc()) {
+            $parameter_ids[] = $row['parameter_id'];
+        }
+
+        $combo['parameter_ids'] = $parameter_ids;
+        return $combo;
+    }
+
 }
