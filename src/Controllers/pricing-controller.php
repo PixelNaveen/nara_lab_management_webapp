@@ -298,6 +298,22 @@ try {
             }
             break;
 
+             case 'deleteCombo':
+            $id = intval($_POST['id'] ?? 0);
+            if ($id <= 0) {
+                throw new Exception('Invalid combo ID');
+            }
+
+            if ($model->softDeleteCombo($id)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Combo price deleted successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to delete combo price');
+            }
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
