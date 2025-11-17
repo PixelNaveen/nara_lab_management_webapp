@@ -272,3 +272,38 @@ async function loadActiveParameters() {
         showToast(result.message || 'Failed to load parameters', 'error');
     }
 }
+
+// ========== LOAD PRICES ==========
+async function loadPrices(filters = {}) {
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+    
+    const indResult = await sendAjax('fetchAllIndividuals', filters);
+    const comboResult = await sendAjax('fetchAllCombos', filters);
+    
+    tableBody.innerHTML = '';
+    let hasRows = false;
+    
+    // Add individual prices
+    if (indResult.status === 'success' && indResult.data.length > 0) {
+        indResult.data.forEach(price => {
+            if (filters.type && filters.type !== 'individual') return;
+            const row = createRow('individual', price);
+            tableBody.appendChild(row);
+            hasRows = true;
+        });
+    }
+    
+    // Add combo prices
+    if (comboResult.status === 'success' && comboResult.data.length > 0) {
+        comboResult.data.forEach(combo => {
+            if (filters.type && filters.type !== 'combo') return;
+            const row = createRow('combo', combo);
+            tableBody.appendChild(row);
+            hasRows = true;
+        });
+    }
+    
+    if (!hasRows) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No prices found</td></tr>';
+    }
+}
