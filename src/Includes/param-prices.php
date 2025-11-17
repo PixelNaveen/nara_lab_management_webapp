@@ -141,3 +141,92 @@
 <!-- Choices.js CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+// ========== CONSTANTS ==========
+const CONTROLLER_PATH = '../../src/Controllers/pricing-controller.php';
+
+// ========== DOM ELEMENTS ==========
+const modalOverlay = document.getElementById('parametersModal');
+const modalTitle = document.getElementById('parametersModalTitle');
+const pricingForm = document.getElementById('pricingForm');
+const typeInput = document.getElementById('type');
+const idInput = document.getElementById('id');
+const individualFields = document.getElementById('individualFields');
+const comboFields = modalOverlay.querySelector('.combo-fields');
+const parameterSelect = document.getElementById('parameterId');
+const comboParameters = document.getElementById('comboParameters');
+const comboPreview = document.getElementById('comboPreview');
+const comboPreviewText = document.getElementById('comboPreviewText');
+const comboCodeDisplay = document.getElementById('comboCodeDisplay');
+const comboCodeReadonly = document.getElementById('comboCodeReadonly');
+const testCharge = document.getElementById('testCharge');
+const isActive = document.getElementById('isActive');
+const tableBody = document.querySelector('#pricingTable tbody');
+const searchInput = document.getElementById('searchInput');
+const statusFilter = document.getElementById('statusFilter');
+const typeFilter = document.getElementById('typeFilter');
+const btnFilter = document.getElementById('btnFilter');
+const btnReset = document.getElementById('btnReset');
+const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+const btnCancelDelete = document.getElementById('btnCancelDelete');
+const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+const btnCloseDeleteModal = document.getElementById('btnCloseDeleteModal');
+const btnCloseModal = document.getElementById('btnCloseModal');
+const btnCancel = document.getElementById('btnCancel');
+
+let choices = null;
+let deleteType = '';
+let deleteId = '';
+let currentFilters = {};
+
+// ========== TOAST HELPER ==========
+function showToast(message, type = 'success') {
+    const colors = {
+        success: 'bg-success text-white',
+        warning: 'bg-warning text-dark',
+        error: 'bg-danger text-white',
+        danger: 'bg-danger text-white'
+    };
+    
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center ${colors[type]} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close ${type === 'warning' ? 'btn-close-black' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.getElementById('toastContainer').appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+// ========== AJAX HELPER ==========
+async function sendAjax(action, data = {}) {
+    try {
+        const formData = new FormData();
+        formData.append('action', action);
+        
+        for (const key in data) {
+            if (Array.isArray(data[key])) {
+                data[key].forEach(val => formData.append(`${key}[]`, val));
+            } else {
+                formData.append(key, data[key]);
+            }
+        }
+        
+        const response = await fetch(CONTROLLER_PATH, {
+            method: 'POST',
+            body: formData
+        });
+        
+        return await response.json();
+    } catch (error) {
+        console.error('AJAX Error:', error);
+        return { status: 'error', message: 'Network error occurred' };
+    }
+}
