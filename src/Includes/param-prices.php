@@ -519,3 +519,23 @@ pricingForm.addEventListener('submit', async (e) => {
         showToast('An error occurred: ' + error.message, 'error');
     }
 });
+
+// ========== DELETE CONFIRM ==========
+btnConfirmDelete.addEventListener('click', async () => {
+    if (!deleteType || !deleteId) return;
+    
+    const action = deleteType === 'individual' ? 'deleteIndividual' : 'deleteCombo';
+    const result = await sendAjax(action, {
+        id: deleteId,
+        csrf_token: document.getElementById('csrfToken').value
+    });
+    
+    if (result.status === 'success') {
+        showToast(result.message, 'success');
+        loadPrices(currentFilters);
+    } else {
+        showToast(result.message || 'Failed to delete', 'error');
+    }
+    
+    closeDeleteModal();
+});
