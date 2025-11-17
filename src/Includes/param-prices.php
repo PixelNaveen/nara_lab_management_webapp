@@ -307,3 +307,110 @@ async function loadPrices(filters = {}) {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No prices found</td></tr>';
     }
 }
+
+
+// ========== CREATE TABLE ROW ==========
+function createRow(type, data) {
+    const row = document.createElement('tr');
+    row.dataset.type = type;
+    row.dataset.id = type === 'individual' ? data.pricing_id : data.combo_id;
+    
+    const name = type === 'individual' ? data.parameter_name : data.combo_params;
+    const code = type === 'individual' ? data.parameter_code : data.combo_code;
+    const price = parseFloat(data.test_charge).toFixed(2);
+    const status = data.is_active == 1 
+        ? '<span class="badge-status bg-success">Active</span>' 
+        : '<span class="badge-status bg-secondary">Inactive</span>';
+    const typeDisplay = type.charAt(0).toUpperCase() + type.slice(1);
+    
+    row.innerHTML = `
+        <td>${name}</td>
+        <td>${code || '--'}</td>
+        <td>${price}</td>
+        <td>${typeDisplay}</td>
+        <td>${status}</td>
+        <td>
+            <button class="btn-parameters-edit" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-parameters-delete" title="Delete"><i class="fas fa-trash"></i></button>
+        </td>
+    `;
+    
+    // Attach events
+    row.querySelector('.btn-parameters-edit').addEventListener('click', () => editPrice(type, row.dataset.id));
+    row.querySelector('.btn-parameters-delete').addEventListener('click', () => openDeleteModal(type, row.dataset.id));
+    
+    return row;
+}
+
+// ========== OPEN MODAL ==========
+async function openModal(mode, type, id = null) {
+    modalTitle.textContent = mode === 'add' 
+        ? `Add ${type === 'combo' ? 'Combo' : 'Individual'} Price` 
+        : `Edit ${type === 'combo' ? 'Combo' : 'Individual'} Price`;
+    
+    // Reset form
+    pricingForm.reset();
+    typeInput.value = type;
+    idInput.value = id || '';
+    testCharge.value = '';
+    isActive.value = '1';
+    comboPreview.classList.add('d-none');
+    comboCodeDisplay.classList.add('d-none');
+    
+    // Show/hide fields
+    if (type === 'individual') {
+        individualFields.classList.remove('d-none');
+        comboFields.classList.add('d-none');
+        parameterSelect.value = '';
+        parameterSelect.required = true;
+    } else {
+        individualFields.classList.add('d-none');
+        comboFields.classList.remove('d-none');
+        parameterSelect.required = false;
+        if (choices) choices.removeActiveItems();
+    }
+
+      const btnSave = document.getElementById('btnSave');
+    if (mode === 'edit') {
+        btnSave.classList.remove('btn-success');
+        btnSave.classList.add('btn-warning');
+        btnSave.textContent = 'Update';
+    } else {
+        btnSave.classList.remove('btn-warning');
+        btnSave.classList.add('btn-success');
+        btnSave.textContent = 'Save';
+    }
+    
+    // Load data for edit mode
+    if (mode === 'edit' && id) {
+        const action = type === 'individual' ? 'getIndividualById' : 'getComboById';
+        const result = await sendAjax(action, { id });
+        
+        if (result.status === 'success') {
+            const data = result.data;
+            testCharge.value = data.test_charge;
+            isActive.value = data.is_active;
+            
+            if (type === 'individual') {
+                parameterSelect.value = data.parameter_id;
+            } else {
+                // Show combo code in edit mode
+                comboCodeDisplay.classList.remove('d-none');
+                comboCodeReadonly.value = data.combo_code;
+                
+                // Set selected parameters
+                if (choices && data.parameter_ids) {
+                    choices.setChoiceByValue(data.parameter_ids.map(id => `${id}`));
+                    
+                    // Trigger preview update
+                    updateComboPreview();
+                }
+            }
+        } else {
+            showToast(result.message || 'Failed to load data', 'error');
+            return;
+        }
+    }
+    
+    modalOverlay.classList.add('active');
+}
