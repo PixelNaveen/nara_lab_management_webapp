@@ -196,4 +196,34 @@ class PricingModel
 
         return $stmt->execute();
     }
+
+    /* ============== Combo Pricing ================== */
+
+    /**
+     * Generate next combo code (e.g., COMBO-001, COMBO-002, ...)
+     */
+
+    public function generateNextComboCode()
+    {
+        $result = $this->conn->query(
+            "SELECT combo_code FROM parameter_combinations 
+             WHERE combo_code LIKE 'COMBO-%'
+             ORDER BY combo_id DESC LIMIT 1"
+        );
+
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $lastCode = $row['combo_code'];
+            preg_match('/COMBO-(\d+)/', $lastCode, $matches);
+            $nextNum = isset($matches[1]) ? intval($matches[1]) + 1 : 1;
+            return 'COMBO-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+        }
+
+        return 'COMBO-001';
+
+    }
+
+    
+
+    
 }
