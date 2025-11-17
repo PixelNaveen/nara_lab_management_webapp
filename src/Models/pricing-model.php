@@ -519,4 +519,40 @@ class PricingModel
         }
     }
 
+    /**
+     * Soft delete combo (cascades to pricing)
+     */
+    public function softDeleteCombo($combo_id)
+    {
+        $this->conn->begin_transaction();
+        
+        try {
+            // Delete parameter_combinations
+            $stmt1 = $this->conn->prepare(
+                "UPDATE parameter_combinations 
+                SET is_deleted = 1, updated_at = NOW()
+                WHERE combo_id = ?"
+            );
+            $stmt1->bind_param("i", $combo_id);
+            $stmt1->execute();
+            
+            // Delete combination_pricing
+            $stmt2 = $this->conn->prepare(
+                "UPDATE combination_pricing 
+                SET is_deleted = 1, updated_at = NOW()
+                WHERE combo_id = ?"
+            );
+            $stmt2->bind_param("i", $combo_id);
+            $stmt2->execute();
+            
+            $this->conn->commit();
+            return true;
+            
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw $e;
+        }
+    }
+
+
 }
