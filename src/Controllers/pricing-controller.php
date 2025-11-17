@@ -237,6 +237,67 @@ try {
             }
             break;
 
+                    case 'updateCombo':
+            $id = intval($_POST['id'] ?? 0);
+            $parameter_ids = isset($_POST['parameter_ids']) && is_array($_POST['parameter_ids'])
+                ? array_filter(array_map('intval', $_POST['parameter_ids']))
+                : [];
+            $test_charge = floatval($_POST['test_charge'] ?? 0);
+            $is_active = intval($_POST['is_active'] ?? 1);
+
+            if ($id <= 0) {
+                throw new Exception('Invalid combo ID');
+            }
+            if (count($parameter_ids) < 2) {
+                throw new Exception('Please select at least 2 parameters');
+            }
+            if ($test_charge < 0) {
+                throw new Exception('Price cannot be negative');
+            }
+
+            // Get current data
+            $current = $model->getComboPriceById($id);
+            if (!$current) {
+                throw new Exception('Combo not found');
+            }
+
+            // Check if parameters changed
+            $currentParams = $current['parameter_ids'];
+            sort($currentParams);
+            sort($parameter_ids);
+            $paramsChanged = ($currentParams != $parameter_ids);
+
+            // Check if anything changed
+            if (
+                !$paramsChanged &&
+                floatval($current['test_charge']) == $test_charge &&
+                intval($current['is_active']) == $is_active
+            ) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No changes detected'
+                ]);
+                exit;
+            }
+
+            // Check for duplicate if parameters changed
+            if ($paramsChanged) {
+                if ($model->hasExactCombo($parameter_ids, $id)) {
+                    throw new Exception('Another combo with these exact parameters already exists');
+                }
+            }
+
+            // Update
+            if ($model->updateCombo($id, $parameter_ids, $test_charge, $is_active)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Combo price updated successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to update combo price');
+            }
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
