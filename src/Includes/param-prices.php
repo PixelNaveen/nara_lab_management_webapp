@@ -230,3 +230,45 @@ async function sendAjax(action, data = {}) {
         return { status: 'error', message: 'Network error occurred' };
     }
 }
+
+
+// ========== LOAD ACTIVE PARAMETERS ==========
+async function loadActiveParameters() {
+    const result = await sendAjax('fetchActiveParameters');
+    
+    if (result.status === 'success') {
+        // For individual dropdown
+        const options = result.data.map(p => 
+            `<option value="${p.parameter_id}">${p.parameter_name}</option>`
+        ).join('');
+        parameterSelect.innerHTML = '<option value="">Select Parameter</option>' + options;
+        
+        // For combo multi-select (Choices.js)
+        // Destroy existing instance if any
+        if (choices) {
+            choices.destroy();
+            choices = null;
+        }
+        
+        // Initialize Choices.js
+        choices = new Choices(comboParameters, {
+            removeItemButton: true,
+            searchEnabled: true,
+            placeholderValue: 'Select parameters',
+            shouldSort: false,
+            removeItems: true,
+            removeItemButton: true,
+        });
+        
+        const choiceOptions = result.data.map(p => ({
+            value: `${p.parameter_id}`,
+            label: p.parameter_name
+        }));
+        
+        choices.setChoices(choiceOptions, 'value', 'label', true);
+        
+        console.log('Choices.js initialized:', choices); // Debug
+    } else {
+        showToast(result.message || 'Failed to load parameters', 'error');
+    }
+}
