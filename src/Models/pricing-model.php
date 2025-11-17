@@ -554,5 +554,29 @@ class PricingModel
         }
     }
 
+    // =================== HELPER METHODS ===================
+
+    /**
+     * Get all active parameters for dropdowns
+     */
+    public function getActiveParameters()
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT parameter_id, parameter_name, parameter_code
+            FROM test_parameters
+            WHERE is_active = 1 AND is_deleted = 0
+            ORDER BY parameter_name ASC"
+        );
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $parameters = [];
+        while ($row = $result->fetch_assoc()) {
+            $parameters[] = $row;
+        }
+
+        return $parameters;
+    }
+
 
 }
