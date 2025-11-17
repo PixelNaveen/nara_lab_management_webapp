@@ -172,6 +172,24 @@ try {
             }
             break;
 
+            // ========== COMBO PRICING ==========
+
+        case 'fetchAllCombos':
+            $filters = [];
+            if (isset($_POST['is_active']) && $_POST['is_active'] !== '') {
+                $filters['is_active'] = intval($_POST['is_active']);
+            }
+            if (isset($_POST['search']) && trim($_POST['search']) !== '') {
+                $filters['search'] = trim($_POST['search']);
+            }
+
+            $result = $model->getAllComboPrices($filters);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $result
+            ]);
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
