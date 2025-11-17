@@ -204,7 +204,7 @@ class PricingModel
      * Generate next combo code (e.g., COMBO-001, COMBO-002, ...)
      */
 
-    public function generateNextComboCode()
+    public function getNextComboCode()
     {
         $result = $this->conn->query(
             "SELECT combo_code FROM parameter_combinations 
@@ -257,5 +257,45 @@ class PricingModel
         return implode('+', $names);
     }
 
-    
+    /**
+     * Check if combo with same parameters exists
+     */
+
+    public function hasExactCombo($parameter_ids, $exclude_combo_id = null)
+    {
+
+        if (count($parameter_ids) < 2) {
+            return false; // A combo must have at least 2 parameters
+        }
+
+        // Sort to ensure consistent comparison
+        sort($parameter_ids);
+        $paramSet = implode(',', $parameter_ids);
+
+        $sql = "SELECT 
+                pc.combo_id,
+                GROUP_CONCAT(ci.parameter_id Order BY ci.parameter_id SEPARATOR ',') AS param_set
+                FROM parameter_combinations pc 
+                INNER JOIN combo_items ci ON pc.combo_id = ci.combo_id
+                WHERE pc.is_deleted = 0";
+
+        if ($exclude_combo_id) {
+            $sql .= " AND pc.combo_id != ?";
+        }
+
+        $sql .= " GROUP BY pc.combo_id 
+                HAVING param_set = ?";
+
+        if ($exclude_combo_id) {
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("is", $exclude_combo_id, $paramSet);
+        } else {
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("s", $paramSet);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
 }
