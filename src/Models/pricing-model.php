@@ -298,4 +298,60 @@ class PricingModel
         $result = $stmt->get_result();
         return $result->num_rows > 0;
     }
+
+    /**
+     * Insert combo with auto-generated code and name
+     */
+
+    public function insertCombo($parameter_ids, $test_charge, $is_active = 1)
+    {
+        if (count($parameter_ids) < 2) {
+            throw new Exception("A combo must have at least 2 parameters.");
+        }
+
+        // Generate combo code and name
+        $combo_code = $this->generateComboName($parameter_ids);
+        $combo_name = $this->getNextComboCode();
+
+        //Begin transaction
+        $this->conn->begin_transaction();
+
+        try {
+            $stmt1 = $this->conn->prepare(
+                "INSERT INTO parameter_combinations 
+                (combo_name, combo_code, description, is_active, is_deleted, created_at)
+                VALUES (?, ?, NULL, ?, 0, NOW())"
+            );
+            $stmt1->bind_param("ssi", $combo_name, $combo_code, $is_active);
+            $stmt1->execute();
+            $combo_id = $this->conn->insert_id;
+
+            // 2. Insert into combination_items
+            $stmt2 = $this->conn->prepare(
+                "INSERT INTO combination_items 
+                (combo_id, parameter_id, sequence_order, created_at)
+                VALUES (?, ?, ?, NOW())"
+            );
+
+            foreach ($parameter_ids as $index => $param_id) {
+                $stmt2->bind_param("iii", $combo_id, $param_id, $index);
+                $stmt2->execute();
+            }
+
+            // 3. Insert into combination_pricing
+            $stmt3 = $this->conn->prepare(
+                "INSERT INTO combination_pricing 
+                (combo_id, test_charge, is_active, is_deleted, created_at)
+                VALUES (?, ?, ?, 0, NOW())"
+            );
+            $stmt3->bind_param("idi", $combo_id, $test_charge, $is_active);
+            $stmt3->execute();
+
+            $this->conn->commit();
+            return $combo_id;
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw $e;
+        }
+    }
 }
