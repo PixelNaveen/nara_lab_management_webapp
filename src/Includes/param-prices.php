@@ -231,7 +231,6 @@ async function sendAjax(action, data = {}) {
     }
 }
 
-
 // ========== LOAD ACTIVE PARAMETERS ==========
 async function loadActiveParameters() {
     const result = await sendAjax('fetchActiveParameters');
@@ -307,7 +306,6 @@ async function loadPrices(filters = {}) {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No prices found</td></tr>';
     }
 }
-
 
 // ========== CREATE TABLE ROW ==========
 function createRow(type, data) {
@@ -430,6 +428,7 @@ async function updateComboPreview() {
         comboPreview.classList.add('d-none');
     }
 }
+
 // ========== EDIT PRICE ==========
 function editPrice(type, id) {
     openModal('edit', type, id);
@@ -539,3 +538,64 @@ btnConfirmDelete.addEventListener('click', async () => {
     
     closeDeleteModal();
 });
+
+// ========== FILTER / RESET ==========
+btnFilter.addEventListener('click', () => {
+    currentFilters = {
+        search: searchInput.value.trim(),
+        is_active: statusFilter.value,
+        type: typeFilter.value
+    };
+    loadPrices(currentFilters);
+});
+
+btnReset.addEventListener('click', () => {
+    searchInput.value = '';
+    statusFilter.value = '';
+    typeFilter.value = '';
+    currentFilters = {};
+    loadPrices();
+});
+
+// ========== MODAL CONTROLS ==========
+document.querySelectorAll('.btn-parameters-new').forEach(btn => {
+    btn.addEventListener('click', () => openModal('add', btn.dataset.type));
+});
+
+btnCloseModal.addEventListener('click', () => modalOverlay.classList.remove('active'));
+btnCancel.addEventListener('click', () => modalOverlay.classList.remove('active'));
+modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+});
+
+btnCancelDelete.addEventListener('click', closeDeleteModal);
+btnCloseDeleteModal.addEventListener('click', closeDeleteModal);
+deleteConfirmModal.addEventListener('click', (e) => {
+    if (e.target === deleteConfirmModal) closeDeleteModal();
+});
+
+// ========== COMBO PARAMETERS CHANGE EVENT ==========
+// Listen to Choices.js change event properly
+if (comboParameters) {
+    comboParameters.addEventListener('addItem', updateComboPreview);
+    comboParameters.addEventListener('removeItem', updateComboPreview);
+}
+
+// ========== SEARCH ON ENTER ==========
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') btnFilter.click();
+});
+
+// ========== INITIAL LOAD ==========
+async function initialize() {
+    await loadActiveParameters();
+    await loadPrices();
+}
+
+// Initialize when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    initialize();
+}
+</script>
