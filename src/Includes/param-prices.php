@@ -414,3 +414,19 @@ async function openModal(mode, type, id = null) {
     
     modalOverlay.classList.add('active');
 }
+
+// ========== UPDATE COMBO PREVIEW ==========
+async function updateComboPreview() {
+    const selectedIds = choices.getValue(true);
+    
+    if (selectedIds.length >= 2) {
+        const result = await sendAjax('previewComboName', { parameter_ids: selectedIds });
+        
+        if (result.status === 'success') {
+            comboPreviewText.textContent = result.combo_name;
+            comboPreview.classList.remove('d-none');
+        }
+    } else {
+        comboPreview.classList.add('d-none');
+    }
+}
