@@ -41,6 +41,20 @@ try {
                 'data' => $result
             ]);
             break;
+
+            case 'getIndividualById':
+            $id = intval($_POST['id'] ?? 0);
+            if ($id <= 0) {
+                throw new Exception('Invalid pricing ID');
+            }
+
+            $result = $model->getIndividualPriceById($id);
+            if ($result) {
+                echo json_encode(['status' => 'success', 'data' => $result]);
+            } else {
+                throw new Exception('Price not found');
+            }
+            break;
     }
 } catch (Exception $e) {
     //throw $th;
