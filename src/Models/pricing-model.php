@@ -457,4 +457,66 @@ class PricingModel
         return $combo;
     }
 
+    /**
+     * Update combo - regenerates name if parameters change
+     */
+    public function updateCombo($combo_id, $parameter_ids, $test_charge, $is_active)
+    {
+        if (count($parameter_ids) < 2) {
+            throw new Exception('At least 2 parameters required for combo');
+        }
+        
+        // Regenerate combo name
+        $combo_name = $this->generateComboName($parameter_ids);
+        
+        // Begin transaction
+        $this->conn->begin_transaction();
+        
+        try {
+            // 1. Update parameter_combinations
+            $stmt1 = $this->conn->prepare(
+                "UPDATE parameter_combinations 
+                SET combo_name = ?, is_active = ?, updated_at = NOW()
+                WHERE combo_id = ? AND is_deleted = 0"
+            );
+            $stmt1->bind_param("sii", $combo_name, $is_active, $combo_id);
+            $stmt1->execute();
+            
+            // 2. Delete old combination_items
+            $stmt2 = $this->conn->prepare(
+                "DELETE FROM combination_items WHERE combo_id = ?"
+            );
+            $stmt2->bind_param("i", $combo_id);
+            $stmt2->execute();
+            
+            // 3. Insert new combination_items
+            $stmt3 = $this->conn->prepare(
+                "INSERT INTO combination_items 
+                (combo_id, parameter_id, sequence_order, created_at)
+                VALUES (?, ?, ?, NOW())"
+            );
+            
+            foreach ($parameter_ids as $index => $param_id) {
+                $stmt3->bind_param("iii", $combo_id, $param_id, $index);
+                $stmt3->execute();
+            }
+            
+            // 4. Update combination_pricing
+            $stmt4 = $this->conn->prepare(
+                "UPDATE combination_pricing 
+                SET test_charge = ?, is_active = ?, updated_at = NOW()
+                WHERE combo_id = ? AND is_deleted = 0"
+            );
+            $stmt4->bind_param("dii", $test_charge, $is_active, $combo_id);
+            $stmt4->execute();
+            
+            $this->conn->commit();
+            return true;
+            
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw $e;
+        }
+    }
+
 }
