@@ -353,6 +353,66 @@ class PricingModel
             $this->conn->rollback();
             throw $e;
         }
+
+    }
+
+        /**
+     * Get all combo prices with auto-generated display names
+     */
+    public function getAllComboPrices($filters = [])
+    {
+        $sql = "SELECT 
+                    pc.combo_id,
+                    pc.combo_name,
+                    pc.combo_code,
+                    cp.test_charge,
+                    cp.is_active,
+                    pc.created_at,
+                    GROUP_CONCAT(
+                        tp.parameter_name 
+                        ORDER BY ci.sequence_order 
+                        SEPARATOR ' + '
+                    ) as combo_params
+                FROM parameter_combinations pc
+                INNER JOIN combination_pricing cp ON pc.combo_id = cp.combo_id
+                INNER JOIN combination_items ci ON pc.combo_id = ci.combo_id
+                INNER JOIN test_parameters tp ON ci.parameter_id = tp.parameter_id
+                WHERE pc.is_deleted = 0 AND cp.is_deleted = 0";
         
+        $params = [];
+        $types = "";
+        
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $sql .= " AND cp.is_active = ?";
+            $params[] = intval($filters['is_active']);
+            $types .= "i";
+        }
+        
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            $sql .= " AND pc.combo_name LIKE ?";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $types .= "s";
+        }
+        
+        $sql .= " GROUP BY pc.combo_id, pc.combo_name, pc.combo_code, 
+                         cp.test_charge, cp.is_active, pc.created_at
+                  ORDER BY pc.combo_id DESC";
+        
+        if (!empty($params)) {
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        } else {
+            $result = $this->conn->query($sql);
+        }
+        
+        $combos = [];
+        while ($row = $result->fetch_assoc()) {
+            $combos[] = $row;
+        }
+        
+        return $combos;
     }
 }
