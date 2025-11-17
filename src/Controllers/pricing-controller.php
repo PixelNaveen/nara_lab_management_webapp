@@ -102,6 +102,59 @@ try {
                 }
             }
             break;
+
+            case 'updateIndividual':
+            $id = intval($_POST['id'] ?? 0);
+            $parameter_id = intval($_POST['parameter_id'] ?? 0);
+            $test_charge = floatval($_POST['test_charge'] ?? 0);
+            $is_active = intval($_POST['is_active'] ?? 1);
+
+            if ($id <= 0) {
+                throw new Exception('Invalid pricing ID');
+            }
+            if ($parameter_id <= 0) {
+                throw new Exception('Please select a parameter');
+            }
+            if ($test_charge < 0) {
+                throw new Exception('Price cannot be negative');
+            }
+
+            // Check current data
+            $current = $model->getIndividualPriceById($id);
+            if (!$current) {
+                throw new Exception('Price not found');
+            }
+
+            // Check if anything changed
+            if (
+                $current['parameter_id'] == $parameter_id &&
+                floatval($current['test_charge']) == $test_charge &&
+                intval($current['is_active']) == $is_active
+            ) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No changes detected'
+                ]);
+                exit;
+            }
+
+            // Check for duplicate if parameter changed
+            if ($current['parameter_id'] != $parameter_id) {
+                if ($model->hasIndividualPrice($parameter_id, $id)) {
+                    throw new Exception('Another price already exists for this parameter');
+                }
+            }
+
+            // Update
+            if ($model->updateIndividualPrice($id, $parameter_id, $test_charge, $is_active)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Price updated successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to update price');
+            }
+            break;
     }
 } catch (Exception $e) {
     //throw $th;
