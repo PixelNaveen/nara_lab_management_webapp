@@ -181,4 +181,19 @@ class PricingModel
 
         return $stmt->execute();
     }
+
+    /**
+     * Soft delete individual price
+     */
+
+    public function deleteIndividualPrice($pricing_id){
+        $sql = "UPDATE parameter_pricing 
+        SET is_deleted = 1, updated_at = NOW() 
+        WHERE pricing_id = ?";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $pricing_id);
+
+        return $stmt->execute();
+    }
 }
