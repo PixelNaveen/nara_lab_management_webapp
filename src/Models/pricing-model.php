@@ -149,7 +149,7 @@ class PricingModel
      * Reactivate deleted individual price
      */
 
-     public function reactivateIndividualPrice($pricing_id, $test_charge, $is_active)
+    public function reactivateIndividualPrice($pricing_id, $test_charge, $is_active)
     {
         $stmt = $this->conn->prepare(
             "UPDATE parameter_pricing 
@@ -160,4 +160,25 @@ class PricingModel
         return $stmt->execute();
     }
 
+    /**
+     * Update individual price
+     */
+
+    public function updateIndividualPrice($pricing_id, $parameter_id, $test_charge, $is_active)
+    {
+        $sql = "UPDATE parameter_pricing 
+        SET test_charge = ?, is_active = ?, updated_at = NOW() 
+        WHERE pricing_id = ? AND is_deleted = 0";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param(
+            "idii",
+            $parameter_id,
+            $test_charge,
+            $is_active,
+            $pricing_id
+        );
+
+        return $stmt->execute();
+    }
 }
