@@ -12,29 +12,27 @@ class PricingModel
         $this->conn->set_charset("utf8mb4");
     }
 
-    // ============= Individual Pricing =================
+    // =================== INDIVIDUAL PRICING ===================
 
     /**
      * Get all individual prices with filters
      */
-
     public function getAllIndividualPrices($filters = [])
     {
         $sql = "SELECT 
-                pp.pricing_id,
-                pp.parameter_id,
-                pp.test_charge,
-                pp.is_active,
-                pp.created_at,
-                pp.parameter_name,
-                pp.parameter_code
+                    pp.pricing_id,
+                    pp.parameter_id,
+                    pp.test_charge,
+                    pp.is_active,
+                    pp.created_at,
+                    tp.parameter_name,
+                    tp.parameter_code
                 FROM parameter_pricing pp
-                INNER JOIN test_parameters tp ON 
-                pp.parameter_id = tp.parameter_id WHERE pp.is_deleted = 0 AND tp.is_deleted = 0
-                ";
+                INNER JOIN test_parameters tp ON pp.parameter_id = tp.parameter_id
+                WHERE pp.is_deleted = 0 AND tp.is_deleted = 0";
 
         $params = [];
-        $types =  "";
+        $types = "";
 
         if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $sql .= " AND pp.is_active = ?";
@@ -64,21 +62,21 @@ class PricingModel
         while ($row = $result->fetch_assoc()) {
             $prices[] = $row;
         }
+
         return $prices;
     }
 
     /**
      * Get individual price by ID
      */
-
-    public function getIndividualPricesById($pricing_id)
+    public function getIndividualPriceById($pricing_id)
     {
-        $sql = "SELECT pp.*, tp.parameter_name, tp.parameter_code 
-        FROM parameter_pricing pp 
-        INNER JOIN test_parameters tp ON pp.parameter_id = tp.parameter_id 
-        WHERE pp.pricing_id = ? AND pp.is_deleted = 0";
-
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->conn->prepare(
+            "SELECT pp.*, tp.parameter_name, tp.parameter_code
+            FROM parameter_pricing pp
+            INNER JOIN test_parameters tp ON pp.parameter_id = tp.parameter_id
+            WHERE pp.pricing_id = ? AND pp.is_deleted = 0"
+        );
         $stmt->bind_param("i", $pricing_id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -88,11 +86,11 @@ class PricingModel
     /**
      * Check if parameter already has pricing
      */
-
     public function hasIndividualPrice($parameter_id, $exclude_pricing_id = null)
     {
-        $sql = "SELECT pricing_id FROM parameter_pricing WHERE parameter_id = ? AND is_deleted = 0";
-
+        $sql = "SELECT pricing_id FROM parameter_pricing 
+                WHERE parameter_id = ? AND is_deleted = 0";
+        
         $params = [$parameter_id];
         $types = "i";
 
@@ -103,7 +101,7 @@ class PricingModel
         }
 
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param($types, ...$parameter_id);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->num_rows > 0;
@@ -112,15 +110,14 @@ class PricingModel
     /**
      * Find deleted individual price by parameter_id
      */
-
-    public function findDeletedIndividualPrice($param_id)
+    public function findDeletedIndividualPrice($parameter_id)
     {
-        $sql = "SELECT pricing_id FROM parameter_pricing
-        WHERE parameter_id = ? AND is_deleted = 1 
-        LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
-
-        $stmt->bind_param("i", $param_id);
+        $stmt = $this->conn->prepare(
+            "SELECT pricing_id FROM parameter_pricing 
+            WHERE parameter_id = ? AND is_deleted = 1 
+            LIMIT 1"
+        );
+        $stmt->bind_param("i", $parameter_id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
@@ -129,16 +126,15 @@ class PricingModel
     /**
      * Insert individual price
      */
-
     public function insertIndividualPrice($parameter_id, $test_charge, $is_active = 1)
     {
-
-        $sql = "INSERT INTO parameter_pricing(parameter_id, test_charge, is_active, is_deleted,created_at) 
-        VALUES (?, ?, ?, 0, NOW())";
-
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->conn->prepare(
+            "INSERT INTO parameter_pricing 
+            (parameter_id, test_charge, is_active, is_deleted, created_at)
+            VALUES (?, ?, ?, 0, NOW())"
+        );
         $stmt->bind_param("idi", $parameter_id, $test_charge, $is_active);
-
+        
         if ($stmt->execute()) {
             return $this->conn->insert_id;
         }
@@ -148,7 +144,6 @@ class PricingModel
     /**
      * Reactivate deleted individual price
      */
-
     public function reactivateIndividualPrice($pricing_id, $test_charge, $is_active)
     {
         $stmt = $this->conn->prepare(
@@ -163,47 +158,36 @@ class PricingModel
     /**
      * Update individual price
      */
-
     public function updateIndividualPrice($pricing_id, $parameter_id, $test_charge, $is_active)
     {
-        $sql = "UPDATE parameter_pricing 
-        SET test_charge = ?, is_active = ?, updated_at = NOW() 
-        WHERE pricing_id = ? AND is_deleted = 0";
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param(
-            "idii",
-            $parameter_id,
-            $test_charge,
-            $is_active,
-            $pricing_id
+        $stmt = $this->conn->prepare(
+            "UPDATE parameter_pricing 
+            SET parameter_id = ?, test_charge = ?, is_active = ?, updated_at = NOW()
+            WHERE pricing_id = ? AND is_deleted = 0"
         );
-
+        $stmt->bind_param("idii", $parameter_id, $test_charge, $is_active, $pricing_id);
         return $stmt->execute();
     }
 
     /**
      * Soft delete individual price
      */
-
-    public function deleteIndividualPrice($pricing_id)
+    public function softDeleteIndividualPrice($pricing_id)
     {
-        $sql = "UPDATE parameter_pricing 
-        SET is_deleted = 1, updated_at = NOW() 
-        WHERE pricing_id = ?";
-
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->conn->prepare(
+            "UPDATE parameter_pricing 
+            SET is_deleted = 1, updated_at = NOW()
+            WHERE pricing_id = ?"
+        );
         $stmt->bind_param("i", $pricing_id);
-
         return $stmt->execute();
     }
 
-    /* ============== Combo Pricing ================== */
+    // =================== COMBO PRICING ===================
 
     /**
-     * Generate next combo code (e.g., COMBO-001, COMBO-002, ...)
+     * Generate next combo code (COMBO-001, COMBO-002, ...)
      */
-
     public function getNextComboCode()
     {
         $result = $this->conn->query(
@@ -211,7 +195,7 @@ class PricingModel
              WHERE combo_code LIKE 'COMBO-%'
              ORDER BY combo_id DESC LIMIT 1"
         );
-
+        
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $lastCode = $row['combo_code'];
@@ -219,53 +203,53 @@ class PricingModel
             $nextNum = isset($matches[1]) ? intval($matches[1]) + 1 : 1;
             return 'COMBO-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
         }
-
+        
         return 'COMBO-001';
     }
 
     /**
      * Generate combo name from parameter IDs
-     * Returns a string like "Param1 + Param2 + Param3"
+     * Returns: "Param1 + Param2 + Param3"
      */
     public function generateComboName($parameter_ids)
     {
         if (empty($parameter_ids) || !is_array($parameter_ids)) {
             return '';
         }
-
+        
         $placeholders = implode(',', array_fill(0, count($parameter_ids), '?'));
         $types = str_repeat('i', count($parameter_ids));
-
-        // Build order by FIELD clause to maintain the order of parameter_ids
-        $fileOrder = implode(',', $parameter_ids);
-
-        $sql = "SELECT parameter_name FROM test_parameters 
-                WHERE parameter_id IN ($placeholders)
-                AND is_active = 1 AND is_deleted = 0
-                ORDER BY FIELD(parameter_id, $fileOrder)";
-
-        $stmt = $this->conn->prepare($sql);
+        
+        // Build ORDER BY FIELD clause
+        $fieldOrder = implode(',', $parameter_ids);
+        
+        $stmt = $this->conn->prepare(
+            "SELECT parameter_name 
+             FROM test_parameters 
+             WHERE parameter_id IN ($placeholders) 
+             AND is_active = 1 AND is_deleted = 0
+             ORDER BY FIELD(parameter_id, $fieldOrder)"
+        );
+        
         $stmt->bind_param($types, ...$parameter_ids);
         $stmt->execute();
         $result = $stmt->get_result();
-
+        
         $names = [];
         while ($row = $result->fetch_assoc()) {
             $names[] = $row['parameter_name'];
         }
-
-        return implode('+', $names);
+        
+        return implode(' + ', $names);
     }
 
     /**
-     * Check if combo with same parameters exists
+     * Check if exact combo exists (same parameters)
      */
-
     public function hasExactCombo($parameter_ids, $exclude_combo_id = null)
     {
-
         if (count($parameter_ids) < 2) {
-            return false; // A combo must have at least 2 parameters
+            return false;
         }
 
         // Sort to ensure consistent comparison
@@ -273,18 +257,18 @@ class PricingModel
         $paramSet = implode(',', $parameter_ids);
 
         $sql = "SELECT 
-                pc.combo_id,
-                GROUP_CONCAT(ci.parameter_id Order BY ci.parameter_id SEPARATOR ',') AS param_set
-                FROM parameter_combinations pc 
-                INNER JOIN combo_items ci ON pc.combo_id = ci.combo_id
+                    pc.combo_id,
+                    GROUP_CONCAT(ci.parameter_id ORDER BY ci.parameter_id SEPARATOR ',') as param_set
+                FROM parameter_combinations pc
+                INNER JOIN combination_items ci ON pc.combo_id = ci.combo_id
                 WHERE pc.is_deleted = 0";
-
+        
         if ($exclude_combo_id) {
             $sql .= " AND pc.combo_id != ?";
         }
-
-        $sql .= " GROUP BY pc.combo_id 
-                HAVING param_set = ?";
+        
+        $sql .= " GROUP BY pc.combo_id
+                  HAVING param_set = ?";
 
         if ($exclude_combo_id) {
             $stmt = $this->conn->prepare($sql);
@@ -300,23 +284,23 @@ class PricingModel
     }
 
     /**
-     * Insert combo with auto-generated code and name
+     * Insert combo with auto-generated name and code
      */
-
     public function insertCombo($parameter_ids, $test_charge, $is_active = 1)
     {
         if (count($parameter_ids) < 2) {
-            throw new Exception("A combo must have at least 2 parameters.");
+            throw new Exception('At least 2 parameters required for combo');
         }
-
-        // Generate combo code and name
-        $combo_code = $this->generateComboName($parameter_ids);
-        $combo_name = $this->getNextComboCode();
-
-        //Begin transaction
+        
+        // Generate combo name and code
+        $combo_name = $this->generateComboName($parameter_ids);
+        $combo_code = $this->getNextComboCode();
+        
+        // Begin transaction
         $this->conn->begin_transaction();
-
+        
         try {
+            // 1. Insert into parameter_combinations
             $stmt1 = $this->conn->prepare(
                 "INSERT INTO parameter_combinations 
                 (combo_name, combo_code, description, is_active, is_deleted, created_at)
@@ -325,19 +309,19 @@ class PricingModel
             $stmt1->bind_param("ssi", $combo_name, $combo_code, $is_active);
             $stmt1->execute();
             $combo_id = $this->conn->insert_id;
-
+            
             // 2. Insert into combination_items
             $stmt2 = $this->conn->prepare(
                 "INSERT INTO combination_items 
                 (combo_id, parameter_id, sequence_order, created_at)
                 VALUES (?, ?, ?, NOW())"
             );
-
+            
             foreach ($parameter_ids as $index => $param_id) {
                 $stmt2->bind_param("iii", $combo_id, $param_id, $index);
                 $stmt2->execute();
             }
-
+            
             // 3. Insert into combination_pricing
             $stmt3 = $this->conn->prepare(
                 "INSERT INTO combination_pricing 
@@ -346,17 +330,17 @@ class PricingModel
             );
             $stmt3->bind_param("idi", $combo_id, $test_charge, $is_active);
             $stmt3->execute();
-
+            
             $this->conn->commit();
             return $combo_id;
+            
         } catch (Exception $e) {
             $this->conn->rollback();
             throw $e;
         }
-
     }
 
-        /**
+    /**
      * Get all combo prices with auto-generated display names
      */
     public function getAllComboPrices($filters = [])
@@ -577,6 +561,4 @@ class PricingModel
 
         return $parameters;
     }
-
-
 }

@@ -4,15 +4,14 @@ session_start();
 require_once __DIR__ . '/../Models/pricing-model.php';
 header('Content-Type: application/json');
 
-// CSRF Validation for state-changing operations
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// CSRF validation for state-changing operations
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $readOnlyActions = ['fetchAllIndividuals', 'fetchAllCombos', 'getIndividualById', 'getComboById', 'fetchActiveParameters', 'previewComboName'];
 
     if (!in_array($action, $readOnlyActions)) {
-        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Invalid CSRF token']);
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid security token']);
             exit;
         }
     }
@@ -103,7 +102,7 @@ try {
             }
             break;
 
-            case 'updateIndividual':
+        case 'updateIndividual':
             $id = intval($_POST['id'] ?? 0);
             $parameter_id = intval($_POST['parameter_id'] ?? 0);
             $test_charge = floatval($_POST['test_charge'] ?? 0);
@@ -156,7 +155,7 @@ try {
             }
             break;
 
-            case 'deleteIndividual':
+        case 'deleteIndividual':
             $id = intval($_POST['id'] ?? 0);
             if ($id <= 0) {
                 throw new Exception('Invalid pricing ID');
@@ -172,7 +171,7 @@ try {
             }
             break;
 
-            // ========== COMBO PRICING ==========
+        // ========== COMBO PRICING ==========
 
         case 'fetchAllCombos':
             $filters = [];
@@ -190,7 +189,7 @@ try {
             ]);
             break;
 
-             case 'getComboById':
+        case 'getComboById':
             $id = intval($_POST['id'] ?? 0);
             if ($id <= 0) {
                 throw new Exception('Invalid combo ID');
@@ -204,7 +203,7 @@ try {
             }
             break;
 
-                    case 'insertCombo':
+        case 'insertCombo':
             $parameter_ids = isset($_POST['parameter_ids']) && is_array($_POST['parameter_ids'])
                 ? array_filter(array_map('intval', $_POST['parameter_ids']))
                 : [];
@@ -237,7 +236,7 @@ try {
             }
             break;
 
-                    case 'updateCombo':
+        case 'updateCombo':
             $id = intval($_POST['id'] ?? 0);
             $parameter_ids = isset($_POST['parameter_ids']) && is_array($_POST['parameter_ids'])
                 ? array_filter(array_map('intval', $_POST['parameter_ids']))
@@ -298,7 +297,7 @@ try {
             }
             break;
 
-             case 'deleteCombo':
+        case 'deleteCombo':
             $id = intval($_POST['id'] ?? 0);
             if ($id <= 0) {
                 throw new Exception('Invalid combo ID');
@@ -314,7 +313,7 @@ try {
             }
             break;
 
-              // ========== HELPER ACTIONS ==========
+        // ========== HELPER ACTIONS ==========
 
         case 'fetchActiveParameters':
             $result = $model->getActiveParameters();
@@ -324,7 +323,7 @@ try {
             ]);
             break;
 
-             case 'previewComboName':
+        case 'previewComboName':
             $parameter_ids = isset($_POST['parameter_ids']) && is_array($_POST['parameter_ids'])
                 ? array_filter(array_map('intval', $_POST['parameter_ids']))
                 : [];
@@ -339,7 +338,8 @@ try {
                 'combo_name' => $combo_name
             ]);
             break;
-default:
+
+        default:
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Invalid action'
@@ -347,5 +347,9 @@ default:
             break;
     }
 } catch (Exception $e) {
-    //throw $th;
+    error_log("Pricing Controller Error: " . $e->getMessage());
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
 }
