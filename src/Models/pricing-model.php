@@ -186,7 +186,8 @@ class PricingModel
      * Soft delete individual price
      */
 
-    public function deleteIndividualPrice($pricing_id){
+    public function deleteIndividualPrice($pricing_id)
+    {
         $sql = "UPDATE parameter_pricing 
         SET is_deleted = 1, updated_at = NOW() 
         WHERE pricing_id = ?";
@@ -220,10 +221,41 @@ class PricingModel
         }
 
         return 'COMBO-001';
-
     }
 
-    
+    /**
+     * Generate combo name from parameter IDs
+     * Returns a string like "Param1 + Param2 + Param3"
+     */
+    public function generateComboName($parameter_ids)
+    {
+        if (empty($parameter_ids) || !is_array($parameter_ids)) {
+            return '';
+        }
+
+        $placeholders = implode(',', array_fill(0, count($parameter_ids), '?'));
+        $types = str_repeat('i', count($parameter_ids));
+
+        // Build order by FIELD clause to maintain the order of parameter_ids
+        $fileOrder = implode(',', $parameter_ids);
+
+        $sql = "SELECT parameter_name FROM test_parameters 
+                WHERE parameter_id IN ($placeholders)
+                AND is_active = 1 AND is_deleted = 0
+                ORDER BY FIELD(parameter_id, $fileOrder)";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$parameter_ids);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $names = [];
+        while ($row = $result->fetch_assoc()) {
+            $names[] = $row['parameter_name'];
+        }
+
+        return implode('+', $names);
+    }
 
     
 }
