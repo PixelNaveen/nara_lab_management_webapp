@@ -430,3 +430,92 @@ async function updateComboPreview() {
         comboPreview.classList.add('d-none');
     }
 }
+// ========== EDIT PRICE ==========
+function editPrice(type, id) {
+    openModal('edit', type, id);
+}
+
+// ========== DELETE MODAL ==========
+function openDeleteModal(type, id) {
+    deleteType = type;
+    deleteId = id;
+    deleteConfirmModal.classList.add('active');
+}
+
+function closeDeleteModal() {
+    deleteConfirmModal.classList.remove('active');
+    deleteType = '';
+    deleteId = '';
+}
+
+// ========== FORM SUBMIT ==========
+pricingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    console.log('Form submitted'); // Debug
+    
+    const type = typeInput.value;
+    const id = idInput.value;
+    
+    const data = {
+        csrf_token: document.getElementById('csrfToken').value,
+        test_charge: testCharge.value,
+        is_active: isActive.value
+    };
+    
+    console.log('Type:', type, 'ID:', id); // Debug
+    
+    // Validation
+    if (type === 'individual') {
+        data.parameter_id = parameterSelect.value;
+        
+        if (!data.parameter_id) {
+            showToast('Please select a parameter', 'warning');
+            return;
+        }
+        
+        console.log('Individual data:', data); // Debug
+    } else {
+        if (!choices) {
+            showToast('Parameter selector not initialized', 'error');
+            return;
+        }
+        
+        data.parameter_ids = choices.getValue(true);
+        
+        console.log('Selected parameter IDs:', data.parameter_ids); // Debug
+        
+        if (!data.parameter_ids || data.parameter_ids.length < 2) {
+            showToast('Please select at least 2 parameters', 'warning');
+            return;
+        }
+        
+        console.log('Combo data:', data); // Debug
+    }
+    
+    if (id) data.id = id;
+    
+    const action = id 
+        ? (type === 'individual' ? 'updateIndividual' : 'updateCombo')
+        : (type === 'individual' ? 'insertIndividual' : 'insertCombo');
+    
+    console.log('Action:', action); // Debug
+    console.log('Sending data:', data); // Debug
+    
+    try {
+        const result = await sendAjax(action, data);
+        
+        console.log('Result:', result); // Debug
+        
+        if (result.status === 'success') {
+            showToast(result.message, 'success');
+            modalOverlay.classList.remove('active');
+            loadPrices(currentFilters);
+        } else {
+            showToast(result.message || 'Operation failed', 'error');
+        }
+    } catch (error) {
+        console.error('Submit error:', error); // Debug
+        showToast('An error occurred: ' + error.message, 'error');
+    }
+});
