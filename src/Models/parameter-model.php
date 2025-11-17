@@ -435,4 +435,29 @@ public function getMethodsByParameter($paramId)
 
     return $methods; // Returns array of ['method_id'=>..., 'method_name'=>...]
 }
+
+public function getParametersWithMethods()
+{
+    $sql = "SELECT 
+                CONCAT(tp.parameter_name, ' (', tp.base_unit, ')') AS parameter_name,
+                GROUP_CONCAT(tm.method_name SEPARATOR ', ') AS method_names
+            FROM test_parameters AS tp
+            LEFT JOIN parameter_methods AS pm ON tp.parameter_id = pm.parameter_id
+            LEFT JOIN test_methods AS tm ON pm.method_id = tm.method_id
+            WHERE tp.is_active = 1 AND tp.is_deleted = 0
+            GROUP BY tp.parameter_id
+            ORDER BY tp.parameter_name ASC";
+    
+    $result = $this->conn->query($sql);
+    
+    $tableData = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $tableData[] = $row;
+        }
+    }
+    
+    return $tableData;
+}
+
 }

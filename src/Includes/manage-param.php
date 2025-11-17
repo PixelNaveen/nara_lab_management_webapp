@@ -158,6 +158,24 @@
   </div>
 </div>
 
+<!-- ADD THIS HTML OVERLAY after the existing delete modal -->
+<div class="table-overlay" id="tableOverlay">
+  <div class="table-overlay-content">
+    <div class="table-overlay-header">
+      <h5>Parameters with Methods</h5>
+      <button class="btn-close-table-overlay" id="btnCloseTableOverlay">Close</button>
+    </div>
+    <div id="overlayTableContainer">
+      <div class="table-loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading data...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Container -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
   <div id="toastContainer"></div>
@@ -573,6 +591,90 @@
   deleteConfirmModal.addEventListener("click", (e) => {
     if (e.target === deleteConfirmModal)
       deleteConfirmModal.classList.remove("active");
+  });
+
+  // Table View Overlay
+    const tableOverlay = document.getElementById("tableOverlay");
+  const btnTableView = document.getElementById("btnTableView");
+  const btnCloseTableOverlay = document.getElementById("btnCloseTableOverlay");
+  const overlayTableContainer = document.getElementById("overlayTableContainer");
+
+  // Open table overlay
+  async function openTableOverlay() {
+    tableOverlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+    
+    // Load table data
+    await loadOverlayTable();
+  }
+
+  // Close table overlay
+  function closeTableOverlay() {
+    tableOverlay.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+
+  // Load overlay table data
+  async function loadOverlayTable() {
+    overlayTableContainer.innerHTML = `
+      <div class="table-loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading data...</p>
+      </div>`;
+
+    const result = await sendAjax("fetchTableView");
+
+    if (result.status === "success" && result.data.length > 0) {
+      renderOverlayTable(result.data);
+    } else {
+      overlayTableContainer.innerHTML = `
+        <div class="table-loading">
+          <p class="text-muted">No data available</p>
+        </div>`;
+    }
+  }
+
+  // Render overlay table
+  function renderOverlayTable(data) {
+    const tableHTML = `
+      <table class="overlay-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">Parameter Name (Unit)</th>
+            <th style="width: 50%;">Methods</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(row => `
+            <tr>
+              <td><strong>${row.parameter_name || '<em class="text-muted">N/A</em>'}</strong></td>
+              <td>${row.method_names || '<em class="text-muted">No methods assigned</em>'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+
+    overlayTableContainer.innerHTML = tableHTML;
+  }
+
+  // Event listeners for table overlay
+  btnTableView.addEventListener("click", openTableOverlay);
+  btnCloseTableOverlay.addEventListener("click", closeTableOverlay);
+
+  // Close on overlay background click
+  tableOverlay.addEventListener("click", (e) => {
+    if (e.target === tableOverlay) {
+      closeTableOverlay();
+    }
+  });
+
+  // Close on ESC key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && tableOverlay.classList.contains("active")) {
+      closeTableOverlay();
+    }
   });
 
   // Initial load

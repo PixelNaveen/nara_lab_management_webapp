@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 // CSRF validation for state-changing operations
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    if (!in_array($action, ['fetchAll', 'getById','fetchMethods'])) {
+    if (!in_array($action, ['fetchAll', 'getById', 'fetchMethods','fetchTableView'])) {
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid security token']);
             exit;
@@ -144,93 +144,93 @@ try {
             break;
 
         // ========== UPDATE ==========
-       // ========== UPDATE ==========
-case 'update':
-    $id = intval($_POST['parameter_id'] ?? 0);
-    $code = trim($_POST['parameter_code'] ?? '');
-    $name = trim($_POST['parameter_name'] ?? '');
-    $category = trim($_POST['parameter_category'] ?? '');
-    $baseUnit = trim($_POST['base_unit'] ?? '');
-    $swabEnabled = intval($_POST['swab_enabled'] ?? 0);
-    $isActive = intval($_POST['is_active'] ?? 1);
-    $methodIds = isset($_POST['method_ids']) && is_array($_POST['method_ids'])
-        ? array_filter(array_map('intval', $_POST['method_ids']))
-        : [];
+        // ========== UPDATE ==========
+        case 'update':
+            $id = intval($_POST['parameter_id'] ?? 0);
+            $code = trim($_POST['parameter_code'] ?? '');
+            $name = trim($_POST['parameter_name'] ?? '');
+            $category = trim($_POST['parameter_category'] ?? '');
+            $baseUnit = trim($_POST['base_unit'] ?? '');
+            $swabEnabled = intval($_POST['swab_enabled'] ?? 0);
+            $isActive = intval($_POST['is_active'] ?? 1);
+            $methodIds = isset($_POST['method_ids']) && is_array($_POST['method_ids'])
+                ? array_filter(array_map('intval', $_POST['method_ids']))
+                : [];
 
-    if ($id <= 0) {
-        throw new Exception('Invalid parameter ID');
-    }
-    if ($name === '') {
-        throw new Exception('Parameter name is required');
-    }
-
-    // Get current parameter and methods
-    $currentParam = $model->getParameterById($id);
-    $currentMethods = $model->getParameterMethodIds($id);
-
-    // Sort arrays for comparison
-    sort($currentMethods);
-    sort($methodIds);
-
-    // Check if anything changed
-    $fieldsUnchanged =
-        $currentParam['parameter_name'] === $name &&
-        $currentParam['parameter_category'] === $category &&
-        $currentParam['base_unit'] === $baseUnit &&
-        intval($currentParam['swab_enabled']) === $swabEnabled &&
-        intval($currentParam['is_active']) === $isActive &&
-        $currentMethods === $methodIds;
-
-    if ($fieldsUnchanged) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'No changes detected'
-        ]);
-        exit;
-    }
-
-    // Check for duplicate name + same methods
-    $allParams = $model->getAllParameters(['is_active'=>'']);
-    foreach ($allParams['data'] as $param) {
-        if ($param['parameter_id'] == $id) continue;
-
-        if ($param['parameter_name'] === $name) {
-            $existingMethodIds = $model->getParameterMethodIds($param['parameter_id']);
-            sort($existingMethodIds);
-            if ($existingMethodIds === $methodIds) {
-                throw new Exception('Another parameter with same name and same methods already exists');
+            if ($id <= 0) {
+                throw new Exception('Invalid parameter ID');
             }
-        }
-    }
+            if ($name === '') {
+                throw new Exception('Parameter name is required');
+            }
 
-    // Get previous swab status
-    $wasSwabEnabled = $currentParam['swab_enabled'];
+            // Get current parameter and methods
+            $currentParam = $model->getParameterById($id);
+            $currentMethods = $model->getParameterMethodIds($id);
 
-    // Perform update
-    if ($model->updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)) {
-        // Sync methods
-        $model->syncParameterMethods($id, $methodIds);
+            // Sort arrays for comparison
+            sort($currentMethods);
+            sort($methodIds);
 
-        // Handle swab changes
-        if ($swabEnabled == 1 && $wasSwabEnabled == 0) {
-            $model->createInitialSwabPrice($id, 0.00);
-        } elseif ($swabEnabled == 0 && $wasSwabEnabled == 1) {
-            $model->disableSwabParam($id);
-        }
+            // Check if anything changed
+            $fieldsUnchanged =
+                $currentParam['parameter_name'] === $name &&
+                $currentParam['parameter_category'] === $category &&
+                $currentParam['base_unit'] === $baseUnit &&
+                intval($currentParam['swab_enabled']) === $swabEnabled &&
+                intval($currentParam['is_active']) === $isActive &&
+                $currentMethods === $methodIds;
 
-        // Sync swab active status
-        if ($swabEnabled == 1) {
-            $model->syncSwabParamStatus($id, $isActive);
-        }
+            if ($fieldsUnchanged) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No changes detected'
+                ]);
+                exit;
+            }
 
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Parameter updated successfully'
-        ]);
-    } else {
-        throw new Exception('Failed to update parameter');
-    }
-    break;
+            // Check for duplicate name + same methods
+            $allParams = $model->getAllParameters(['is_active' => '']);
+            foreach ($allParams['data'] as $param) {
+                if ($param['parameter_id'] == $id) continue;
+
+                if ($param['parameter_name'] === $name) {
+                    $existingMethodIds = $model->getParameterMethodIds($param['parameter_id']);
+                    sort($existingMethodIds);
+                    if ($existingMethodIds === $methodIds) {
+                        throw new Exception('Another parameter with same name and same methods already exists');
+                    }
+                }
+            }
+
+            // Get previous swab status
+            $wasSwabEnabled = $currentParam['swab_enabled'];
+
+            // Perform update
+            if ($model->updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)) {
+                // Sync methods
+                $model->syncParameterMethods($id, $methodIds);
+
+                // Handle swab changes
+                if ($swabEnabled == 1 && $wasSwabEnabled == 0) {
+                    $model->createInitialSwabPrice($id, 0.00);
+                } elseif ($swabEnabled == 0 && $wasSwabEnabled == 1) {
+                    $model->disableSwabParam($id);
+                }
+
+                // Sync swab active status
+                if ($swabEnabled == 1) {
+                    $model->syncSwabParamStatus($id, $isActive);
+                }
+
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Parameter updated successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to update parameter');
+            }
+            break;
 
 
         // ========== DELETE ==========
@@ -288,6 +288,21 @@ case 'update':
                 'data' => $methods
             ]);
             break;
+        case 'fetchTableView':
+            try {
+                $tableData = $model->getParametersWithMethods();
+
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $tableData
+                ]);
+            } catch (Exception $e) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to load table data: ' . $e->getMessage()
+                ]);
+            }
+            break;
         default:
             echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
@@ -296,4 +311,3 @@ case 'update':
     error_log("Parameter Controller Error: " . $e->getMessage());
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
-?>
