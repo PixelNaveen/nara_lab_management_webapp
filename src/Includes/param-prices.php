@@ -132,3 +132,12 @@
     </div>
   </div>
 </div>
+
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+  <div id="toastContainer"></div>
+</div>
+
+<!-- Choices.js CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
