@@ -190,6 +190,20 @@ try {
             ]);
             break;
 
+             case 'getComboById':
+            $id = intval($_POST['id'] ?? 0);
+            if ($id <= 0) {
+                throw new Exception('Invalid combo ID');
+            }
+
+            $result = $model->getComboPriceById($id);
+            if ($result) {
+                echo json_encode(['status' => 'success', 'data' => $result]);
+            } else {
+                throw new Exception('Combo not found');
+            }
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
