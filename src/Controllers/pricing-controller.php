@@ -314,6 +314,16 @@ try {
             }
             break;
 
+              // ========== HELPER ACTIONS ==========
+
+        case 'fetchActiveParameters':
+            $result = $model->getActiveParameters();
+            echo json_encode([
+                'status' => 'success',
+                'data' => $result
+            ]);
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
