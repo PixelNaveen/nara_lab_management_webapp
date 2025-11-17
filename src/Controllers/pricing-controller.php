@@ -339,7 +339,12 @@ try {
                 'combo_name' => $combo_name
             ]);
             break;
-
+default:
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid action'
+            ]);
+            break;
     }
 } catch (Exception $e) {
     //throw $th;
