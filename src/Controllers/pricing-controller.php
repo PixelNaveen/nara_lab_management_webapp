@@ -155,6 +155,23 @@ try {
                 throw new Exception('Failed to update price');
             }
             break;
+
+            case 'deleteIndividual':
+            $id = intval($_POST['id'] ?? 0);
+            if ($id <= 0) {
+                throw new Exception('Invalid pricing ID');
+            }
+
+            if ($model->softDeleteIndividualPrice($id)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Price deleted successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to delete price');
+            }
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
