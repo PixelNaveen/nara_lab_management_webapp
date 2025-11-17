@@ -42,7 +42,7 @@ try {
             ]);
             break;
 
-            case 'getIndividualById':
+        case 'getIndividualById':
             $id = intval($_POST['id'] ?? 0);
             if ($id <= 0) {
                 throw new Exception('Invalid pricing ID');
@@ -53,6 +53,53 @@ try {
                 echo json_encode(['status' => 'success', 'data' => $result]);
             } else {
                 throw new Exception('Price not found');
+            }
+            break;
+
+        case 'insertIndividual':
+            $parameter_id = intval($_POST['parameter_id'] ?? 0);
+            $test_charge = floatval($_POST['test_charge'] ?? 0);
+            $is_active = intval($_POST['is_active'] ?? 1);
+
+            if ($parameter_id <= 0) {
+                throw new Exception('Please select a parameter');
+            }
+            if ($test_charge < 0) {
+                throw new Exception('Price cannot be negative');
+            }
+
+            // Check if deleted price exists
+            $deletedPrice = $model->findDeletedIndividualPrice($parameter_id);
+
+            if ($deletedPrice) {
+                // Reactivate
+                if ($model->reactivateIndividualPrice($deletedPrice['pricing_id'], $test_charge, $is_active)) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Price reactivated successfully',
+                        'pricing_id' => $deletedPrice['pricing_id']
+                    ]);
+                } else {
+                    throw new Exception('Failed to reactivate price');
+                }
+            } else {
+                // Check for active duplicate
+                if ($model->hasIndividualPrice($parameter_id)) {
+                    throw new Exception('This parameter already has a price');
+                }
+
+                // Insert new
+                $pricing_id = $model->insertIndividualPrice($parameter_id, $test_charge, $is_active);
+
+                if ($pricing_id) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Price added successfully',
+                        'pricing_id' => $pricing_id
+                    ]);
+                } else {
+                    throw new Exception('Failed to add price');
+                }
             }
             break;
     }
