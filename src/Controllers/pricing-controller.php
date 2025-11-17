@@ -204,6 +204,39 @@ try {
             }
             break;
 
+                    case 'insertCombo':
+            $parameter_ids = isset($_POST['parameter_ids']) && is_array($_POST['parameter_ids'])
+                ? array_filter(array_map('intval', $_POST['parameter_ids']))
+                : [];
+            $test_charge = floatval($_POST['test_charge'] ?? 0);
+            $is_active = intval($_POST['is_active'] ?? 1);
+
+            if (count($parameter_ids) < 2) {
+                throw new Exception('Please select at least 2 parameters');
+            }
+            if ($test_charge < 0) {
+                throw new Exception('Price cannot be negative');
+            }
+
+            // Check for exact duplicate combo
+            if ($model->hasExactCombo($parameter_ids)) {
+                throw new Exception('A combo with these exact parameters already exists');
+            }
+
+            // Insert combo
+            $combo_id = $model->insertCombo($parameter_ids, $test_charge, $is_active);
+
+            if ($combo_id) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Combo price added successfully',
+                    'combo_id' => $combo_id
+                ]);
+            } else {
+                throw new Exception('Failed to add combo price');
+            }
+            break;
+
     }
 } catch (Exception $e) {
     //throw $th;
