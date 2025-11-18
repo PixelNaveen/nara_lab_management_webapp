@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample Information Form - Laboratory Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --danger-color: #dc3545;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+        }
+
+        .form-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-number {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        /* Progress Indicator */
+        .progress-container {
+            background: white;
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .progress-step::before {
+            content: attr(data-step);
+            display: block;
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 0.5rem;
+            background: #e9ecef;
+            border-radius: 50%;
+            line-height: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active::before {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed::before {
+            background: var(--success-color);
+            color: white;
+            content: '\2713';
+        }
+
+        /* Step Content */
+        .step {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Client Search */
+        .client-search-box {
+            position: relative;
+        }
+
+        .client-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .client-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .client-item:hover {
+            background: var(--light-bg);
+        }
+
+        .client-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Sample Card */
+        .sample-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .sample-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .sample-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--light-bg);
+        }
+
+        .sample-code-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .remove-sample-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .remove-sample-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .add-sample-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .add-sample-btn:hover {
+            background: #157347;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Unit Selector Groups */
+        .unit-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .unit-option {
+            padding: 0.5rem 1rem;
+            background: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .unit-option:hover {
+            background: #e2e6ea;
+        }
+
+        .unit-option.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Parameter Selection */
+        .param-section {
+            background: var(--light-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .param-category {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .param-item {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .param-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .param-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+
+        .param-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .param-label {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .param-price {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .swab-badge {
+            background: var(--warning-color);
+            color: #000;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Variants */
+        .variant-list {
+            margin-left: 2.5rem;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        /* Review Summary */
+        .review-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .review-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .total-row {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .btn-nav {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prev {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-prev:hover {
+            background: #5a6268;
+        }
+
+        .btn-next, .btn-submit {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-next:hover, .btn-submit:hover {
+            background: #0b5ed7;
+        }
+
+        /* Radio Type Selection */
+        .type-card {
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .type-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .type-card.selected {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .type-card i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 0 0.5rem;
+            }
+
+            .form-header {
+                padding: 1.5rem;
+            }
+
+            .sample-card {
+                padding: 1rem;
+            }
+
+            .progress-steps {
+                flex-wrap: wrap;
+            }
+
+            .progress-step {
+                flex: 0 0 25%;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .alert-info {
+            background: #cfe2ff;
+            border: 1px solid #b6d4fe;
+            color: #084298;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Form Header -->
+        <div class="form-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-flask"></i> Sample Information Form</h1>
+                    <div class="form-number">
+                        <i class="fas fa-barcode"></i> Form Number: <span id="formNumberDisplay">25/0001</span>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="d-block opacity-75">Submitted by:</small>
+                    <strong id="currentUser">Kavidu Naveen</strong>
+                    <input type="hidden" name="submitted_by" id="submittedBy" value="Kavidu Naveen">
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="progress-container">
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar" id="progressBar" style="width: 16.67%;"></div>
+            </div>
+            <ul class="progress-steps">
+                <li class="progress-step active" data-step="1">Client</li>
+                <li class="progress-step" data-step="2">Type</li>
+                <li class="progress-step" data-step="3">Details</li>
+                <li class="progress-step" data-step="4">Samples</li>
+                <li class="progress-step" data-step="5">Tests</li>
+                <li class="progress-step" data-step="6">Review</li>
+            </ul>
+        </div>
+
+        <!-- Main Form -->
+        <form id="siForm">
+            <input type="hidden" name="form_number" id="formNumber" value="25/0001">
+
+            <!-- Step 1: Client Selection -->
+            <div class="step active" data-step="1">
+                <h2 class="step-title"><i class="fas fa-users"></i> Step 1: Select or Create Client</h2>
+                
+                <div class="client-search-box mb-4">
+                    <label class="form-label fw-bold">Search Existing Client</label>
+                    <input type="text" class="form-control form-control-lg" id="clientSearch" 
+                           placeholder="Search by name, phone, or email...">
+                    <div class="client-results" id="clientResults" style="display: none;"></div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Select an existing client or create a new one below
+                </div>
+
+                <h5 class="mb-3"><i class="fas fa-user-plus"></i> Or Create New Client</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Client Name *</label>
+                        <input type="text" class="form-control" name="client_name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone *</label>
+                        <input type="text" class="form-control" name="phone_primary" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" name="address_line1">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" name="city">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Contact Person</label>
+                        <input type="text" class="form-control" name="contact_person">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Submission Type -->
+            <div class="step" data-step="2">
+                <h2 class="step-title"><i class="fas fa-clipboard-check"></i> Step 2: Select Submission Type</h2>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="type-card" data-type="regular">
+                            <input type="radio" name="submission_type" value="regular" id="typeRegular" 
+                                   style="display: none;" required>
+                            <label for="typeRegular" style="cursor: pointer; width: 100%;">
+                                <i class="fas fa-vial"></i>
+                                <h4>Regular Testing</h4>
+                                <p class="text-muted mb-0">Water, Liquid, Food Samples</p>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="type-card" data-type="swab">
+                            <input type="radio" name="submission_type" value="swab" id="typeSwab" 
+                                   style="display: none;" required>
+                            <label for="typeSwab" style="cursor: pointer; width: 100%;">
+                                <i class="fas fa-hand-sparkles"></i>
+                                <h4>SWAB Testing</h4>
+                                <p class="text-muted mb-0">Surface Swabs, Equipment Testing</p>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Submission Details -->
+            <div class="step" data-step="3">
+                <h2 class="step-title"><i class="fas fa-info-circle"></i> Step 3: Submission Details</h2>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Sampling Date & Time *</label>
+                        <input type="datetime-local" class="form-control" name="sampling_datetime" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Sampling Location</label>
+                        <input type="text" class="form-control" name="sampling_location" 
+                               placeholder="e.g., Kitchen Area, Storage Room">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Reason for Analysis</label>
+                        <textarea class="form-control" name="reason_for_analysis" rows="2" 
+                                  placeholder="Enter the reason or purpose of this analysis..."></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea class="form-control" name="additional_notes" rows="3" 
+                                  placeholder="Any special instructions or observations..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tentative Report Date *</label>
+                        <input type="date" class="form-control" name="tentative_date" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Additional Charges (Rs.)</label>
+                        <input type="number" class="form-control" name="additional_charges" 
+                               step="0.01" min="0" value="0" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Sample Items -->
+            <div class="step" data-step="4">
+                <h2 class="step-title"><i class="fas fa-flask"></i> Step 4: Add Sample Items</h2>
+                
+                <div id="samplesContainer"></div>
+                
+                <button type="button" class="add-sample-btn" id="addSampleBtn">
+                    <i class="fas fa-plus-circle"></i> Add Another Sample
+                </button>
+            </div>
+
+            <!-- Step 5: Select Tests -->
+            <div class="step" data-step="5">
+                <h2 class="step-title"><i class="fas fa-tasks"></i> Step 5: Select Tests for Each Sample</h2>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-exclamation-circle"></i> Each sample must have at least one test selected
+                </div>
+                
+                <div id="testsContainer"></div>
+            </div>
+
+            <!-- Step 6: Review -->
+            <div class="step" data-step="6">
+                <h2 class="step-title"><i class="fas fa-check-circle"></i> Step 6: Review & Submit</h2>
+                
+                <div id="reviewSummary"></div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button type="button" class="btn-nav btn-prev" id="prevBtn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button type="button" class="btn-nav btn-next" id="nextBtn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" class="btn-nav btn-submit" id="submitBtn" style="display: none;">
+                    <i class="fas fa-paper-plane"></i> Submit Form
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Configuration
+        const formNumber = document.getElementById('formNumber').value;
+        let currentStep = 1;
+        let sampleCount = 0;
+        let submissionType = '';
+
+        // Simulated Data (Replace with AJAX calls to PHP backend)
+        const simulatedClients = [
+            { client_id: 3, client_name: 'ABCD Pvt Ltd', city: 'Colombo', phone_primary: '0341212123', address_line1: '125/35/01, Akkara 29, Bombuwala, Kalutara' },
+            { client_id: 4, client_name: 'ABC Pvt Ltd', city: 'Kaluthara', phone_primary: '0111213244', address_line1: '125/35/01, Akkara 29, Bombuwala' },
+            { client_id: 5, client_name: 'Alpex Pvt Ltd', city: 'Colombo', phone_primary: '0111314321', address_line1: 'Colombo 15' }
+        ];
+
+        const parameters = [
+            { parameter_id: 1, parameter_code: 'A', parameter_name: 'Aerobic Plate Count', has_variants: 1, swab_enabled: 1, price: 1250.00, swab_price: 375.00 },
+            { parameter_id: 2, parameter_code: 'B', parameter_name: 'Water and Ice – Coliforms', has_variants: 0, swab_enabled: 0, price: 1125.00 },
+            { parameter_id: 3, parameter_code: 'C', parameter_name: 'Water and Ice – Faecal coliforms', has_variants: 0, swab_enabled: 0, price: 1250.00 },
+            { parameter_id: 4, parameter_code: 'D', parameter_name: 'Water and Ice – E. coli', has_variants: 0, swab_enabled: 0, price: 1375.00 },
+            { parameter_id: 5, parameter_code: 'E', parameter_name: 'Food – Coliforms', has_variants: 0, swab_enabled: 1, price: 1125.00, swab_price: 375.00 },
+            { parameter_id: 6, parameter_code: 'F', parameter_name: 'Food – Faecal coliforms', has_variants: 0, swab_enabled: 1, price: 1250.00, swab_price: 375.00 },
+            { parameter_id: 7, parameter_code: 'G', parameter_name: 'Food – E. coli', has_variants: 0, swab_enabled: 0, price: 1375.00 },
+            { parameter_id: 11, parameter_code: 'K', parameter_name: 'Staphylococcus aureus', has_variants: 0, swab_enabled: 1, price: 2625.00, swab_price: 375.00 }
+        ];
+
+        const variants = {
+            1: [
+                { variant_id: 1, variant_name: '37°C', full_display_name: 'Aerobic Plate Count at 37°C' },
+                { variant_id: 2, variant_name: '30°C', full_display_name: 'Aerobic Plate Count at 30°C' },
+                { variant_id: 3, variant_name: '22°C', full_display_name: 'Aerobic Plate Count at 22°C' }
+            ]
+        };
+
+        // Unit options by category
+        const unitOptions = {
+            weight: ['g', 'kg', 'mg'],
+            volume: ['ml', 'L', 'μL'],
+            size: ['cm²', 'm²', 'mm²'],
+            area: ['cm²', 'm²', 'swab']
+        };
+
+        // Navigation Functions
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+
+            document.querySelectorAll('.progress-step').forEach((s, idx) => {
+                s.classList.toggle('active', idx + 1 === step);
+                s.classList.toggle('completed', idx + 1 < step);
+            });
+
+            document.getElementById('progressBar').style.width = `${(step / 6) * 100}%`;
+            document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'inline-block';
+            document.getElementById('nextBtn').style.display = step === 6 ? 'none' : 'inline-block';
+            document.getElementById('submitBtn').style.display = step === 6 ? 'inline-block' : 'none';
+
+            currentStep = step;
+
+            if (step === 4) initSamples();
+            if (step === 5) loadTests();
+            if (step === 6) showReview();
+        }
+
+        function validateStep(step) {
+            const stepEl = document.querySelector(`.step[data-step="${step}"]`);
+            const required = stepEl.querySelectorAll('[required]');
+            
+            for (let input of required) {
+                if (!input.value.trim() && input.type !== 'radio') return false;
+                if (input.type === 'radio' && !document.querySelector(`[name="${input.name}"]:checked`)) return false;
+            }
+
+            if (step === 4 && sampleCount === 0) return false;
+            if (step === 5) {
+                const checked = document.querySelectorAll('input[name^="test_"]:checked');
+                if (checked.length === 0) return false;
+            }
+
+            return true;
+        }
+
+        // Client Search
+        document.getElementById('clientSearch').addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const results = document.getElementById('clientResults');
+            
+            if (query.length === 0) {
+                results.style.display = 'none';
+                return;
+            }
+
+            const matches = simulatedClients.filter(c => 
+                c.client_name.toLowerCase().includes(query) ||
+                c.phone_primary.includes(query)
+            );
+
+            if (matches.length > 0) {
+                results.innerHTML = matches.map(c => `
+                    <div class="client-item" onclick="selectClient(${c.client_id})">
+                        <strong>${c.client_name}</strong><br>
+                        <small class="text-muted">${c.city} • ${c.phone_primary}</small>
+                    </div>
+                `).join('');
+                results.style.display = 'block';
+            } else {
+                results.innerHTML = '<div class="client-item">No clients found</div>';
+                results.style.display = 'block';
+            }
+        });
+
+        function selectClient(clientId) {
+            const client = simulatedClients.find(c => c.client_id === clientId);
+            if (client) {
+                document.querySelector('[name="client_name"]').value = client.client_name;
+                document.querySelector('[name="phone_primary"]').value = client.phone_primary;
+                document.querySelector('[name="city"]').value = client.city || '';
+                document.querySelector('[name="address_line1"]').value = client.address_line1 || '';
+                document.getElementById('clientResults').style.display = 'none';
+            }
+        }
+
+        // Submission Type Selection
+        document.querySelectorAll('.type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+                submissionType = this.querySelector('input[type="radio"]').value;
+            });
+        });
+
+        // Sample Management
+        function initSamples() {
+            if (sampleCount === 0) addSample();
+        }
+
+        function addSample() {
+            sampleCount++;
+            const sampleCode = `${formNumber}/${String(sampleCount).padStart(2, '0')}`;
+            const container = document.getElementById('samplesContainer');
+
+            const card = document.createElement('div');
+            card.className = 'sample-card';
+            card.dataset.sampleId = sampleCount;
+            card.innerHTML = `
+                <div class="sample-card-header">
+                    <div>
+                        <h4 class="mb-0">Sample ${sampleCount}</h4>
+                        <span class="sample-code-badge">${sampleCode}</span>
+                    </div>
+                    ${sampleCount > 1 ? `<button type="button" class="remove-sample-btn" onclick="removeSample(${sampleCount})">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>` : ''}
+                </div>
+
+                <input type="hidden" name="samples[${sampleCount}][sequence]" value="${sampleCount}">
+                <input type="hidden" name="samples[${sampleCount}][sample_code]" value="${sampleCode}">
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Sample Name *</label>
+                        <input type="text" class="form-control" name="samples[${sampleCount}][sample_name]" 
+                               placeholder="e.g., Drinking Water, Ice Cubes, Surface Swab" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Measurement Value *</label>
+                        <input type="number" class="form-control" name="samples[${sampleCount}][value]" 
+                               placeholder="e.g., 100, 250" step="0.01" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Unit *</label>
+                        <select class="form-select" name="samples[${sampleCount}][unit]" required>
+                            <option value="">Select Unit</option>
+                            <optgroup label="Weight">
+                                <option value="g">g (gram)</option>
+                                <option value="kg">kg (kilogram)</option>
+                                <option value="mg">mg (milligram)</option>
+                            </optgroup>
+                            <optgroup label="Volume">
+                                <option value="ml">ml (milliliter)</option>
+                                <option value="L">L (liter)</option>
+                            </optgroup>
+                            <optgroup label="Area">
+                                <option value="cm²">cm² (square centimeter)</option>
+                                <option value="m²">m² (square meter)</option>
+                            </optgroup>
+                            ${submissionType === 'swab' ? '<optgroup label="Swab"><option value="swab">swab</option></optgroup>' : ''}
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Client Sample Reference (Optional)</label>
+                        <input type="text" class="form-control" name="samples[${sampleCount}][client_sample_code]" 
+                               placeholder="Client's own sample code or reference">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+        }
+
+        function removeSample(sampleId) {
+            const card = document.querySelector(`.sample-card[data-sample-id="${sampleId}"]`);
+            if (card) {
+                card.remove();
+                sampleCount--;
+                // Renumber remaining samples
+                renumberSamples();
+            }
+        }
+
+        function renumberSamples() {
+            const cards = document.querySelectorAll('.sample-card');
+            sampleCount = 0;
+            
+            cards.forEach((card, index) => {
+                sampleCount++;
+                const newCode = `${formNumber}/${String(sampleCount).padStart(2, '0')}`;
+                
+                card.dataset.sampleId = sampleCount;
+                card.querySelector('h4').textContent = `Sample ${sampleCount}`;
+                card.querySelector('.sample-code-badge').textContent = newCode;
+                
+                // Update all input names
+                card.querySelectorAll('input, select').forEach(input => {
+                    if (input.name) {
+                        input.name = input.name.replace(/\[\d+\]/, `[${sampleCount}]`);
+                    }
+                });
+                
+                card.querySelector('[name^="samples"][name$="[sequence]"]').value = sampleCount;
+                card.querySelector('[name^="samples"][name$="[sample_code]"]').value = newCode;
+
+                // Update remove button
+                const removeBtn = card.querySelector('.remove-sample-btn');
+                if (removeBtn) {
+                    removeBtn.onclick = () => removeSample(sampleCount);
+                }
+            });
+        }
+
+        document.getElementById('addSampleBtn').addEventListener('click', addSample);
+
+        // Load Tests Based on Submission Type
+        function loadTests() {
+            const container = document.getElementById('testsContainer');
+            container.innerHTML = '';
+
+            const availableParams = submissionType === 'swab' 
+                ? parameters.filter(p => p.swab_enabled === 1)
+                : parameters;
+
+            for (let i = 1; i <= sampleCount; i++) {
+                const sampleName = document.querySelector(`[name="samples[${i}][sample_name]"]`).value;
+                const sampleCode = document.querySelector(`[name="samples[${i}][sample_code]"]`).value;
+
+                const sampleSection = document.createElement('div');
+                sampleSection.className = 'param-section';
+                sampleSection.innerHTML = `
+                    <h4 class="param-category">
+                        <i class="fas fa-vial"></i> Sample ${i}: ${sampleName} 
+                        <small class="text-muted">(${sampleCode})</small>
+                    </h4>
+                `;
+
+                availableParams.forEach(param => {
+                    const paramDiv = document.createElement('div');
+                    paramDiv.className = 'param-item';
+
+                    if (param.has_variants && variants[param.parameter_id]) {
+                        // Parameter with variants
+                        paramDiv.innerHTML = `
+                            <div class="param-checkbox">
+                                <strong>${param.parameter_code} — ${param.parameter_name}</strong>
+                                ${submissionType === 'swab' ? '<span class="swab-badge">SWAB</span>' : ''}
+                            </div>
+                            <div class="variant-list">
+                                ${variants[param.parameter_id].map(v => `
+                                    <div class="param-checkbox mb-2">
+                                        <input type="checkbox" 
+                                               name="test_${i}_${param.parameter_id}_${v.variant_id}" 
+                                               id="test_${i}_${param.parameter_id}_${v.variant_id}"
+                                               data-sample="${i}"
+                                               data-param="${param.parameter_id}"
+                                               data-variant="${v.variant_id}"
+                                               data-price="${submissionType === 'swab' ? param.swab_price : param.price}"
+                                               onchange="updatePricing()">
+                                        <label for="test_${i}_${param.parameter_id}_${v.variant_id}" class="param-label">
+                                            ${v.full_display_name}
+                                        </label>
+                                        <span class="param-price">
+                                            Rs. ${submissionType === 'swab' ? param.swab_price.toFixed(2) : param.price.toFixed(2)}
+                                        </span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        // Regular parameter
+                        const price = submissionType === 'swab' && param.swab_price ? param.swab_price : param.price;
+                        paramDiv.innerHTML = `
+                            <div class="param-checkbox">
+                                <input type="checkbox" 
+                                       name="test_${i}_${param.parameter_id}" 
+                                       id="test_${i}_${param.parameter_id}"
+                                       data-sample="${i}"
+                                       data-param="${param.parameter_id}"
+                                       data-price="${price}"
+                                       onchange="updatePricing()">
+                                <label for="test_${i}_${param.parameter_id}" class="param-label">
+                                    ${param.parameter_code} — ${param.parameter_name}
+                                    ${submissionType === 'swab' && param.swab_enabled ? '<span class="swab-badge">SWAB</span>' : ''}
+                                </label>
+                                <span class="param-price">Rs. ${price.toFixed(2)}</span>
+                            </div>
+                        `;
+                    }
+
+                    sampleSection.appendChild(paramDiv);
+                });
+
+                container.appendChild(sampleSection);
+            }
+        }
+
+        // Update Pricing Calculation
+        function updatePricing() {
+            // This will be called when checkboxes change
+            // Prices are stored in data attributes for easy access
+        }
+
+        // Review and Calculate Totals
+        function showReview() {
+            const container = document.getElementById('reviewSummary');
+            const clientName = document.querySelector('[name="client_name"]').value;
+            const samplingDate = document.querySelector('[name="sampling_datetime"]').value;
+            const additionalCharges = parseFloat(document.querySelector('[name="additional_charges"]').value) || 0;
+
+            let reviewHTML = `
+                <div class="review-card">
+                    <h4><i class="fas fa-user"></i> Client Information</h4>
+                    <div class="review-item">
+                        <span><strong>Client Name:</strong></span>
+                        <span>${clientName}</span>
+                    </div>
+                    <div class="review-item">
+                        <span><strong>Submission Type:</strong></span>
+                        <span class="badge bg-primary">${submissionType.toUpperCase()}</span>
+                    </div>
+                    <div class="review-item">
+                        <span><strong>Sampling Date:</strong></span>
+                        <span>${new Date(samplingDate).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+
+            let grandTotal = 0;
+
+            // Calculate for each sample
+            for (let i = 1; i <= sampleCount; i++) {
+                const sampleName = document.querySelector(`[name="samples[${i}][sample_name]"]`).value;
+                const sampleCode = document.querySelector(`[name="samples[${i}][sample_code]"]`).value;
+                const value = document.querySelector(`[name="samples[${i}][value]"]`).value;
+                const unit = document.querySelector(`[name="samples[${i}][unit]"]`).value;
+
+                const selectedTests = document.querySelectorAll(`input[data-sample="${i}"]:checked`);
+                let sampleTotal = 0;
+                let testsHTML = '';
+
+                selectedTests.forEach(test => {
+                    const price = parseFloat(test.dataset.price);
+                    sampleTotal += price;
+                    
+                    const paramId = test.dataset.param;
+                    const param = parameters.find(p => p.parameter_id == paramId);
+                    const variantId = test.dataset.variant;
+                    
+                    let testName = param ? `${param.parameter_code} — ${param.parameter_name}` : 'Test';
+                    
+                    if (variantId && variants[paramId]) {
+                        const variant = variants[paramId].find(v => v.variant_id == variantId);
+                        if (variant) testName = variant.full_display_name;
+                    }
+
+                    testsHTML += `
+                        <div class="review-item">
+                            <span>${testName}</span>
+                            <span class="text-success">Rs. ${price.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+
+                grandTotal += sampleTotal;
+
+                reviewHTML += `
+                    <div class="review-card">
+                        <h5><i class="fas fa-flask"></i> ${sampleName} (${sampleCode})</h5>
+                        <div class="review-item">
+                            <span><strong>Measurement:</strong></span>
+                            <span>${value} ${unit}</span>
+                        </div>
+                        <h6 class="mt-3 mb-2"><i class="fas fa-list-check"></i> Selected Tests:</h6>
+                        ${testsHTML}
+                        <div class="review-item" style="background: #f8f9fa; padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem;">
+                            <span><strong>Sample Subtotal:</strong></span>
+                            <span class="fw-bold text-primary">Rs. ${sampleTotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Final totals
+            reviewHTML += `
+                <div class="review-card">
+                    <h4><i class="fas fa-calculator"></i> Financial Summary</h4>
+                    <div class="review-item">
+                        <span><strong>Total Test Charges:</strong></span>
+                        <span class="text-success fw-bold">Rs. ${grandTotal.toFixed(2)}</span>
+                    </div>
+                    <div class="review-item">
+                        <span><strong>Additional Charges:</strong></span>
+                        <span class="text-info fw-bold">Rs. ${additionalCharges.toFixed(2)}</span>
+                    </div>
+                    <div class="total-row">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-money-bill-wave"></i> GRAND TOTAL:</span>
+                            <span class="text-primary">Rs. ${(grandTotal + additionalCharges).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = reviewHTML;
+        }
+
+        // Navigation Event Listeners
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (validateStep(currentStep)) {
+                showStep(currentStep + 1);
+            } else {
+                alert('Please complete all required fields before proceeding.');
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            showStep(currentStep - 1);
+        });
+
+        // Form Submission
+        document.getElementById('siForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (!validateStep(6)) {
+                alert('Please complete all required fields.');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            
+            // Add selected tests to formData
+            document.querySelectorAll('input[name^="test_"]:checked').forEach(test => {
+                formData.append(test.name, test.value || 'on');
+                formData.append(`${test.name}_price`, test.dataset.price);
+                formData.append(`${test.name}_param`, test.dataset.param);
+                if (test.dataset.variant) {
+                    formData.append(`${test.name}_variant`, test.dataset.variant);
+                }
+            });
+
+            // In production, send to save_sample.php
+            console.log('Form Data:', Object.fromEntries(formData));
+            
+            // Simulated success
+            alert('Sample Information Form submitted successfully!\n\nForm Number: ' + formNumber + '\n\nRedirecting to Acknowledgement Form...');
+            
+            // In production: window.location.href = 'acknowledgement_form.php?sample_id=' + sampleId;
+        });
+
+        // Initialize
+        showStep(1);
+    </script>
+</body>
+</html>
