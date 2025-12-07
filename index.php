@@ -1,16 +1,32 @@
 <?php
-// index.php
+/**
+ * Main Index File
+ * Laboratory Management System
+ * 
+ * Entry point for the application with authentication
+ */
+
+// ✅ INCLUDE AUTHENTICATION CHECK FIRST
+require_once __DIR__ . '/src/Includes/auth.php';
+
+// Now $currentUser is available from auth.php
+// Database connection
 require_once __DIR__ . '/Config/Database.php';
 $db = new Database();
 $conn = $db->connect();
 
-session_start();
+// $currentUser array from auth.php contains:
+// - user_id
+// - fullname
+// - username
+// - email
+// - role
 
-// Example user data
 $user = [
-    'name' => 'Kavidu Naveen',
-    'role' => 'Lab Technician',
-    'initials' => 'KN'
+    'name' => $_SESSION['fullname'],
+    'username' => $_SESSION['username'],
+    'role' => $_SESSION['role'],
+    'initials' => $userInitials
 ];
 
 // Get current page from URL parameter
@@ -29,7 +45,6 @@ $pageMap = [
     'swab-parameter' => 'swab-param.php',
     'pricing' => 'param-prices.php',
     'methods' => 'manage-test-methods.php'
-    // Add all other pages here
 ];
 
 // Resolve the file path safely
@@ -40,7 +55,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" gi content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NARA Lab Management System</title>
 
     <!-- Bootstrap CSS -->
@@ -54,15 +69,11 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
     <!-- Custom CSS -->
-
-    <link rel="stylesheet" href="public/assets/css/main.css">
+    <link rel="stylesheet" href="public/assets/css/style.css">
     <link rel="stylesheet" href="public/assets/css/header.css">
     <link rel="stylesheet" href="public/assets/css/sidebar.css">
-    <link rel="stylesheet" href="public/assets/css/style.css">
     <link rel="stylesheet" href="public/assets/css/dashboard.css">
     <link rel="stylesheet" href="public/assets/css/manage-users.css">
     <link rel="stylesheet" href="public/assets/css/manage-clients.css">
@@ -70,8 +81,8 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/manage-param-variants.css">
     <link rel="stylesheet" href="public/assets/css/swab-param.css">
     <link rel="stylesheet" href="public/assets/css/param-prices.css">
-
-    </div>
+    <link rel="stylesheet" href="public/assets/css/manage-test-methods.css">
+    <link rel="stylesheet" href="public/assets/css/sample-submission.css">
 </head>
 
 <body>
@@ -91,7 +102,10 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
                     if (file_exists($pageFile)) {
                         include $pageFile;
                     } else {
-                        echo "<h1 class='text-danger'>Page not found!</h1>";
+                        echo "<div class='alert alert-danger'>";
+                        echo "<h4><i class='fas fa-exclamation-triangle'></i> Page Not Found</h4>";
+                        echo "<p>The requested page could not be found.</p>";
+                        echo "</div>";
                     }
                     ?>
                 </div>
@@ -103,13 +117,40 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
-
-    <!-- jQuery (optional) -->
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- Custom JS -->
     <script src="public/assets/js/script.js"></script>
     <script src="public/assets/js/load.js"></script>
+
+    <!-- Session Check Script -->
+    <script>
+        // Check session validity every 5 minutes
+        setInterval(async () => {
+            try {
+                const response = await fetch('src/Controllers/auth-controller.php?action=checkSession');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    // Session invalid, redirect to login
+                    window.location.href = 'src/Views/login.php';
+                }
+            } catch (error) {
+                console.error('Session check error:', error);
+            }
+        }, 300000); // 5 minutes
+
+        // Prevent back button to login after successful login
+        window.onload = function() {
+            if (typeof history.pushState === "function") {
+                history.pushState("jibberish", null, null);
+                window.onpopstate = function() {
+                    history.pushState('newjibberish', null, null);
+                };
+            }
+        };
+    </script>
 </body>
 
 </html>

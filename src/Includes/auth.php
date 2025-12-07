@@ -1,38 +1,92 @@
 <?php
-// src/Includes/auth.php
-// Central auth/session guard. Starts session safely and enforces inactivity logout.
+/**
+ * Authentication Check Helper
+ * Include this file at the top of any protected page
+ * 
+ * Security Features:
+ * - Prevents caching of protected pages
+ * - Checks if user is logged in
+ * - Validates session timeout
+ * - Prevents session hijacking (IP check)
+ * - Regenerates session ID periodically
+ * 
+ * @package LabManagementSystem
+ * @subpackage Includes
+ * @version 1.0
+ */
 
-// Start session only if not already started to avoid warnings
+// ✅ PREVENT CACHING OF PROTECTED PAGES
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
+
+// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// If no login → redirect to login page
-if (!isset($_SESSION['user']) || empty($_SESSION['user']['user_id'])) {
-    // Use dirname to compute correct relative path regardless of include location
-    header("Location: " . dirname(__DIR__, 2) . "/src/Views/login.php");
-    exit();
+// ✅ CHECK IF USER IS LOGGED IN
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    // User is not logged in, redirect to login page
+    header('Location: src/Views/login.php');
+    exit;
 }
 
-// Auto logout after 60 seconds of inactivity (as requested)
-$timeoutSeconds = 60; // <--- 60 seconds
-
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeoutSeconds)) {
-    // clear session and redirect to login with timeout flag
-    session_unset();
+// ✅ CHECK SESSION TIMEOUT (2 hours)
+$sessionTimeout = 2 * 60 * 60; // 2 hours in seconds
+if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time'] > $sessionTimeout)) {
+    // Session expired
+    $_SESSION = [];
     session_destroy();
-    header("Location: " . dirname(__DIR__, 2) . "/src/Views/login.php?timeout=1");
-    exit();
+    header('Location: src/Views/login.php?timeout=1');
+    exit;
 }
 
-// Update last activity timestamp
+// ✅ IP ADDRESS VALIDATION (Prevents session hijacking)
+// Note: Can be disabled if users have dynamic IPs
+if (isset($_SESSION['ip_address'])) {
+    $currentIp = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+    if ($_SESSION['ip_address'] !== $currentIp) {
+        // IP changed - possible session hijacking
+        $_SESSION = [];
+        session_destroy();
+        header('Location: src/Views/login.php?security=1');
+        exit;
+    }
+}
+
+// ✅ REGENERATE SESSION ID PERIODICALLY (Every 5 minutes)
+// Prevents session fixation attacks
+if (!isset($_SESSION['last_regeneration'])) {
+    $_SESSION['last_regeneration'] = time();
+} elseif (time() - $_SESSION['last_regeneration'] > 300) { // 5 minutes
+    session_regenerate_id(true);
+    $_SESSION['last_regeneration'] = time();
+}
+
+// ✅ UPDATE LAST ACTIVITY
 $_SESSION['last_activity'] = time();
 
-// Optional: regenerate session id occasionally to mitigate fixation
-if (!isset($_SESSION['regen_time'])) {
-    $_SESSION['regen_time'] = time();
-} elseif (time() - $_SESSION['regen_time'] > 300) { // regen every 5 minutes
-    session_regenerate_id(true);
-    $_SESSION['regen_time'] = time();
+// ✅ MAKE USER DATA AVAILABLE GLOBALLY
+$currentUser = [
+    'user_id' => $_SESSION['user_id'],
+    'fullname' => $_SESSION['fullname'],
+    'username' => $_SESSION['username'],
+    'email' => $_SESSION['email'] ?? '',
+    'role' => $_SESSION['role']
+];
+
+// ✅ GET USER INITIALS FOR DISPLAY
+function getUserInitials($fullname) {
+    $names = explode(' ', trim($fullname));
+    $initials = strtoupper(substr($names[0], 0, 1));
+    if (isset($names[1])) {
+        $initials .= strtoupper(substr($names[1], 0, 1));
+    }
+    return $initials;
 }
+
+$userInitials = getUserInitials($currentUser['fullname']);
+
+// ✅ SESSION IS VALID - Continue with page
 ?>
