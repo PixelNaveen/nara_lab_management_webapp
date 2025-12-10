@@ -12,16 +12,7 @@ $userId = $_SESSION['user_id'] ?? 0;
 <div class="sample-submission-page">
 
 <!-- Toast Notification Container -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="notificationToast" class="toast" role="alert">
-        <div class="toast-header">
-            <i class="fas toast-icon"></i>
-            <strong class="me-auto" id="toastTitle">Notification</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body" id="toastMessage"></div>
-    </div>
-</div>
+
 
 <!-- Main Container -->
 <div class="container-fluid py-4">
@@ -296,6 +287,10 @@ $userId = $_SESSION['user_id'] ?? 0;
         </div>
     </div>
 </div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+    <div id="manageUsersToastContainer"></div>
+  </div>
 
 </div>
 <!-- End scoped div -->

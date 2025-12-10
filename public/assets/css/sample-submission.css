@@ -129,16 +129,18 @@
 /* ===== Client Search Results ===== */
 .sample-submission-page .client-results {
   position: absolute;
-  z-index: 1000;
-  background: white;
-  border: 1px solid var(--border-color);
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #f9f9f9; /* Very light gray background */
+  border: 1px solid #e0e0e0; /* Light, visible border */
   border-top: none;
   border-radius: 0 0 8px 8px;
-  max-height: 300px;
+  max-height: 200px; /* Reduced height */
   overflow-y: auto;
-  width: 100%;
-  box-shadow: var(--shadow-md);
-  display: none;
+  z-index: 1050; /* Ensure it's on top */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  display: none; /* Hidden by default */
 }
 
 .sample-submission-page .client-results.show {
@@ -146,28 +148,14 @@
 }
 
 .sample-submission-page .client-item {
-  padding: 0.875rem 1rem;
+  padding: 10px 15px;
   cursor: pointer;
-  transition: background 0.2s ease-in-out;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.sample-submission-page .client-item:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease; /* Smooth hover effect */
 }
 
 .sample-submission-page .client-item:hover {
-  background: var(--light-gray);
-}
-
-.sample-submission-page .client-item strong {
-  display: block;
-  color: var(--text-dark);
-  margin-bottom: 0.25rem;
-}
-
-.sample-submission-page .client-item small {
-  color: #64748b;
+  background-color: #f1f1f1; /* Slightly darker gray on hover */
 }
 
 /* ===== Type Selection Cards ===== */
