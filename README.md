@@ -1,14 +1,16 @@
 # File Tree: project
 
-**Generated:** 12/10/2025, 12:56:28 PM
-**Root Path:** `c:\Users\Naveen\Desktop\project`
+**Generated:** 12/14/2025, 9:05:09 PM
+**Root Path:** `c:\Users\KNJ\OneDrive\Desktop\project`
 
 ```
 ├── 📁 Config
 │   └── 🐘 Database.php
 ├── 📁 db
 │   ├── 📄 lab (10).sql
+│   ├── 📄 lab (latest).sql
 │   └── 📄 lab.sql
+├── 📁 logs
 ├── 📁 public
 │   ├── 📁 assets
 │   │   ├── 📁 css
@@ -38,11 +40,14 @@
 │   │   ├── 🐘 dashboard-controller.php
 │   │   ├── 🐘 parameter-controller.php
 │   │   ├── 🐘 pricing-controller.php
+│   │   ├── 🐘 sample-controller-debug.php
+│   │   ├── 🐘 sample-controller.php
 │   │   ├── 🐘 swab-controller.php
 │   │   ├── 🐘 test-method-controller.php
 │   │   ├── 🐘 user-controller.php
 │   │   └── 🐘 variant-controller.php
 │   ├── 📁 Helpers
+│   │   └── 🐘 functions.php
 │   ├── 📁 Includes
 │   │   ├── 🐘 auth.php
 │   │   ├── 🐘 dashboard-page.php
@@ -65,6 +70,7 @@
 │   │   ├── 🐘 dashboard-model.php
 │   │   ├── 🐘 parameter-model.php
 │   │   ├── 🐘 pricing-model.php
+│   │   ├── 🐘 sample-model.php
 │   │   ├── 🐘 swab-model.php
 │   │   ├── 🐘 test-method-model.php
 │   │   ├── 🐘 user-model.php
@@ -78,6 +84,9 @@
 ├── ⚙️ package-lock.json
 ├── ⚙️ package.json
 ├── 🌐 print.html
+├── 🐘 test-controller.php
+├── 🐘 test-save-sample.php
+├── 🐘 test-submission.php
 ├── 🌐 test.html
 └── 🐘 test.php
 ```
