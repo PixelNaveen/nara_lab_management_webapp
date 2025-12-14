@@ -1,7 +1,7 @@
 <?php
 /**
- * Sample Submission Form
- * Version: 2.0 (All issues fixed)
+ * Sample Submission Form - COMPLETE VERSION WITH VALIDATION
+ * Version: 2.0 - Production Ready
  */
 
 $currentUser = $_SESSION['fullname'] ?? 'Unknown User';
@@ -10,9 +10,6 @@ $userId = $_SESSION['user_id'] ?? 0;
 
 <!-- Wrap everything in scoped div to prevent CSS conflicts -->
 <div class="sample-submission-page">
-
-<!-- Toast Notification Container -->
-
 
 <!-- Main Container -->
 <div class="container-fluid py-4">
@@ -61,7 +58,7 @@ $userId = $_SESSION['user_id'] ?? 0;
             </ul>
 
             <!-- Form -->
-            <form id="siForm">
+            <form id="siForm" novalidate>
                 <!-- Hidden Fields -->
                 <input type="hidden" name="submitted_by" value="<?php echo htmlspecialchars($currentUser); ?>">
                 <input type="hidden" name="user_id" value="<?php echo $userId; ?>">
@@ -84,8 +81,9 @@ $userId = $_SESSION['user_id'] ?? 0;
                     <div class="mb-4 position-relative">
                         <label class="form-label">Search Client</label>
                         <input type="text" class="form-control" id="clientSearch"
-                            placeholder="Search by name, phone, or contact person...">
+                            placeholder="Search by name, phone, or contact person..." autocomplete="off">
                         <div class="client-results" id="clientResults"></div>
+                        <span class="error-label" id="clientSearchError"></span>
                     </div>
 
                     <!-- Client Details -->
@@ -95,21 +93,29 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 Client Name <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="clientName" required>
+                            <span class="error-label" id="clientNameError"></span>
                         </div>
+                        
                         <div class="col-md-6">
-                            <label class="form-label">Primary Phone <span class="text-danger">*</span></label>
+                            <label class="form-label">
+                                Primary Phone <span class="text-danger">*</span>
+                            </label>
                             <input type="text" class="form-control" id="phonePrimary"
-                                required placeholder="07XXXXXXXX">
-                            <small class="text-muted">Format: 07XXXXXXXX (spaces/dashes allowed)</small>
+                                required placeholder="0771234567" maxlength="10">
+                            <small class="text-muted">Format: 10 digits starting with 0</small>
+                            <span class="error-label" id="phonePrimaryError"></span>
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Address</label>
                             <input type="text" class="form-control" id="addressLine1">
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">City</label>
                             <input type="text" class="form-control" id="city">
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Contact Person</label>
                             <input type="text" class="form-control" id="contactPerson">
@@ -139,6 +145,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                             <p class="text-muted">Swab sample submission</p>
                         </div>
                     </div>
+                    <span class="error-label text-center d-block" id="submissionTypeError"></span>
                 </div>
 
                 <!-- STEP 3: SUBMISSION DETAILS -->
@@ -154,24 +161,30 @@ $userId = $_SESSION['user_id'] ?? 0;
                             </label>
                             <input type="date" class="form-control" id="receivedDate" required>
                             <small class="text-muted">Today or up to 5 days in the past</small>
+                            <span class="error-label" id="receivedDateError"></span>
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">
                                 Tentative Date <span class="text-danger">*</span>
                             </label>
                             <input type="date" class="form-control" id="tentativeDate" required>
                             <small class="text-muted">Today or future date</small>
+                            <span class="error-label" id="tentativeDateError"></span>
                         </div>
+                        
                         <div class="col-12">
                             <label class="form-label">Additional Notes</label>
                             <textarea class="form-control" id="additionalNotes" rows="3"
                                 placeholder="Enter any additional notes or special instructions..."></textarea>
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Additional Charges (Rs.)</label>
                             <input type="number" class="form-control" id="additionalCharges"
                                 min="0" step="0.01" value="0.00">
                             <small class="text-muted">Any extra charges beyond test fees</small>
+                            <span class="error-label" id="additionalChargesError"></span>
                         </div>
                     </div>
                 </div>
@@ -200,7 +213,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                     </h2>
 
                     <div class="alert alert-info">
-                        <i class="fas fa-exclamation-circle"></i> Each sample must have at least one test selected
+                        <i class="fas fa-exclamation-circle"></i> Each sample must have at least one test selected (maximum 10 tests per sample)
                     </div>
 
                     <div id="testsContainer"></div>
@@ -238,32 +251,33 @@ $userId = $_SESSION['user_id'] ?? 0;
                             </label>
                             <input type="text" class="form-control" id="paymentReference"
                                 placeholder="Enter payment reference number">
+                            <span class="error-label" id="paymentReferenceError"></span>
                         </div>
                     </div>
 
                     <!-- Receipt Delivery -->
                     <div class="receipt-delivery-section">
                         <h5 class="mb-3">
-                            <i class="fas fa-envelope"></i> Receipt Delivery (Optional)
+                            <i class="fas fa-envelope"></i> Receipt Delivery (Optional - Future Feature)
                         </h5>
 
                         <div class="alert alert-warning">
                             <i class="fas fa-info-circle"></i>
-                            These are for receipt delivery only and will not be saved to client record.
+                            These fields are for future email/SMS receipt delivery and will not be saved to client record.
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Mobile Number (for SMS receipt)</label>
                                 <input type="text" class="form-control" id="receiptMobile"
-                                    placeholder="07XXXXXXXX">
-                                <small class="text-muted">Leave blank to skip SMS receipt</small>
+                                    placeholder="0771234567" disabled>
+                                <small class="text-muted">Feature coming soon</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email Address (for email receipt)</label>
                                 <input type="email" class="form-control" id="receiptEmail"
-                                    placeholder="client@example.com">
-                                <small class="text-muted">Leave blank to skip email receipt</small>
+                                    placeholder="client@example.com" disabled>
+                                <small class="text-muted">Feature coming soon</small>
                             </div>
                         </div>
                     </div>
@@ -288,9 +302,10 @@ $userId = $_SESSION['user_id'] ?? 0;
     </div>
 </div>
 
+<!-- Toast Container -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
     <div id="manageUsersToastContainer"></div>
-  </div>
+</div>
 
 </div>
 <!-- End scoped div -->
