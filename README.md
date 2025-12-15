@@ -1,6 +1,6 @@
 # File Tree: project
 
-**Generated:** 12/10/2025, 12:56:28 PM
+**Generated:** 12/11/2025, 11:18:04 AM
 **Root Path:** `c:\Users\Naveen\Desktop\project`
 
 ```
@@ -38,11 +38,13 @@
 │   │   ├── 🐘 dashboard-controller.php
 │   │   ├── 🐘 parameter-controller.php
 │   │   ├── 🐘 pricing-controller.php
+│   │   ├── 🐘 sample-controller.php
 │   │   ├── 🐘 swab-controller.php
 │   │   ├── 🐘 test-method-controller.php
 │   │   ├── 🐘 user-controller.php
 │   │   └── 🐘 variant-controller.php
 │   ├── 📁 Helpers
+│   │   └── 🐘 functions.php
 │   ├── 📁 Includes
 │   │   ├── 🐘 auth.php
 │   │   ├── 🐘 dashboard-page.php
@@ -65,6 +67,7 @@
 │   │   ├── 🐘 dashboard-model.php
 │   │   ├── 🐘 parameter-model.php
 │   │   ├── 🐘 pricing-model.php
+│   │   ├── 🐘 sample-model.php
 │   │   ├── 🐘 swab-model.php
 │   │   ├── 🐘 test-method-model.php
 │   │   ├── 🐘 user-model.php
