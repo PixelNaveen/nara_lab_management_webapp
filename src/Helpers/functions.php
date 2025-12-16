@@ -1,32 +1,24 @@
 <?php
 
 /**
- * Helper Functions - FIXED VERSION 3.1
+ * Helper Functions - COMPLETE WITH COMBO FIX
+ * Version: 5.0 FINAL - Production Ready
  * 
- * CRITICAL FIX: Form sequence only increments on successful commit
- * 
- * Changes:
- * 1. generateFormNumber() now part of main transaction
- * 2. Sequence increments ONLY if submission succeeds
- * 3. Payment reference uses NULL instead of empty string
+ * COMBO PRICING FIX:
+ * - Stores full combo price (not divided)
+ * - Calculates individual → discount → combo totals
+ * - Future-proof for new combos
  */
 
 /**
  * Generate Form Number WITHIN TRANSACTION
- * CRITICAL: This must be called INSIDE the main transaction
- * Do NOT commit here - let the calling function handle commit
- * 
- * @param mysqli $conn Database connection (with active transaction)
- * @param int $sampleCount Number of samples in this submission
- * @return array ['success' => bool, 'form_number' => string, 'base_number' => string]
  */
 function generateFormNumber($conn, $sampleCount)
 {
     try {
         $year = (int)date('Y');
-        $yearShort = (int)date('y'); // 2025 -> 25
+        $yearShort = (int)date('y');
 
-        // Lock the row for update (within existing transaction)
         $sql = "SELECT current_number FROM form_sequence WHERE year = ? FOR UPDATE";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -38,7 +30,6 @@ function generateFormNumber($conn, $sampleCount)
         $result = $stmt->get_result();
 
         if ($result->num_rows === 0) {
-            // First form of this year
             $insertSql = "INSERT INTO form_sequence (year, current_number) VALUES (?, 1)";
             $insertStmt = $conn->prepare($insertSql);
             if (!$insertStmt) {
@@ -48,7 +39,6 @@ function generateFormNumber($conn, $sampleCount)
             $insertStmt->execute();
             $sequenceNumber = 1;
         } else {
-            // Increment sequence
             $row = $result->fetch_assoc();
             $sequenceNumber = $row['current_number'] + 1;
 
@@ -61,14 +51,13 @@ function generateFormNumber($conn, $sampleCount)
             $updateStmt->execute();
         }
 
-        // Format: YY/NNNN/CC
         $baseNumber = sprintf("%02d/%04d", $yearShort, $sequenceNumber);
         $fullFormNumber = sprintf("%s/%02d", $baseNumber, $sampleCount);
 
         return [
             'success' => true,
-            'base_number' => $baseNumber,      // 25/0001
-            'form_number' => $fullFormNumber,  // 25/0001/03
+            'base_number' => $baseNumber,
+            'form_number' => $fullFormNumber,
             'sequence' => $sequenceNumber,
             'year' => $yearShort,
             'sample_count' => $sampleCount
@@ -82,30 +71,14 @@ function generateFormNumber($conn, $sampleCount)
     }
 }
 
-/**
- * Generate AC Reference from Form Number
- * Adds 'AC/' prefix to form number for acceptance and acknowledgement forms
- * 
- * @param string $formNumber Form number (e.g., "25/0001/03")
- * @return string AC reference (e.g., "AC/25/0001/03")
- */
 function generateACReference($formNumber)
 {
     return 'AC/' . $formNumber;
 }
 
-/**
- * Get Default Test Method for Parameter
- * Returns the default method_id, or first available if no default set
- * 
- * @param mysqli $conn Database connection
- * @param int $parameterId Parameter ID
- * @return int|null Method ID or null if not found
- */
 function getDefaultMethod($conn, $parameterId)
 {
     try {
-        // Try to get default method
         $sql = "SELECT method_id FROM parameter_methods 
                 WHERE parameter_id = ? AND is_default = 1 
                 ORDER BY sequence_order ASC LIMIT 1";
@@ -123,7 +96,6 @@ function getDefaultMethod($conn, $parameterId)
             return (int)$row['method_id'];
         }
 
-        // If no default found, get first available method
         $fallbackSql = "SELECT method_id FROM parameter_methods 
                         WHERE parameter_id = ? 
                         ORDER BY sequence_order ASC LIMIT 1";
@@ -147,20 +119,11 @@ function getDefaultMethod($conn, $parameterId)
     }
 }
 
-/**
- * Validate Payment Reference Uniqueness
- * Checks if payment reference already exists in samples table
- * 
- * @param mysqli $conn Database connection
- * @param string $reference Payment reference to check
- * @param int|null $excludeSampleId Exclude this sample_id from check (for updates)
- * @return bool True if unique (available), false if already exists
- */
 function isPaymentReferenceUnique($conn, $reference, $excludeSampleId = null)
 {
     try {
         if (empty($reference)) {
-            return true; // Empty references are allowed (not paid)
+            return true;
         }
 
         $sql = "SELECT COUNT(*) as count FROM samples WHERE payment_reference = ?";
@@ -190,24 +153,11 @@ function isPaymentReferenceUnique($conn, $reference, $excludeSampleId = null)
     }
 }
 
-/**
- * Format currency with Rs. prefix
- * 
- * @param float $amount Amount to format
- * @return string Formatted currency (e.g., "Rs. 1,250.00")
- */
 function formatCurrency($amount)
 {
     return 'Rs. ' . number_format((float)$amount, 2);
 }
 
-/**
- * Sanitize input data recursively
- * Handles strings, arrays, and nested arrays
- * 
- * @param mixed $input Input to sanitize
- * @return mixed Sanitized input
- */
 function sanitizeInput($input)
 {
     if (is_array($input)) {
@@ -221,41 +171,20 @@ function sanitizeInput($input)
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * Validate phone number format
- * First digit must be 0, followed by 9 digits
- * 
- * @param string $phone Phone number
- * @return bool Valid or not
- */
 function validatePhone($phone)
 {
-    // Remove spaces and dashes
     $cleaned = preg_replace('/[\s-]/', '', $phone);
-    // Must be 10 digits starting with 0
     return preg_match('/^0\d{9}$/', $cleaned);
 }
 
-/**
- * Validate email format
- * 
- * @param string $email Email address
- * @return bool Valid or not
- */
 function validateEmail($email)
 {
     if (empty($email)) {
-        return true; // Optional field
+        return true;
     }
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-/**
- * Validate received date (today or past 5 days only)
- * 
- * @param string $date Date to validate (YYYY-MM-DD)
- * @return array ['valid' => bool, 'message' => string]
- */
 function validateReceivedDate($date)
 {
     try {
@@ -265,9 +194,8 @@ function validateReceivedDate($date)
 
         $receivedDate = new DateTime($date);
         $today = new DateTime();
-        $fiveDaysAgo = (clone $today)->modify('-5 days');
+        $fiveDaysAgo = new DateTime('-5 days');
 
-        // Reset time to compare only dates
         $receivedDate->setTime(0, 0, 0);
         $today->setTime(0, 0, 0);
         $fiveDaysAgo->setTime(0, 0, 0);
@@ -286,12 +214,6 @@ function validateReceivedDate($date)
     }
 }
 
-/**
- * Validate tentative date (today or future only)
- * 
- * @param string $date Date to validate (YYYY-MM-DD)
- * @return array ['valid' => bool, 'message' => string]
- */
 function validateTentativeDate($date)
 {
     try {
@@ -302,7 +224,6 @@ function validateTentativeDate($date)
         $tentativeDate = new DateTime($date);
         $today = new DateTime();
 
-        // Reset time to compare only dates
         $tentativeDate->setTime(0, 0, 0);
         $today->setTime(0, 0, 0);
 
@@ -316,13 +237,6 @@ function validateTentativeDate($date)
     }
 }
 
-/**
- * Calculate grand total (test charges + additional charges)
- * 
- * @param float $testCharges Test charges total
- * @param float $additionalCharges Additional charges
- * @return float Grand total
- */
 function calculateGrandTotal($testCharges, $additionalCharges = 0.00)
 {
     return (float)$testCharges + (float)$additionalCharges;
@@ -330,25 +244,17 @@ function calculateGrandTotal($testCharges, $additionalCharges = 0.00)
 
 /**
  * Detect combos from selected tests
- * Returns array of detected combos with their charges
- * Prioritizes larger combos (more parameters) first
- * 
- * @param array $tests Array of test objects with parameter_id
- * @param mysqli $conn Database connection
- * @param string $submissionType 'regular' or 'swab'
- * @return array Detected combos with pricing
+ * Returns array of detected combos with their full pricing
  */
 function detectCombos($tests, $conn, $submissionType = 'regular')
 {
     try {
-        // Extract unique parameter IDs from tests
         $parameterIds = array_unique(array_column($tests, 'parameter_id'));
 
         if (count($parameterIds) < 2) {
-            return []; // Need at least 2 parameters for a combo
+            return [];
         }
 
-        // Get all active combos with their parameters
         $sql = "SELECT 
                     pc.combo_id,
                     pc.combo_name,
@@ -363,7 +269,7 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
                   AND cp.is_active = 1
                   AND cp.is_deleted = 0
                 GROUP BY pc.combo_id
-                ORDER BY param_count DESC"; // Prioritize larger combos
+                ORDER BY param_count DESC";
 
         $result = $conn->query($sql);
         if (!$result) {
@@ -372,53 +278,67 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
         }
 
         $detectedCombos = [];
+        $usedParameters = [];  // CRITICAL FIX: Track used parameters
 
         while ($combo = $result->fetch_assoc()) {
             $comboParams = explode(',', $combo['param_ids']);
 
-            // Check if all combo parameters are in selected tests
+            // CRITICAL FIX: Check if ALL params match AND none are already used
             $matchesAll = true;
+            $alreadyUsed = false;
+
             foreach ($comboParams as $comboParam) {
                 if (!in_array($comboParam, $parameterIds)) {
                     $matchesAll = false;
                     break;
                 }
+                if (in_array($comboParam, $usedParameters)) {
+                    $alreadyUsed = true;
+                    break;
+                }
             }
 
-            if ($matchesAll) {
-                // For SWAB mode: verify all parameters are swab_enabled
-                if ($submissionType === 'swab') {
-                    $placeholders = implode(',', array_fill(0, count($comboParams), '?'));
-                    $swabCheckSql = "SELECT COUNT(*) as count 
-                                     FROM test_parameters 
-                                     WHERE parameter_id IN ($placeholders) 
-                                     AND swab_enabled = 1";
+            // Skip if not all match OR if any parameter already used
+            if (!$matchesAll || $alreadyUsed) {
+                continue;
+            }
 
-                    $swabStmt = $conn->prepare($swabCheckSql);
-                    if ($swabStmt) {
-                        $types = str_repeat('i', count($comboParams));
-                        $swabStmt->bind_param($types, ...$comboParams);
-                        $swabStmt->execute();
-                        $swabResult = $swabStmt->get_result();
-                        $swabRow = $swabResult->fetch_assoc();
+            if ($submissionType === 'swab') {
+                $placeholders = implode(',', array_fill(0, count($comboParams), '?'));
+                $swabCheckSql = "SELECT COUNT(*) as count 
+                                 FROM test_parameters 
+                                 WHERE parameter_id IN ($placeholders) 
+                                 AND swab_enabled = 1";
 
-                        if ($swabRow['count'] != count($comboParams)) {
-                            continue; // Not all parameters are swab-enabled, skip this combo
-                        }
+                $swabStmt = $conn->prepare($swabCheckSql);
+                if ($swabStmt) {
+                    $types = str_repeat('i', count($comboParams));
+                    $swabStmt->bind_param($types, ...$comboParams);
+                    $swabStmt->execute();
+                    $swabResult = $swabStmt->get_result();
+                    $swabRow = $swabResult->fetch_assoc();
 
-                        // Add SWAB surcharge (Rs. 375 × number of swab-enabled params)
-                        $swabSurcharge = 375.00 * count($comboParams);
-                        $combo['combo_price'] = (float)$combo['combo_price'] + $swabSurcharge;
+                    if ($swabRow['count'] != count($comboParams)) {
+                        continue;
                     }
-                }
 
-                $detectedCombos[] = [
-                    'combo_id' => (int)$combo['combo_id'],
-                    'combo_name' => $combo['combo_name'],
-                    'parameter_ids' => $comboParams,
-                    'combo_price' => (float)$combo['combo_price'],
-                    'param_count' => (int)$combo['param_count']
-                ];
+                    $swabSurcharge = 375.00 * count($comboParams);
+                    $combo['combo_price'] = (float)$combo['combo_price'] + $swabSurcharge;
+                }
+            }
+
+            // Add combo to detected list
+            $detectedCombos[] = [
+                'combo_id' => (int)$combo['combo_id'],
+                'combo_name' => $combo['combo_name'],
+                'parameter_ids' => $comboParams,
+                'combo_price' => (float)$combo['combo_price'],
+                'param_count' => (int)$combo['param_count']
+            ];
+
+            // CRITICAL FIX: Mark these parameters as used
+            foreach ($comboParams as $paramId) {
+                $usedParameters[] = $paramId;
             }
         }
 
@@ -430,13 +350,169 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
 }
 
 /**
- * Log error to file
- * Creates logs directory if it doesn't exist
+ * ============================================================================
+ * COMBO PRICING FIX - Calculate charges with FULL combo price
+ * ============================================================================
  * 
- * @param string $message Error message
- * @param string $context Context where error occurred
- * @return void
+ * This calculates:
+ * 1. Individual total (sum of all individual prices)
+ * 2. Combo total (full combo price, not divided)
+ * 3. Discount amount (individual - combo)
+ * 
+ * For UI display: Individual → Discount → Combo Price
  */
+function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 'regular')
+{
+    try {
+        // Group tests by sample
+        $testsBySample = [];
+        foreach ($testsData as $test) {
+            $sampleIndex = $test['sample'];
+            if (!isset($testsBySample[$sampleIndex])) {
+                $testsBySample[$sampleIndex] = [];
+            }
+            $testsBySample[$sampleIndex][] = $test;
+        }
+
+        $finalTotal = 0.00;
+        $individualGrandTotal = 0.00;
+        $allTestsWithCharges = [];
+        $allCombosDetected = [];
+        $totalSavings = 0.00;
+
+        // Process each sample
+        foreach ($testsBySample as $sampleIndex => $sampleTests) {
+
+            // Detect combos for this sample
+            $detectedCombos = detectCombos($sampleTests, $conn, $submissionType);
+
+            // Mark which tests are in combos
+            $combosByParameterId = [];
+            foreach ($detectedCombos as $combo) {
+                // Store which combo each parameter belongs to
+                foreach ($combo['parameter_ids'] as $paramId) {
+                    $combosByParameterId[$paramId] = $combo;
+                }
+
+                // Add to overall list
+                $allCombosDetected[] = [
+                    'sample' => $sampleIndex,
+                    'combo_id' => $combo['combo_id'],
+                    'combo_name' => $combo['combo_name'],
+                    'combo_price' => $combo['combo_price'],
+                    'param_count' => $combo['param_count'],
+                    'parameter_ids' => $combo['parameter_ids']
+                ];
+            }
+
+            // Calculate totals for this sample
+            $sampleIndividualTotal = 0.00;
+            $sampleComboTotal = 0.00;
+
+            // CRITICAL FIX: Handle BOTH combo and individual tests correctly
+            if (!empty($detectedCombos)) {
+                // Step 1: Add combo prices
+                foreach ($detectedCombos as $combo) {
+                    $sampleComboTotal += $combo['combo_price'];
+                }
+
+                // Step 2: Calculate individual total for ALL tests (for discount display)
+                foreach ($sampleTests as $test) {
+                    $sampleIndividualTotal += (float)$test['charge'];
+                }
+
+                // Step 3: Add NON-COMBO tests to the final total
+                foreach ($sampleTests as $test) {
+                    if (!isset($combosByParameterId[$test['parameter_id']])) {
+                        // This test is NOT in a combo - add individual price
+                        $sampleComboTotal += (float)$test['charge'];
+                    }
+                }
+
+                // Add to grand totals
+                $finalTotal += $sampleComboTotal;
+                $individualGrandTotal += $sampleIndividualTotal;
+                $totalSavings += ($sampleIndividualTotal - $sampleComboTotal);
+            } else {
+                // No combo - use individual prices for all tests
+                foreach ($sampleTests as $test) {
+                    $price = (float)$test['charge'];
+                    $sampleIndividualTotal += $price;
+                    $sampleComboTotal += $price;
+                }
+
+                $finalTotal += $sampleComboTotal;
+                $individualGrandTotal += $sampleIndividualTotal;
+            }
+
+            // Tag each test with combo info
+            foreach ($sampleTests as $test) {
+                $test['individual_charge'] = (float)$test['charge'];
+                $test['is_combo'] = isset($combosByParameterId[$test['parameter_id']]);
+                $test['combo_id'] = $combosByParameterId[$test['parameter_id']]['combo_id'] ?? null;
+                $test['combo_name'] = $combosByParameterId[$test['parameter_id']]['combo_name'] ?? null;
+
+                $allTestsWithCharges[] = $test;
+            }
+        }
+
+        return [
+            'success' => true,
+            'tests_with_charges' => $allTestsWithCharges,
+            'total' => round($finalTotal, 2),                          // Final price (with combos)
+            'individual_total' => round($individualGrandTotal, 2),     // Original price
+            'combos_detected' => $allCombosDetected,
+            'combos_count' => count($allCombosDetected),
+            'savings' => round($totalSavings, 2),
+            'discount_percentage' => $individualGrandTotal > 0 ?
+                round(($totalSavings / $individualGrandTotal) * 100, 1) : 0
+        ];
+    } catch (Exception $e) {
+        logError($e->getMessage(), 'calculateTestChargesWithCombos');
+        return [
+            'success' => false,
+            'message' => 'Failed to calculate charges: ' . $e->getMessage(),
+            'total' => 0.00
+        ];
+    }
+}
+
+/**
+ * Get parameter price from database
+ */
+function getParameterPrice($conn, $parameterId, $includeSwab = false)
+{
+    try {
+        $sql = "SELECT pp.test_charge, sp.swab_price
+                FROM test_parameters tp
+                LEFT JOIN parameter_pricing pp ON tp.parameter_id = pp.parameter_id
+                    AND pp.is_active = 1 AND pp.is_deleted = 0
+                LEFT JOIN swab_param sp ON tp.parameter_id = sp.param_id
+                    AND sp.is_active = 1 AND sp.is_deleted = 0
+                WHERE tp.parameter_id = ? AND tp.is_active = 1 AND tp.is_deleted = 0";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return null;
+
+        $stmt->bind_param("i", $parameterId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($row = $result->fetch_assoc()) {
+            $price = (float)$row['test_charge'];
+            if ($includeSwab && $row['swab_price']) {
+                $price += (float)$row['swab_price'];
+            }
+            return $price;
+        }
+
+        return null;
+    } catch (Exception $e) {
+        logError($e->getMessage(), 'getParameterPrice');
+        return null;
+    }
+}
+
 function logError($message, $context = '')
 {
     $logDir = __DIR__ . '/../../logs';
@@ -451,13 +527,6 @@ function logError($message, $context = '')
     file_put_contents($logDir . '/error.log', $log, FILE_APPEND);
 }
 
-/**
- * Send JSON response and exit
- * Sets proper headers and exits script
- * 
- * @param array $data Data to send as JSON
- * @return void
- */
 function sendJsonResponse($data)
 {
     header('Content-Type: application/json; charset=utf-8');
@@ -465,13 +534,6 @@ function sendJsonResponse($data)
     exit;
 }
 
-/**
- * Format date for display
- * 
- * @param string $date Date string (YYYY-MM-DD)
- * @param string $format Output format (default: d/m/Y)
- * @return string Formatted date or 'N/A' if empty
- */
 function formatDate($date, $format = 'd/m/Y')
 {
     try {
@@ -485,13 +547,6 @@ function formatDate($date, $format = 'd/m/Y')
     }
 }
 
-/**
- * Validate payment reference format
- * Basic validation for payment reference string
- * 
- * @param string $reference Payment reference
- * @return array ['valid' => bool, 'message' => string]
- */
 function validatePaymentReference($reference)
 {
     if (empty($reference)) {
@@ -508,7 +563,6 @@ function validatePaymentReference($reference)
         return ['valid' => false, 'message' => 'Payment reference too long (max 100 characters)'];
     }
 
-    // Allow alphanumeric, hyphens, slashes, and spaces
     if (!preg_match('/^[a-zA-Z0-9\-\/\s]+$/', $reference)) {
         return ['valid' => false, 'message' => 'Payment reference contains invalid characters'];
     }
