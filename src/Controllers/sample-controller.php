@@ -1,21 +1,18 @@
 <?php
+
 /**
- * Sample Controller - FIXED VERSION
- * Version: 2.1 (All Bugs Fixed)
+ * Sample Controller - COMPLETE FINAL VERSION
+ * Version: 5.0 - With Combo Detection & Smart UI Support
  */
 
-// Load dependencies FIRST (before any function calls)
 require_once __DIR__ . '/../../Config/Database.php';
 require_once __DIR__ . '/../Helpers/functions.php';
 require_once __DIR__ . '/../Models/sample-model.php';
 
-// Then start session
 session_start();
 
-// Set JSON header
 header('Content-Type: application/json; charset=utf-8');
 
-// Check authentication
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in'])) {
     sendJsonResponse([
         'success' => false,
@@ -23,7 +20,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in'])) {
     ]);
 }
 
-// Initialize model
 try {
     $sampleModel = new SampleModel();
 } catch (Exception $e) {
@@ -34,40 +30,42 @@ try {
     ]);
 }
 
-// Get action
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// Route to appropriate handler
 try {
     switch ($action) {
         case 'searchClients':
             handleSearchClients($sampleModel);
             break;
-        
+
         case 'createClient':
             handleCreateClient($sampleModel);
             break;
-        
+
         case 'updateClient':
             handleUpdateClient($sampleModel);
             break;
-        
+
         case 'getParameters':
             handleGetParameters($sampleModel);
             break;
-        
+
+        case 'getCombos':
+            handleGetCombos($sampleModel);
+            break;
+
         case 'searchSampleNames':
             handleSearchSampleNames($sampleModel);
             break;
-        
-        case 'validatePaymentReference': // FIX: Added full name
+
+        case 'validatePaymentReference':
             handleValidatePaymentReference();
             break;
-        
+
         case 'saveSample':
             handleSaveSample($sampleModel);
             break;
-        
+
         default:
             sendJsonResponse([
                 'success' => false,
@@ -82,30 +80,23 @@ try {
     ]);
 }
 
-/**
- * Handle client search request
- */
 function handleSearchClients($model)
 {
     $query = trim($_GET['query'] ?? '');
-    
+
     if (strlen($query) < 2) {
         sendJsonResponse([
             'success' => false,
             'message' => 'Search query must be at least 2 characters'
         ]);
     }
-    
+
     $result = $model->searchClients($query);
     sendJsonResponse($result);
 }
 
-/**
- * Handle create new client request
- */
 function handleCreateClient($model)
 {
-    // Validate required fields
     $requiredFields = ['client_name', 'phone_primary'];
     foreach ($requiredFields as $field) {
         if (empty($_POST[$field])) {
@@ -116,8 +107,7 @@ function handleCreateClient($model)
             ]);
         }
     }
-    
-    // Validate phone format
+
     if (!validatePhone($_POST['phone_primary'])) {
         sendJsonResponse([
             'success' => false,
@@ -125,8 +115,7 @@ function handleCreateClient($model)
             'field' => 'phone_primary'
         ]);
     }
-    
-    // Sanitize input
+
     $data = [
         'client_name' => sanitizeInput($_POST['client_name']),
         'address_line1' => sanitizeInput($_POST['address_line1'] ?? ''),
@@ -134,18 +123,15 @@ function handleCreateClient($model)
         'phone_primary' => sanitizeInput($_POST['phone_primary']),
         'contact_person' => sanitizeInput($_POST['contact_person'] ?? '')
     ];
-    
+
     $result = $model->createClient($data);
     sendJsonResponse($result);
 }
 
-/**
- * Handle update client request
- */
 function handleUpdateClient($model)
 {
     $clientId = intval($_POST['client_id'] ?? 0);
-    
+
     if ($clientId === 0) {
         sendJsonResponse([
             'success' => false,
@@ -153,8 +139,7 @@ function handleUpdateClient($model)
             'field' => 'client_id'
         ]);
     }
-    
-    // Validate required fields
+
     if (empty($_POST['client_name']) || empty($_POST['phone_primary'])) {
         sendJsonResponse([
             'success' => false,
@@ -162,8 +147,7 @@ function handleUpdateClient($model)
             'field' => empty($_POST['client_name']) ? 'client_name' : 'phone_primary'
         ]);
     }
-    
-    // Validate phone format
+
     if (!validatePhone($_POST['phone_primary'])) {
         sendJsonResponse([
             'success' => false,
@@ -171,8 +155,7 @@ function handleUpdateClient($model)
             'field' => 'phone_primary'
         ]);
     }
-    
-    // Sanitize input
+
     $data = [
         'client_id' => $clientId,
         'client_name' => sanitizeInput($_POST['client_name']),
@@ -181,66 +164,63 @@ function handleUpdateClient($model)
         'phone_primary' => sanitizeInput($_POST['phone_primary']),
         'contact_person' => sanitizeInput($_POST['contact_person'] ?? '')
     ];
-    
+
     $result = $model->updateClient($data);
     sendJsonResponse($result);
 }
 
-/**
- * Handle get parameters request
- */
 function handleGetParameters($model)
 {
     $submissionType = $_GET['type'] ?? 'regular';
-    
+
     if (!in_array($submissionType, ['regular', 'swab'])) {
         sendJsonResponse([
             'success' => false,
             'message' => 'Invalid submission type. Must be "regular" or "swab"'
         ]);
     }
-    
+
     $result = $model->getParameters($submissionType);
     sendJsonResponse($result);
 }
 
 /**
- * Handle sample name search for autocomplete
+ * NEW: Get all active combos for frontend detection
  */
+function handleGetCombos($model)
+{
+    $result = $model->getCombos();
+    sendJsonResponse($result);
+}
+
 function handleSearchSampleNames($model)
 {
     $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
-    
+
     if (strlen($query) < 2) {
         sendJsonResponse([
             'success' => true,
-            'names' => [], // FIX: Changed from 'results' to 'names'
+            'names' => [],
             'count' => 0
         ]);
     }
-    
+
     $result = $model->searchSampleNames($query);
     sendJsonResponse($result);
 }
 
-/**
- * Handle payment reference validation
- * FIX: Removed model parameter, create DB connection directly
- */
 function handleValidatePaymentReference()
 {
-    // FIX: Changed from 'reference' to 'payment_reference'
     $reference = trim($_POST['payment_reference'] ?? $_GET['payment_reference'] ?? '');
-    
+
     if (empty($reference)) {
         sendJsonResponse([
             'success' => true,
-            'is_unique' => true, // Empty is valid
+            'is_unique' => true,
             'message' => 'No reference provided'
         ]);
     }
-    
-    // Validate format
+
     $formatValidation = validatePaymentReference($reference);
     if (!$formatValidation['valid']) {
         sendJsonResponse([
@@ -249,13 +229,12 @@ function handleValidatePaymentReference()
             'message' => $formatValidation['message']
         ]);
     }
-    
-    // Check uniqueness - FIX: Create DB connection directly
+
     try {
         $database = new Database();
         $conn = $database->connect();
         $isUnique = isPaymentReferenceUnique($conn, $reference);
-        
+
         sendJsonResponse([
             'success' => true,
             'is_unique' => $isUnique,
@@ -271,12 +250,12 @@ function handleValidatePaymentReference()
 }
 
 /**
- * Handle main sample submission
+ * MAIN SUBMISSION HANDLER - WITH COMBO PRICING FIX
  */
 function handleSaveSample($model)
 {
     try {
-        // 1. Validate required fields
+        // VALIDATION
         $requiredFields = [
             'client_id' => 'Client',
             'submission_type' => 'Submission type',
@@ -284,7 +263,7 @@ function handleSaveSample($model)
             'tentative_date' => 'Tentative date',
             'payment_status' => 'Payment status'
         ];
-        
+
         foreach ($requiredFields as $field => $label) {
             if (!isset($_POST[$field]) || $_POST[$field] === '') {
                 sendJsonResponse([
@@ -294,8 +273,7 @@ function handleSaveSample($model)
                 ]);
             }
         }
-        
-        // 2. Validate client_id
+
         $clientId = intval($_POST['client_id']);
         if ($clientId <= 0) {
             sendJsonResponse([
@@ -304,8 +282,7 @@ function handleSaveSample($model)
                 'field' => 'client_id'
             ]);
         }
-        
-        // 3. Validate submission type
+
         if (!in_array($_POST['submission_type'], ['regular', 'swab'])) {
             sendJsonResponse([
                 'success' => false,
@@ -313,8 +290,7 @@ function handleSaveSample($model)
                 'field' => 'submission_type'
             ]);
         }
-        
-        // 4. Validate dates
+
         $receivedDateValidation = validateReceivedDate($_POST['received_date']);
         if (!$receivedDateValidation['valid']) {
             sendJsonResponse([
@@ -323,7 +299,7 @@ function handleSaveSample($model)
                 'field' => 'received_date'
             ]);
         }
-        
+
         $tentativeDateValidation = validateTentativeDate($_POST['tentative_date']);
         if (!$tentativeDateValidation['valid']) {
             sendJsonResponse([
@@ -332,8 +308,7 @@ function handleSaveSample($model)
                 'field' => 'tentative_date'
             ]);
         }
-        
-        // 5. Validate payment
+
         $paymentStatus = $_POST['payment_status'];
         if (!in_array($paymentStatus, ['Paid', 'Not Paid', 'Pending'])) {
             sendJsonResponse([
@@ -342,7 +317,7 @@ function handleSaveSample($model)
                 'field' => 'payment_status'
             ]);
         }
-        
+
         if ($paymentStatus === 'Paid') {
             if (empty($_POST['payment_reference'])) {
                 sendJsonResponse([
@@ -351,8 +326,7 @@ function handleSaveSample($model)
                     'field' => 'payment_reference'
                 ]);
             }
-            
-            // Validate uniqueness
+
             $database = new Database();
             $conn = $database->connect();
             if (!isPaymentReferenceUnique($conn, $_POST['payment_reference'])) {
@@ -363,8 +337,8 @@ function handleSaveSample($model)
                 ]);
             }
         }
-        
-        // 6. Parse samples
+
+        // PARSE DATA
         if (empty($_POST['samples'])) {
             sendJsonResponse([
                 'success' => false,
@@ -372,11 +346,11 @@ function handleSaveSample($model)
                 'field' => 'samples'
             ]);
         }
-        
-        $samplesData = is_string($_POST['samples']) 
-            ? json_decode($_POST['samples'], true) 
+
+        $samplesData = is_string($_POST['samples'])
+            ? json_decode($_POST['samples'], true)
             : $_POST['samples'];
-        
+
         if (!is_array($samplesData) || count($samplesData) === 0) {
             sendJsonResponse([
                 'success' => false,
@@ -384,8 +358,7 @@ function handleSaveSample($model)
                 'field' => 'samples'
             ]);
         }
-        
-        // 7. Parse tests
+
         if (empty($_POST['tests'])) {
             sendJsonResponse([
                 'success' => false,
@@ -393,11 +366,11 @@ function handleSaveSample($model)
                 'field' => 'tests'
             ]);
         }
-        
-        $testsData = is_string($_POST['tests']) 
-            ? json_decode($_POST['tests'], true) 
+
+        $testsData = is_string($_POST['tests'])
+            ? json_decode($_POST['tests'], true)
             : $_POST['tests'];
-        
+
         if (!is_array($testsData) || count($testsData) === 0) {
             sendJsonResponse([
                 'success' => false,
@@ -405,8 +378,8 @@ function handleSaveSample($model)
                 'field' => 'tests'
             ]);
         }
-        
-        // 8. Validate max 10 tests per sample
+
+        // Validate max 10 tests per sample
         $testsBySample = [];
         foreach ($testsData as $test) {
             $sampleIndex = $test['sample'];
@@ -415,7 +388,7 @@ function handleSaveSample($model)
             }
             $testsBySample[$sampleIndex]++;
         }
-        
+
         foreach ($testsBySample as $sampleIndex => $testCount) {
             if ($testCount > 10) {
                 sendJsonResponse([
@@ -425,17 +398,78 @@ function handleSaveSample($model)
                 ]);
             }
         }
-        
-        // 9. Calculate totals
-        $testChargesTotal = 0.00;
-        foreach ($testsData as $test) {
-            $testChargesTotal += (float)$test['charge'];
+
+        // COMBO PRICING FIX - Calculate ACTUAL charges with combo detection
+        try {
+            $database = new Database();
+            $conn = $database->connect();
+
+            $calculationResult = calculateTestChargesWithCombos(
+                $testsData,
+                $conn,
+                $_POST['submission_type']
+            );
+
+            if (!$calculationResult['success']) {
+                sendJsonResponse([
+                    'success' => false,
+                    'message' => 'Failed to calculate test charges: ' . $calculationResult['message'],
+                    'field' => 'tests'
+                ]);
+            }
+
+            // Use CORRECT total (with combo pricing applied)
+            $testChargesTotal = $calculationResult['total'];
+            $additionalCharges = floatval($_POST['additional_charges'] ?? 0);
+            $grandTotal = $testChargesTotal + $additionalCharges;
+
+            // Log combo application
+            if ($calculationResult['combos_count'] > 0) {
+                $comboNames = array_column($calculationResult['combos_detected'], 'combo_name');
+                logError(
+                    "✓ COMBOS APPLIED: {$calculationResult['combos_count']} combos (" .
+                        implode(', ', $comboNames) . ") | " .
+                        "Individual: Rs. {$calculationResult['individual_total']} | " .
+                        "Combo: Rs. {$testChargesTotal} | " .
+                        "Savings: Rs. {$calculationResult['savings']} ({$calculationResult['discount_percentage']}%)",
+                    'ComboSuccess'
+                );
+            }
+
+            // Validate frontend didn't send inflated total
+            $frontendTotal = floatval($_POST['test_charges_total'] ?? 0);
+            $difference = abs($frontendTotal - $testChargesTotal);
+
+            if ($difference > 0.01) {
+                logError(
+                    "Total mismatch - Frontend: Rs. $frontendTotal, Backend: Rs. $testChargesTotal, " .
+                        "Diff: Rs. $difference, Combos: {$calculationResult['combos_count']}",
+                    'TotalValidation'
+                );
+
+                // If frontend total EXCEEDS max possible, reject
+                $maxPossibleTotal = 0;
+                foreach ($testsData as $test) {
+                    $maxPossibleTotal += (float)$test['charge'];
+                }
+
+                if ($frontendTotal > $maxPossibleTotal + 0.01) {
+                    sendJsonResponse([
+                        'success' => false,
+                        'message' => 'Invalid total submitted. Price tampering detected.',
+                        'field' => 'test_charges_total'
+                    ]);
+                }
+            }
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'ComboCalculation');
+            sendJsonResponse([
+                'success' => false,
+                'message' => 'Error calculating charges: ' . $e->getMessage()
+            ]);
         }
-        
-        $additionalCharges = floatval($_POST['additional_charges'] ?? 0);
-        $grandTotal = $testChargesTotal + $additionalCharges;
-        
-        // 10. Prepare data
+
+        // PREPARE DATA FOR MODEL
         $submissionData = [
             'client_id' => $clientId,
             'submission_type' => sanitizeInput($_POST['submission_type']),
@@ -449,13 +483,25 @@ function handleSaveSample($model)
             'payment_status' => sanitizeInput($_POST['payment_status']),
             'payment_reference' => sanitizeInput($_POST['payment_reference'] ?? ''),
             'samples' => $samplesData,
-            'tests' => $testsData
+            'tests' => $testsData,
+            'combo_calculation' => $calculationResult
         ];
-        
-        // 11. Save
+
+        // SAVE TO DATABASE
         $result = $model->saveSample($submissionData);
+
+        // Add combo details to response for UI
+        if ($result['success'] && isset($calculationResult['combos_detected'])) {
+            $result['pricing_details'] = [
+                'individual_total' => $calculationResult['individual_total'],
+                'combo_total' => $calculationResult['total'],
+                'discount' => $calculationResult['savings'],
+                'discount_percentage' => $calculationResult['discount_percentage'],
+                'combos_applied' => $calculationResult['combos_detected']
+            ];
+        }
+
         sendJsonResponse($result);
-        
     } catch (Exception $e) {
         logError($e->getMessage(), 'handleSaveSample');
         sendJsonResponse([

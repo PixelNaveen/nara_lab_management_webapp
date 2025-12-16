@@ -1,15 +1,8 @@
 <?php
 
 /**
- * Sample Model - FINAL PERFECT VERSION 3.1
- * 
- * ALL FIXES:
- * 1. PHP 8.2 bind_param compatibility
- * 2. Payment reference NULL instead of empty string
- * 3. Sample code uses form_number
- * 4. Form sequence ONLY increments on successful commit
- * 
- * CRITICAL: Form number generation is now part of the main transaction
+ * Sample Model - COMPLETE FINAL VERSION
+ * Version: 5.0 - With Combo Support & Correct Field Names
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
@@ -99,8 +92,8 @@ class SampleModel
             if ($stmt->execute()) {
                 return [
                     'success' => true,
-                    'client_id' => $this->conn->insert_id,
-                    'message' => 'Client created successfully'
+                    'message' => 'Client created successfully',
+                    'client_id' => $this->conn->insert_id
                 ];
             } else {
                 throw new Exception("Execute failed: " . $stmt->error);
@@ -118,10 +111,10 @@ class SampleModel
     {
         try {
             $sql = "UPDATE clients 
-                    SET client_name = ?, 
-                        address_line1 = ?, 
-                        city = ?, 
-                        phone_primary = ?, 
+                    SET client_name = ?,
+                        address_line1 = ?,
+                        city = ?,
+                        phone_primary = ?,
                         contact_person = ?
                     WHERE client_id = ?";
 
@@ -164,9 +157,10 @@ class SampleModel
         }
     }
 
-    public function getParameters($type = 'regular')
+    public function getParameters($submissionType = 'regular')
     {
         try {
+            // Use single query with JOIN like the old version (more efficient)
             $sql = "SELECT 
                         tp.parameter_id, 
                         tp.parameter_code,
@@ -174,6 +168,7 @@ class SampleModel
                         tp.has_variants,
                         tp.swab_enabled,
                         tp.base_unit,
+                        tp.parameter_category,
                         pp.test_charge AS parameter_price,
                         COALESCE(sp.swab_price, 0) AS swab_price,
                         pv.variant_id, 
@@ -188,7 +183,7 @@ class SampleModel
                         AND pv.is_active = 1 AND pv.is_deleted = 0
                     WHERE tp.is_active = 1 AND tp.is_deleted = 0";
 
-            if ($type === 'swab') {
+            if ($submissionType === 'swab') {
                 $sql .= " AND tp.swab_enabled = 1";
             }
 
@@ -207,7 +202,7 @@ class SampleModel
                 if (!isset($parameters[$paramId])) {
                     $basePrice = (float)($row['parameter_price'] ?? 0);
 
-                    if ($type === 'swab' && $row['swab_enabled'] == 1) {
+                    if ($submissionType === 'swab' && $row['swab_enabled'] == 1) {
                         $basePrice += (float)$row['swab_price'];
                     }
 
@@ -216,6 +211,7 @@ class SampleModel
                         'parameter_code' => $row['parameter_code'],
                         'parameter_name' => $row['parameter_name'],
                         'base_unit' => $row['base_unit'],
+                        'category' => $row['parameter_category'],
                         'price' => $basePrice,
                         'has_variants' => (bool)$row['has_variants'],
                         'swab_enabled' => (bool)$row['swab_enabled'],
@@ -223,12 +219,13 @@ class SampleModel
                     ];
                 }
 
+                // Add variant with price
                 if ($row['variant_id']) {
                     $parameters[$paramId]['variants'][] = [
                         'variant_id' => $row['variant_id'],
                         'variant_name' => $row['variant_name'],
                         'full_display_name' => $row['full_display_name'],
-                        'price' => $parameters[$paramId]['price']
+                        'price' => $parameters[$paramId]['price']  // ✅ FIXED: Include price
                     ];
                 }
             }
@@ -243,6 +240,73 @@ class SampleModel
             return [
                 'success' => false,
                 'message' => 'Error fetching parameters: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * NEW: Get all active combos for frontend detection
+     */
+    public function getCombos()
+    {
+        try {
+            $sql = "SELECT 
+                        pc.combo_id,
+                        pc.combo_name,
+                        cp.test_charge AS combo_price,
+                        GROUP_CONCAT(ci.parameter_id ORDER BY ci.parameter_id) AS parameter_ids
+                    FROM parameter_combinations pc
+                    JOIN combination_pricing cp ON pc.combo_id = cp.combo_id
+                    JOIN combination_items ci ON pc.combo_id = ci.combo_id
+                    WHERE pc.is_active = 1 
+                      AND pc.is_deleted = 0
+                      AND cp.is_active = 1
+                      AND cp.is_deleted = 0
+                    GROUP BY pc.combo_id
+                    ORDER BY COUNT(ci.parameter_id) DESC";
+
+            $result = $this->conn->query($sql);
+            if (!$result) {
+                throw new Exception("Query failed: " . $this->conn->error);
+            }
+
+            $combos = [];
+            while ($row = $result->fetch_assoc()) {
+                $paramIds = array_map('intval', explode(',', $row['parameter_ids']));
+
+                // Calculate individual total for this combo
+                $individualTotal = 0;
+                foreach ($paramIds as $paramId) {
+                    $priceResult = $this->conn->query(
+                        "SELECT test_charge FROM parameter_pricing 
+                         WHERE parameter_id = $paramId AND is_active = 1 AND is_deleted = 0"
+                    );
+                    if ($priceRow = $priceResult->fetch_assoc()) {
+                        $individualTotal += (float)$priceRow['test_charge'];
+                    }
+                }
+
+                $combos[] = [
+                    'combo_id' => (int)$row['combo_id'],
+                    'combo_name' => $row['combo_name'],
+                    'parameter_ids' => $paramIds,
+                    'combo_price' => (float)$row['combo_price'],
+                    'individual_total' => $individualTotal,
+                    'savings' => $individualTotal - (float)$row['combo_price']
+                ];
+            }
+
+            return [
+                'success' => true,
+                'combos' => $combos,
+                'count' => count($combos)
+            ];
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::getCombos');
+            return [
+                'success' => false,
+                'message' => 'Failed to load combos',
+                'combos' => []
             ];
         }
     }
@@ -288,12 +352,9 @@ class SampleModel
 
     /**
      * Save complete sample submission
-     * CRITICAL: Form number generation is INSIDE this transaction
-     * If anything fails, form_sequence is rolled back (number not wasted)
      */
     public function saveSample($data)
     {
-        // CRITICAL: Start transaction FIRST
         $this->conn->begin_transaction();
 
         try {
@@ -303,8 +364,6 @@ class SampleModel
 
             $sampleCount = count($samplesData);
 
-            // CRITICAL: Generate form number WITHIN transaction
-            // If submission fails later, this will be rolled back
             $formGen = generateFormNumber($this->conn, $sampleCount);
 
             if (!$formGen['success']) {
@@ -327,7 +386,8 @@ class SampleModel
                 ? $data['tests']
                 : json_decode($data['tests'], true);
 
-            $this->insertSampleTests($sampleItemIds, $testsData, $data['submission_type']);
+            $comboCalc = $data['combo_calculation'] ?? null;
+            $this->insertSampleTests($sampleItemIds, $testsData, $data['submission_type'], $comboCalc);
 
             $this->insertSampleAcceptance(
                 $sampleId,
@@ -342,20 +402,17 @@ class SampleModel
                 $data
             );
 
-            // CRITICAL: Only commit if everything succeeded
-            // This COMMITS the form_sequence increment
             $this->conn->commit();
 
             return [
                 'success' => true,
+                'message' => 'Sample submitted successfully',
                 'form_number' => $formNumber,
                 'sample_id' => $sampleId,
-                'ac_reference' => $acReference,
-                'message' => 'Sample submitted successfully'
+                'report_ref' => $reportRef,
+                'ac_reference' => $acReference  // FIXED: Add AC reference
             ];
         } catch (Exception $e) {
-            // CRITICAL: Rollback on ANY error
-            // This REVERTS the form_sequence increment
             $this->conn->rollback();
             logError($e->getMessage(), 'SampleModel::saveSample');
             return [
@@ -371,29 +428,32 @@ class SampleModel
                     client_id, sample_code, form_number, report_ref, submission_type,
                     received_date, tentative_date, submitted_by, additional_notes,
                     additional_charges, test_charges_total, grand_total,
-                    payment_status, payment_reference
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    payment_status, payment_reference, status, status_updated_at, status_updated_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
             throw new Exception("Prepare failed (samples): " . $this->conn->error);
         }
 
-        $clientId           = (int)$data['client_id'];
-        $sampleCode         = $formNumber;
-        $submissionType     = $data['submission_type'];
-        $receivedDate       = $data['received_date'];
-        $tentativeDate      = $data['tentative_date'];
-        $submittedBy        = $data['submitted_by'];
-        $additionalNotes    = $data['additional_notes'] ?? '';
-        $additionalCharges  = (float)$data['additional_charges'];
-        $testChargesTotal   = (float)$data['test_charges_total'];
-        $grandTotal         = (float)$data['grand_total'];
-        $paymentStatus      = $data['payment_status'];
-        $paymentReference   = !empty($data['payment_reference']) ? $data['payment_reference'] : null;
+        $clientId = $data['client_id'];
+        $sampleCode = $formNumber;
+        $submissionType = $data['submission_type'];
+        $receivedDate = $data['received_date'];
+        $tentativeDate = $data['tentative_date'];
+        $submittedBy = $data['submitted_by'];
+        $additionalNotes = $data['additional_notes'];
+        $additionalCharges = $data['additional_charges'];
+        $testChargesTotal = $data['test_charges_total'];
+        $grandTotal = $data['grand_total'];
+        $paymentStatus = $data['payment_status'];
+        $paymentReference = ($paymentStatus === 'Paid' && !empty($data['payment_reference']))
+            ? $data['payment_reference']
+            : null;
+        $statusUpdatedBy = $submittedBy;
 
         $stmt->bind_param(
-            "issssssssdddss",
+            "issssssssdddsss",
             $clientId,
             $sampleCode,
             $formNumber,
@@ -407,7 +467,8 @@ class SampleModel
             $testChargesTotal,
             $grandTotal,
             $paymentStatus,
-            $paymentReference
+            $paymentReference,
+            $statusUpdatedBy
         );
 
         if (!$stmt->execute()) {
@@ -430,15 +491,15 @@ class SampleModel
             throw new Exception("Prepare failed (sample_items): " . $this->conn->error);
         }
 
-        $sampleName           = $item['sample_name'] ?? '';
-        $value                = $item['value'] ?? '';
-        $unit                 = $item['unit'] ?? '';
-        $clientSampleCode     = $item['client_sample_code'] ?? '';
-        $samplingLocation     = $item['sampling_location'] ?? '';
-        $reasonForAnalysis    = $item['reason_for_analysis'] ?? '';
-        $containerDamage      = $item['container_damage'] ?? 'No';
+        $sampleName = $item['sample_name'];
+        $value = $item['value'] ?? null;
+        $unit = $item['unit'] ?? null;
+        $clientSampleCode = $item['client_sample_code'] ?? null;
+        $samplingLocation = $item['sampling_location'] ?? null;
+        $reasonForAnalysis = $item['reason_for_analysis'] ?? null;
+        $containerDamage = $item['container_damage'] ?? 'No';
         $temperatureCondition = $item['temperature_condition'] ?? 'Ambient';
-        $validityStatus       = $item['validity_status'] ?? 'OK';
+        $validityStatus = $item['validity_status'] ?? 'OK';
 
         $stmt->bind_param(
             "isssssssssi",
@@ -462,7 +523,10 @@ class SampleModel
         return $this->conn->insert_id;
     }
 
-    private function insertSampleTests($sampleItemIds, $testsData, $submissionType)
+    /**
+     * Insert tests with FULL combo price
+     */
+    private function insertSampleTests($sampleItemIds, $testsData, $submissionType, $comboCalc = null)
     {
         $sql = "INSERT INTO sample_tests (
                     sample_item_id, parameter_id, variant_id, test_method_id,
@@ -494,10 +558,10 @@ class SampleModel
 
             $detectedCombos = detectCombos($sampleTests, $this->conn, $submissionType);
 
-            $usedInCombo = [];
+            $parameterToCombo = [];
             foreach ($detectedCombos as $combo) {
                 foreach ($combo['parameter_ids'] as $paramId) {
-                    $usedInCombo[$paramId] = $combo;
+                    $parameterToCombo[$paramId] = $combo;
                 }
             }
 
@@ -510,15 +574,18 @@ class SampleModel
 
                 $parameterId = $test['parameter_id'];
                 $variantId = !empty($test['variant_id']) ? (int)$test['variant_id'] : null;
-                $charge = (float)$test['charge'];
                 $comboId = null;
                 $isComboApplied = 0;
 
-                if (isset($usedInCombo[$test['parameter_id']])) {
-                    $combo = $usedInCombo[$test['parameter_id']];
+                // CRITICAL FIX: Store DIVIDED combo price so SUM equals combo total
+                if (isset($parameterToCombo[$test['parameter_id']])) {
+                    $combo = $parameterToCombo[$test['parameter_id']];
                     $comboId = $combo['combo_id'];
                     $isComboApplied = 1;
+                    // Store divided price: combo_price / number of parameters
                     $charge = $combo['combo_price'] / $combo['param_count'];
+                } else {
+                    $charge = (float)$test['charge'];
                 }
 
                 $stmt->bind_param(
@@ -552,13 +619,12 @@ class SampleModel
             throw new Exception("Prepare failed (sample_acceptance): " . $this->conn->error);
         }
 
+        $receivedBy = $data['submitted_by'];
         $containerDamage = $firstSample['container_damage'] ?? 'No';
         $temperatureCondition = $firstSample['temperature_condition'] ?? 'Ambient';
-        $validityStatus = $firstSample['validity_status'] ?? 'OK';
-        $validityOk = ($validityStatus === 'OK') ? 'OK' : 'Not OK';
-        $remarks = null;
-        $receivedBy = $data['submitted_by'];
+        $validityOk = ($firstSample['validity_status'] ?? 'OK') === 'OK' ? 'OK' : 'Not OK';
         $tentativeDate = $data['tentative_date'];
+        $remarks = null;
 
         $stmt->bind_param(
             "isssssss",
@@ -594,9 +660,11 @@ class SampleModel
         $additionalCharges = $data['additional_charges'];
         $totalCharges = $data['grand_total'];
         $paymentStatus = $data['payment_status'];
-        $paymentReference = !empty($data['payment_reference']) ? $data['payment_reference'] : null;
+        $paymentReference = ($paymentStatus === 'Paid' && !empty($data['payment_reference']))
+            ? $data['payment_reference']
+            : null;
         $acknowledgedBy = $data['submitted_by'];
-        $notes = $data['additional_notes'] ?? '';
+        $notes = $data['additional_notes'];
 
         $stmt->bind_param(
             "isdddssss",
