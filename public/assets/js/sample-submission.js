@@ -13,6 +13,7 @@ let currentStep = 1;
 let sampleCount = 0;
 let submissionType = "";
 let allParameters = [];
+let availableCombos = []; // NEW: Store combos for detection
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -1005,12 +1006,80 @@ async function loadTests() {
 
     allParameters = data.parameters;
     console.log("Loaded parameters:", allParameters);
+
+    // Load combos for detection
+    await loadCombos();
+
     renderTests();
   } catch (err) {
     console.error("Load tests error:", err);
     container.innerHTML =
       "<div class='alert alert-danger'><i class='fas fa-exclamation-triangle'></i> Failed to load tests. Please try again.</div>";
   }
+}
+
+/**
+ * Load available combos from backend
+ */
+/**
+ * Load available combos from backend
+ */
+/**
+ * Load available combos from backend
+ */
+/**
+ * Load available combos from backend
+ */
+async function loadCombos() {
+  try {
+    const res = await fetch(`${API_BASE}?action=getCombos`);
+    const data = await res.json();
+
+    if (data.success) {
+      availableCombos = data.combos || [];
+      console.log("✅ Loaded combos:", availableCombos);
+    } else {
+      console.warn("⚠️ No combos loaded:", data.message);
+      availableCombos = [];
+    }
+  } catch (err) {
+    console.error("❌ Load combos error:", err);
+    availableCombos = [];
+  }
+}
+
+/**
+ * Detect which combos match currently selected tests
+ * Returns array of detected combos sorted by size (largest first)
+ */
+function detectCombosInSelection() {
+  const selectedTests = Array.from(
+    document.querySelectorAll(".test-checkbox:checked")
+  );
+
+  if (selectedTests.length < 2) {
+    return [];
+  }
+
+  // Get selected parameter IDs
+  const selectedParams = selectedTests.map((cb) => parseInt(cb.dataset.param));
+
+  // Check which combos match
+  const detected = [];
+
+  for (const combo of availableCombos) {
+    const comboParams = combo.parameter_ids;
+    const allMatch = comboParams.every((pid) => selectedParams.includes(pid));
+
+    if (allMatch) {
+      detected.push(combo);
+    }
+  }
+
+  // Sort by parameter count DESC (larger combos first)
+  detected.sort((a, b) => b.parameter_ids.length - a.parameter_ids.length);
+
+  return detected;
 }
 
 function renderTests() {
@@ -1118,6 +1187,7 @@ function generateReview() {
   const container = document.getElementById("reviewSummary");
   let html = "";
 
+  // CLIENT INFO
   html += `
     <div class="review-section">
       <h6><i class="fas fa-user"></i> Client Information</h6>
@@ -1132,6 +1202,7 @@ function generateReview() {
       )}</p>
     </div>`;
 
+  // SUBMISSION DETAILS
   html += `
     <div class="review-section">
       <h6><i class="fas fa-calendar-alt"></i> Submission Details</h6>
@@ -1146,7 +1217,8 @@ function generateReview() {
       )}</p>
     </div>`;
 
-  let testTotal = 0;
+  // SAMPLES & TESTS
+  let individualTotal = 0;
   html +=
     '<div class="review-section"><h6><i class="fas fa-flask"></i> Samples & Tests</h6>';
 
@@ -1161,10 +1233,11 @@ function generateReview() {
     const selectedTests = document.querySelectorAll(
       `input[data-sample="${sampleIdx}"]:checked`
     );
+
     selectedTests.forEach((test) => {
       const label = test.nextElementSibling.textContent.split("Rs.")[0].trim();
       const price = parseFloat(test.dataset.price);
-      testTotal += price;
+      individualTotal += price;
       html += `<li>${label} - ${formatCurrency(price)}</li>`;
     });
 
@@ -1173,21 +1246,95 @@ function generateReview() {
 
   html += "</div>";
 
+  // DETECT COMBOS
+  const combosDetected = detectCombosInSelection();
+  const hasCombo = combosDetected.length > 0;
+
+  // Calculate combo pricing
+  let finalTotal = individualTotal;
+  let totalDiscount = 0;
+
+  if (hasCombo) {
+    // Calculate savings from combos (prevent overlap)
+    let usedParams = new Set();
+
+    combosDetected.forEach((combo) => {
+      // Only apply if parameters not already used
+      const canApply = combo.parameter_ids.every((pid) => !usedParams.has(pid));
+
+      if (canApply) {
+        finalTotal -= combo.individual_total;
+        finalTotal += combo.combo_price;
+        totalDiscount += combo.savings;
+
+        // Mark parameters as used
+        combo.parameter_ids.forEach((pid) => usedParams.add(pid));
+      }
+    });
+  }
+
   const addCharges =
     parseFloat(document.getElementById("additionalCharges").value) || 0;
-  const grandTotal = testTotal + addCharges;
+  const grandTotal = finalTotal + addCharges;
 
-  html += `
-    <div class="review-section">
-      <h6><i class="fas fa-calculator"></i> Totals</h6>
-      <p><strong>Test Charges:</strong> <span id="testChargesTotal">${formatCurrency(
-        testTotal
-      )}</span></p>
-      <p><strong>Additional Charges:</strong> ${formatCurrency(addCharges)}</p>
-      <h5 class="mt-3"><strong>Grand Total: <span id="grandTotalDisplay">${formatCurrency(
-        grandTotal
-      )}</span></strong></h5>
-    </div>`;
+  // SMART UI - Show combo info ONLY if combo detected
+  if (hasCombo && totalDiscount > 0) {
+    const discountPercent = Math.round((totalDiscount / individualTotal) * 100);
+
+    html += `
+      <div class="review-section">
+        <h6><i class="fas fa-calculator"></i> Totals</h6>
+        <p><strong>Individual Price:</strong> 
+          <span style="text-decoration: line-through; color: #999;">
+            ${formatCurrency(individualTotal)}
+          </span>
+        </p>
+        <p><strong>Combo Discount:</strong> 
+          <span style="color: #28a745; font-weight: bold;">
+            -${formatCurrency(totalDiscount)} 
+            (${discountPercent}% off!)
+          </span>
+        </p>
+        <p class="text-muted small">
+          <i class="fas fa-check-circle"></i> 
+          ${combosDetected.length} combo${
+      combosDetected.length > 1 ? "s" : ""
+    } applied: 
+          ${combosDetected.map((c) => c.combo_name).join(", ")}
+        </p>
+        <p><strong>Test Charges:</strong> 
+          <span id="testChargesTotal" style="color: #007bff; font-weight: bold;">
+            ${formatCurrency(finalTotal)}
+          </span>
+        </p>
+        <p><strong>Additional Charges:</strong> ${formatCurrency(
+          addCharges
+        )}</p>
+        <h5 class="mt-3"><strong>Grand Total: 
+          <span id="grandTotalDisplay" style="color: #28a745;">
+            ${formatCurrency(grandTotal)}
+          </span>
+        </strong></h5>
+        <p class="text-muted small mt-2">
+          * Backend will validate and apply combo discounts automatically
+        </p>
+      </div>`;
+  } else {
+    // NO COMBO - Normal display
+    html += `
+      <div class="review-section">
+        <h6><i class="fas fa-calculator"></i> Totals</h6>
+        <p><strong>Test Charges:</strong> 
+          <span id="testChargesTotal">${formatCurrency(individualTotal)}</span>
+        </p>
+        <p><strong>Additional Charges:</strong> ${formatCurrency(
+          addCharges
+        )}</p>
+        <h5 class="mt-3"><strong>Grand Total: 
+          <span id="grandTotalDisplay">${formatCurrency(grandTotal)}</span>
+        </strong></h5>
+      </div>`;
+  }
 
   container.innerHTML = html;
 }
@@ -1246,7 +1393,7 @@ let isSubmitting = false;
 
 async function handleSubmit(e) {
   e.preventDefault();
-  
+
   // ===== CRITICAL: SUBMISSION LOCK =====
   if (isSubmitting) {
     console.warn("⚠️ Submission already in progress, ignoring duplicate call");
@@ -1255,7 +1402,7 @@ async function handleSubmit(e) {
   isSubmitting = true;
   console.log("🔒 Submission lock acquired");
   // ===== END LOCK =====
-  
+
   const selectedPayment = document.querySelector(".payment-option.selected");
   if (!selectedPayment) {
     showToast("Please select payment status", "error");
@@ -1286,15 +1433,31 @@ async function handleSubmit(e) {
 
   const formData = new FormData();
   formData.append("action", "saveSample");
-  formData.append("submitted_by", document.querySelector('[name="submitted_by"]').value);
+  formData.append(
+    "submitted_by",
+    document.querySelector('[name="submitted_by"]').value
+  );
   formData.append("user_id", document.querySelector('[name="user_id"]').value);
-  formData.append("client_id", document.getElementById("selectedClientId").value);
+  formData.append(
+    "client_id",
+    document.getElementById("selectedClientId").value
+  );
   formData.append("submission_type", submissionType);
-  formData.append("received_date", document.getElementById("receivedDate").value);
-  formData.append("tentative_date", document.getElementById("tentativeDate").value);
-  formData.append("additional_notes", document.getElementById("additionalNotes").value || "");
+  formData.append(
+    "received_date",
+    document.getElementById("receivedDate").value
+  );
+  formData.append(
+    "tentative_date",
+    document.getElementById("tentativeDate").value
+  );
+  formData.append(
+    "additional_notes",
+    document.getElementById("additionalNotes").value || ""
+  );
 
-  const addCharges = parseFloat(document.getElementById("additionalCharges").value) || 0;
+  const addCharges =
+    parseFloat(document.getElementById("additionalCharges").value) || 0;
   formData.append("additional_charges", addCharges);
 
   const samples = [];
@@ -1303,9 +1466,12 @@ async function handleSubmit(e) {
       sample_name: card.querySelector(".sample-name-input").value.trim(),
       value: card.querySelector(".sample-value").value.trim(),
       unit: card.querySelector(".sample-unit").value,
-      client_sample_code: card.querySelector(".sample-client-code").value.trim() || "",
-      sampling_location: card.querySelector(".sample-location").value.trim() || "",
-      reason_for_analysis: card.querySelector(".sample-reason").value.trim() || "",
+      client_sample_code:
+        card.querySelector(".sample-client-code").value.trim() || "",
+      sampling_location:
+        card.querySelector(".sample-location").value.trim() || "",
+      reason_for_analysis:
+        card.querySelector(".sample-reason").value.trim() || "",
       container_damage: card.querySelector(".sample-damage").value,
       temperature_condition: card.querySelector(".sample-temp").value,
       validity_status: card.querySelector(".sample-validity").value,
@@ -1322,7 +1488,10 @@ async function handleSubmit(e) {
     tests.push({
       sample: parseInt(cb.dataset.sample),
       parameter_id: parseInt(cb.dataset.param),
-      variant_id: cb.dataset.variant ? parseInt(cb.dataset.variant) : null,
+      variant_id:
+        cb.dataset.variant && cb.dataset.variant !== ""
+          ? parseInt(cb.dataset.variant)
+          : null,
       charge: charge,
     });
   });
@@ -1334,7 +1503,10 @@ async function handleSubmit(e) {
   formData.append("payment_status", isPaid ? "Paid" : "Not Paid");
 
   if (isPaid) {
-    formData.append("payment_reference", document.getElementById("paymentReference").value.trim());
+    formData.append(
+      "payment_reference",
+      document.getElementById("paymentReference").value.trim()
+    );
   } else {
     formData.append("payment_reference", "");
   }
