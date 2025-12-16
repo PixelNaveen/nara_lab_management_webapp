@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Authentication Controller
  * Handles login, logout, registration, and session management
@@ -20,26 +21,26 @@ switch ($action) {
     case 'login':
         handleLogin($authModel);
         break;
-    
+
     case 'logout':
         handleLogout();
         break;
-    
+
     case 'register':
         handleRegister($authModel);
         break;
-    
+
     case 'checkSession':
         checkSession($authModel);
         break;
-    
+
     case 'changePassword':
         changePassword($authModel);
         break;
-    
+
     default:
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Invalid action'
         ]);
 }
@@ -47,7 +48,8 @@ switch ($action) {
 /**
  * Handle login request
  */
-function handleLogin($authModel) {
+function handleLogin($authModel)
+{
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $rememberMe = isset($_POST['remember_me']);
@@ -55,7 +57,7 @@ function handleLogin($authModel) {
     // Validate input
     if (empty($username) || empty($password)) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Username and password are required'
         ]);
         return;
@@ -67,7 +69,7 @@ function handleLogin($authModel) {
     if ($result['success']) {
         // Regenerate session ID to prevent session fixation
         session_regenerate_id(true);
-        
+
         // Create session with all user data
         $_SESSION['user_id'] = $result['user']['user_id'];
         $_SESSION['fullname'] = $result['user']['fullname'];
@@ -94,7 +96,7 @@ function handleLogin($authModel) {
                 'username' => $result['user']['username'],
                 'role' => $result['user']['role']
             ],
-            'redirect' => '../../index.php?page=dashboard'
+            'redirect' => '../../index.php?page=dashboard&from=login'
         ]);
     } else {
         echo json_encode($result);
@@ -104,16 +106,17 @@ function handleLogin($authModel) {
 /**
  * Handle logout request
  */
-function handleLogout() {
+function handleLogout()
+{
     // Clear all session variables
     $_SESSION = [];
-    
+
     // Destroy the session cookie
     if (isset($_COOKIE[session_name()])) {
         $params = session_get_cookie_params();
         setcookie(
-            session_name(), 
-            '', 
+            session_name(),
+            '',
             time() - 3600,
             $params["path"],
             $params["domain"],
@@ -121,10 +124,10 @@ function handleLogout() {
             $params["httponly"]
         );
     }
-    
+
     // Destroy session
     session_destroy();
-    
+
     // Clear remember me cookie
     if (isset($_COOKIE['remember_token'])) {
         setcookie('remember_token', '', time() - 3600, '/');
@@ -140,7 +143,8 @@ function handleLogout() {
 /**
  * Handle registration request
  */
-function handleRegister($authModel) {
+function handleRegister($authModel)
+{
     $data = [
         'fullname' => trim($_POST['fullname'] ?? ''),
         'username' => trim($_POST['username'] ?? ''),
@@ -151,10 +155,12 @@ function handleRegister($authModel) {
     ];
 
     // Validation
-    if (empty($data['fullname']) || empty($data['username']) || 
-        empty($data['email']) || empty($data['password'])) {
+    if (
+        empty($data['fullname']) || empty($data['username']) ||
+        empty($data['email']) || empty($data['password'])
+    ) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'All fields are required'
         ]);
         return;
@@ -163,7 +169,7 @@ function handleRegister($authModel) {
     // Check password confirmation
     if ($data['password'] !== $data['password_confirm']) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Passwords do not match'
         ]);
         return;
@@ -172,7 +178,7 @@ function handleRegister($authModel) {
     // Validate password strength
     if (strlen($data['password']) < 6) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Password must be at least 6 characters long'
         ]);
         return;
@@ -181,7 +187,7 @@ function handleRegister($authModel) {
     // Validate username (alphanumeric and underscore only)
     if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $data['username'])) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Username must be 3-20 characters (letters, numbers, underscore only)'
         ]);
         return;
@@ -195,11 +201,14 @@ function handleRegister($authModel) {
 /**
  * Check if session is valid
  */
-function checkSession($authModel) {
-    if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || 
-        $_SESSION['logged_in'] !== true) {
+function checkSession($authModel)
+{
+    if (
+        !isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) ||
+        $_SESSION['logged_in'] !== true
+    ) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Not logged in'
         ]);
         return;
@@ -207,7 +216,7 @@ function checkSession($authModel) {
 
     // Verify user still exists and is active
     $user = $authModel->getUserById($_SESSION['user_id']);
-    
+
     if ($user) {
         echo json_encode([
             'success' => true,
@@ -222,7 +231,7 @@ function checkSession($authModel) {
         // User no longer exists or is inactive
         session_destroy();
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Session invalid'
         ]);
     }
@@ -231,10 +240,11 @@ function checkSession($authModel) {
 /**
  * Handle password change request
  */
-function changePassword($authModel) {
+function changePassword($authModel)
+{
     if (!isset($_SESSION['user_id'])) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'Not logged in'
         ]);
         return;
@@ -247,7 +257,7 @@ function changePassword($authModel) {
     // Validation
     if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'All fields are required'
         ]);
         return;
@@ -256,7 +266,7 @@ function changePassword($authModel) {
     // Check password confirmation
     if ($newPassword !== $confirmPassword) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => 'New passwords do not match'
         ]);
         return;
@@ -265,4 +275,3 @@ function changePassword($authModel) {
     $result = $authModel->changePassword($_SESSION['user_id'], $currentPassword, $newPassword);
     echo json_encode($result);
 }
-?>

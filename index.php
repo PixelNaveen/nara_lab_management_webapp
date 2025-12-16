@@ -9,19 +9,14 @@
 // ✅ INCLUDE AUTHENTICATION CHECK FIRST
 require_once __DIR__ . '/src/Includes/auth.php';
 
-// Now $currentUser is available from auth.php
+// Now $currentUser and $userInitials are available from auth.php
+
 // Database connection
 require_once __DIR__ . '/Config/Database.php';
 $db = new Database();
 $conn = $db->connect();
 
-// $currentUser array from auth.php contains:
-// - user_id
-// - fullname
-// - username
-// - email
-// - role
-
+// Prepare user data for sidebar
 $user = [
     'name' => $_SESSION['fullname'],
     'username' => $_SESSION['username'],
@@ -83,9 +78,24 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/param-prices.css">
     <link rel="stylesheet" href="public/assets/css/manage-test-methods.css">
     <link rel="stylesheet" href="public/assets/css/sample-submission.css">
+
+    <!-- Clean URL: Remove ?from= parameter after page load -->
+    <?php if (isset($_GET['from'])): ?>
+    <script>
+        if (window.history.replaceState) {
+            const url = new URL(window.location);
+            url.searchParams.delete('from');
+            window.history.replaceState({path: url.toString()}, '', url.toString());
+        }
+    </script>
+    <?php endif; ?>
 </head>
 
 <body>
+    <!-- ============= LOADER: Only shows when entering dashboard ============= -->
+    <?php include 'src/Includes/loader.php'; ?>
+    <!-- ==================================================================== -->
+
     <div class="d-flex" id="wrapper">
         <!-- Sidebar -->
         <?php include 'src/Includes/sidebar.php'; ?>
@@ -102,10 +112,10 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
                     if (file_exists($pageFile)) {
                         include $pageFile;
                     } else {
-                        echo "<div class='alert alert-danger'>";
-                        echo "<h4><i class='fas fa-exclamation-triangle'></i> Page Not Found</h4>";
-                        echo "<p>The requested page could not be found.</p>";
-                        echo "</div>";
+                        echo "<div class='alert alert-danger'>
+                                <h4><i class='fas fa-exclamation-triangle'></i> Page Not Found</h4>
+                                <p>The requested page could not be found.</p>
+                              </div>";
                     }
                     ?>
                 </div>
@@ -122,35 +132,12 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
     <!-- Custom JS -->
     <script src="public/assets/js/script.js"></script>
+
+    <!-- ============= LOADER SCRIPT: Controls animation & hide ============= -->
     <script src="public/assets/js/load.js"></script>
+    <!-- ==================================================================== -->
 
     <!-- Session Check Script -->
-    <script>
-        // Check session validity every 5 minutes
-        setInterval(async () => {
-            try {
-                const response = await fetch('src/Controllers/auth-controller.php?action=checkSession');
-                const result = await response.json();
-                
-                if (!result.success) {
-                    // Session invalid, redirect to login
-                    window.location.href = 'src/Views/login.php';
-                }
-            } catch (error) {
-                console.error('Session check error:', error);
-            }
-        }, 300000); // 5 minutes
-
-        // Prevent back button to login after successful login
-        window.onload = function() {
-            if (typeof history.pushState === "function") {
-                history.pushState("jibberish", null, null);
-                window.onpopstate = function() {
-                    history.pushState('newjibberish', null, null);
-                };
-            }
-        };
-    </script>
+    
 </body>
-
 </html>

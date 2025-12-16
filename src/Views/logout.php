@@ -39,6 +39,6 @@ if (isset($_COOKIE['remember_token'])) {
 }
 
 // Redirect to login page
-header('Location: login.php');
+header('Location: login.php?from=logout');
 exit;
 ?>

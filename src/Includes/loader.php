@@ -1,4 +1,12 @@
 <!-- includes/loader.php -->
+<?php
+// Only show loader if coming from login, logout, or register transition
+$showLoader = false;
+if (isset($_GET['from']) && in_array($_GET['from'], ['login', 'logout', 'register'])) {
+    $showLoader = true;
+}
+?>
+<?php if ($showLoader): ?>
 <div id="loader-wrapper">
   <div class="loader-container">
     <img src="public/images/Nara logo.png" alt="Logo" class="loader-logo">
@@ -69,3 +77,4 @@
   visibility: hidden;
 }
 </style>
+<?php endif; ?>

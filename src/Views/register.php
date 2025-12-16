@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Registration Page
  * Laboratory Management System
@@ -19,20 +20,21 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Lab Management System</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../public/assets/css/login.css">
-    
+
     <style>
         .password-strength {
             height: 5px;
@@ -41,35 +43,47 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
             background: #e9ecef;
             overflow: hidden;
         }
-        
+
         .password-strength-bar {
             height: 100%;
             width: 0%;
             transition: all 0.3s ease;
         }
-        
-        .strength-weak { background: #dc3545; width: 33%; }
-        .strength-medium { background: #ffc107; width: 66%; }
-        .strength-strong { background: #28a745; width: 100%; }
-        
+
+        .strength-weak {
+            background: #dc3545;
+            width: 33%;
+        }
+
+        .strength-medium {
+            background: #ffc107;
+            width: 66%;
+        }
+
+        .strength-strong {
+            background: #28a745;
+            width: 100%;
+        }
+
         .password-requirements {
             font-size: 0.85rem;
             margin-top: 0.5rem;
         }
-        
+
         .password-requirements li {
             color: #6c757d;
         }
-        
+
         .password-requirements li.valid {
             color: #28a745;
         }
-        
+
         .password-requirements li i {
             width: 15px;
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="login-card">
@@ -89,13 +103,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
                     <label class="form-label">
                         <i class="fas fa-user"></i> Full Name
                     </label>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        name="fullname" 
-                        id="fullname" 
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="fullname"
+                        id="fullname"
                         placeholder="Enter your full name"
-                        required 
+                        required
                         autofocus>
                     <div class="invalid-feedback">
                         Please enter your full name.
@@ -106,11 +120,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
                     <label class="form-label">
                         <i class="fas fa-user-circle"></i> Username
                     </label>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        name="username" 
-                        id="username" 
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="username"
+                        id="username"
                         placeholder="Choose a username (3-20 characters)"
                         pattern="[a-zA-Z0-9_]{3,20}"
                         required>
@@ -123,11 +137,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
                     <label class="form-label">
                         <i class="fas fa-envelope"></i> Email Address
                     </label>
-                    <input 
-                        type="email" 
-                        class="form-control" 
-                        name="email" 
-                        id="email" 
+                    <input
+                        type="email"
+                        class="form-control"
+                        name="email"
+                        id="email"
                         placeholder="Enter your email address"
                         required>
                     <div class="invalid-feedback">
@@ -155,11 +169,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
                         <i class="fas fa-lock"></i> Password
                     </label>
                     <div class="password-input">
-                        <input 
-                            type="password" 
-                            class="form-control" 
-                            name="password" 
-                            id="password" 
+                        <input
+                            type="password"
+                            class="form-control"
+                            name="password"
+                            id="password"
                             placeholder="Create a password"
                             required>
                         <button type="button" class="toggle-password" onclick="togglePassword('password', 'toggleIcon1')" tabindex="-1">
@@ -182,11 +196,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
                         <i class="fas fa-lock"></i> Confirm Password
                     </label>
                     <div class="password-input">
-                        <input 
-                            type="password" 
-                            class="form-control" 
-                            name="password_confirm" 
-                            id="password_confirm" 
+                        <input
+                            type="password"
+                            class="form-control"
+                            name="password_confirm"
+                            id="password_confirm"
                             placeholder="Confirm your password"
                             required>
                         <button type="button" class="toggle-password" onclick="togglePassword('password_confirm', 'toggleIcon2')" tabindex="-1">
@@ -227,7 +241,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
         function togglePassword(inputId, iconId) {
             const passwordInput = document.getElementById(inputId);
             const toggleIcon = document.getElementById(iconId);
-            
+
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 toggleIcon.classList.remove('fa-eye');
@@ -260,29 +274,29 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
         document.getElementById('password').addEventListener('input', function() {
             const password = this.value;
             const strengthBar = document.getElementById('strengthBar');
-            
+
             // Remove previous classes
             strengthBar.className = 'password-strength-bar';
-            
+
             // Requirements
             const hasLength = password.length >= 6;
             const hasUppercase = /[A-Z]/.test(password);
             const hasLowercase = /[a-z]/.test(password);
             const hasNumber = /[0-9]/.test(password);
-            
+
             // Update requirements UI
             updateRequirement('req-length', hasLength);
             updateRequirement('req-uppercase', hasUppercase);
             updateRequirement('req-lowercase', hasLowercase);
             updateRequirement('req-number', hasNumber);
-            
+
             // Calculate strength
             let strength = 0;
             if (hasLength) strength++;
             if (hasUppercase) strength++;
             if (hasLowercase) strength++;
             if (hasNumber) strength++;
-            
+
             // Update strength bar
             if (strength === 0) {
                 strengthBar.style.width = '0%';
@@ -298,7 +312,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
         function updateRequirement(id, isValid) {
             const element = document.getElementById(id);
             const icon = element.querySelector('i');
-            
+
             if (isValid) {
                 element.classList.add('valid');
                 icon.classList.remove('fa-circle');
@@ -319,7 +333,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
             const role = document.getElementById('role');
             const password = document.getElementById('password');
             const passwordConfirm = document.getElementById('password_confirm');
-            
+
             let isValid = true;
 
             // Validate fullname
@@ -384,7 +398,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
         // Handle form submission
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Validate form
             if (!validateForm()) {
                 showAlert('Please fill in all fields correctly.', 'warning');
@@ -409,10 +423,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
 
                 if (result.success) {
                     showAlert('Registration successful! Redirecting to login...', 'success');
-                    
+
                     // Redirect after short delay
                     setTimeout(() => {
-                        window.location.href = 'login.php?registered=1';
+                        window.location.href = 'login.php?from=register';
                     }, 2000);
                 } else {
                     showAlert(result.message, 'danger');
@@ -437,9 +451,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
 
         // Prevent back button after registration
         window.history.forward();
+
         function noBack() {
             window.history.forward();
         }
     </script>
 </body>
+
 </html>

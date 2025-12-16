@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Login Page
  * Laboratory Management System
@@ -24,20 +25,22 @@ $registered = isset($_GET['registered']) ? true : false;
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Lab Management System</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../public/assets/css/login.css">
 </head>
+
 <body>
     <div class="login-container">
         <div class="login-card">
@@ -52,21 +55,21 @@ $registered = isset($_GET['registered']) ? true : false;
             <div id="alertMessage" style="display: none;"></div>
 
             <?php if ($timeout): ?>
-            <div class="alert alert-warning" role="alert">
-                <i class="fas fa-clock me-2"></i>Your session has expired. Please login again.
-            </div>
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-clock me-2"></i>Your session has expired. Please login again.
+                </div>
             <?php endif; ?>
 
             <?php if ($security): ?>
-            <div class="alert alert-danger" role="alert">
-                <i class="fas fa-shield-alt me-2"></i>Security alert: Session terminated. Please login again.
-            </div>
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-shield-alt me-2"></i>Security alert: Session terminated. Please login again.
+                </div>
             <?php endif; ?>
 
             <?php if ($registered): ?>
-            <div class="alert alert-success" role="alert">
-                <i class="fas fa-check-circle me-2"></i>Registration successful! Please login with your credentials.
-            </div>
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>Registration successful! Please login with your credentials.
+                </div>
             <?php endif; ?>
 
             <!-- Login Form -->
@@ -75,13 +78,13 @@ $registered = isset($_GET['registered']) ? true : false;
                     <label class="form-label">
                         <i class="fas fa-user"></i> Username or Email
                     </label>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        name="username" 
-                        id="username" 
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="username"
+                        id="username"
                         placeholder="Enter your username or email"
-                        required 
+                        required
                         autofocus>
                     <div class="invalid-feedback">
                         Please enter your username or email.
@@ -93,11 +96,11 @@ $registered = isset($_GET['registered']) ? true : false;
                         <i class="fas fa-lock"></i> Password
                     </label>
                     <div class="password-input">
-                        <input 
-                            type="password" 
-                            class="form-control" 
-                            name="password" 
-                            id="password" 
+                        <input
+                            type="password"
+                            class="form-control"
+                            name="password"
+                            id="password"
                             placeholder="Enter your password"
                             required>
                         <button type="button" class="toggle-password" onclick="togglePassword()" tabindex="-1">
@@ -110,10 +113,10 @@ $registered = isset($_GET['registered']) ? true : false;
                 </div>
 
                 <div class="mb-3 form-check">
-                    <input 
-                        type="checkbox" 
-                        class="form-check-input" 
-                        name="remember_me" 
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="remember_me"
                         id="rememberMe">
                     <label class="form-check-label" for="rememberMe">
                         Remember me for 30 days
@@ -129,7 +132,7 @@ $registered = isset($_GET['registered']) ? true : false;
             <div class="login-footer">
                 <a href="#" class="text-muted">Forgot password?</a>
                 <span class="text-muted">•</span>
-                <a href="register.php">Create account</a>
+                <a href="register.php?from=login">Create account</a>
             </div>
 
             <!-- System Info -->
@@ -150,7 +153,7 @@ $registered = isset($_GET['registered']) ? true : false;
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const toggleIcon = document.getElementById('toggleIcon');
-            
+
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 toggleIcon.classList.remove('fa-eye');
@@ -213,7 +216,7 @@ $registered = isset($_GET['registered']) ? true : false;
         // Handle form submission
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Validate form
             if (!validateForm()) {
                 return;
@@ -237,7 +240,7 @@ $registered = isset($_GET['registered']) ? true : false;
 
                 if (result.success) {
                     showAlert('Login successful! Redirecting to dashboard...', 'success');
-                    
+
                     // Clear form validation
                     document.getElementById('username').classList.remove('is-valid');
                     document.getElementById('password').classList.remove('is-valid');
@@ -278,9 +281,11 @@ $registered = isset($_GET['registered']) ? true : false;
 
         // Prevent back button after login
         window.history.forward();
+
         function noBack() {
             window.history.forward();
         }
     </script>
 </body>
+
 </html>

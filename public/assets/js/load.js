@@ -1,18 +1,14 @@
-// assets/js/loader.js
+document.addEventListener("DOMContentLoaded", function() {
+    const loader = document.getElementById("loader-wrapper");
+    if (!loader) return;
 
-window.addEventListener("load", function() {
-  const loader = document.getElementById("loader-wrapper");
-  if (loader) {
-    const minDisplayTime = 2000; // Minimum time in milliseconds (2 seconds)
+    const minDisplayTime = 1500;
     const startTime = performance.timing.navigationStart;
-    const now = Date.now();
-    const timeElapsed = now - startTime;
-    const remainingTime = Math.max(0, minDisplayTime - timeElapsed);
+    const elapsed = Date.now() - startTime;
+    const delay = Math.max(0, minDisplayTime - elapsed);
 
     setTimeout(() => {
-      loader.classList.add("hidden");
-    }, remainingTime);
-  }
+        loader.classList.add("hidden");
+        setTimeout(() => { loader.style.display = 'none'; }, 600);
+    }, delay);
 });
-
-console.log(1);
