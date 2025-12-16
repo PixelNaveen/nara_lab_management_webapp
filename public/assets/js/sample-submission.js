@@ -1527,6 +1527,9 @@ async function handleSubmit(e) {
 
       // Keep lock during reload
       setTimeout(() => {
+        openSAFPreview(data.sample_id, data.ac_reference, data.form_number);
+      }, 1500);
+      setTimeout(() => {
         location.reload();
       }, 3000);
     } else {
@@ -1540,4 +1543,16 @@ async function handleSubmit(e) {
     submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Form';
     isSubmitting = false; // Release lock on error
   }
+}
+
+// Add this function:
+function openSAFPreview(sampleId, acRef, formNumber) {
+    const safUrl = `src/Controllers/saf-controller.php?action=view&sample_id=${sampleId}`;
+    const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes';
+    const safWindow = window.open(safUrl, `SAF_${sampleId}`, windowFeatures);
+    if (safWindow) {
+        safWindow.focus();
+    } else {
+        showToast('⚠️ Popup blocked! Allow popups.', 'warning');
+    }
 }
