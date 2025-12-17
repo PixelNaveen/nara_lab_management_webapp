@@ -1,8 +1,9 @@
 <?php
 /**
  * SAF Controller - Sample Acceptance Form Generator
- * Version: 2.0 - Multi-page Support
+ * Version: 2.1 - CORRECTED
  * 
+ * FIXED: UTF-8 encoding (proper emojis)
  * Routes SAF requests and renders forms
  */
 

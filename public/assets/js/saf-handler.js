@@ -1,7 +1,9 @@
 /**
  * SAF Handler - Sample Acceptance Form Interactions
- * Version: 2.0 - Matches user template + PDF download
+ * Version: 2.1 - CORRECTED
  * 
+ * FIXED: UTF-8 encoding (proper emojis)
+ * FIXED: Better error handling
  * Handles size changes and PDF download
  */
 
@@ -196,5 +198,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (pageCount > 5) {
         console.warn(`⚠️ Large form (${pageCount} pages). PDF generation may take time.`);
+    }
+    
+    // Check if html2pdf library is loaded
+    if (typeof html2pdf === 'undefined') {
+        console.error('❌ html2pdf library not loaded! PDF download will not work.');
+        console.error('Please ensure /public/assets/libs/html2pdf.bundle.min.js is present.');
+        
+        const btnDownload = document.querySelector('.btn-print');
+        if (btnDownload) {
+            btnDownload.disabled = true;
+            btnDownload.textContent = '❌ PDF Library Missing';
+            btnDownload.title = 'html2pdf.bundle.min.js not found';
+        }
     }
 });

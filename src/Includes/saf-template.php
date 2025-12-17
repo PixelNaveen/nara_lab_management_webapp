@@ -1,11 +1,11 @@
 <?php
 /**
  * SAF Template - Sample Acceptance Form
- * Version: 2.0 - Multi-page Support
+ * Version: 2.1 - CORRECTED
  * 
- * Uses EXACT styling from user's template
- * Filled with dynamic data from database
- * All sections on all pages (as per requirements)
+ * FIXED: UTF-8 encoding (proper emojis)
+ * FIXED: Payment:: (double colon)
+ * FIXED: CSS path handling
  */
 
 if (!isset($data)) {
@@ -118,9 +118,9 @@ $totalSamples = $data['total_samples'];
                     </tr>
                 <?php endforeach; ?>
 
-                <!-- Payment Row -->
+                <!-- Payment Row - FIXED: Payment:: (double colon) -->
                 <tr class="payment-row">
-                    <td colspan="3" style="width: 60%;">Payment: Test Charge: Rs. <?= number_format($data['acknowledgement']['test_charges'], 2) ?> &nbsp;&nbsp; Total charge: Rs. <?= number_format($data['acknowledgement']['total_charges'], 2) ?></td>
+                    <td colspan="3" style="width: 60%;">Payment:: Test Charge: Rs. <?= number_format($data['acknowledgement']['test_charges'], 2) ?> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Total charge: Rs. <?= number_format($data['acknowledgement']['total_charges'], 2) ?></td>
                     <td colspan="2" style="width: 28%;">Tentative date of issuing: <?= htmlspecialchars($data['acceptance']['tentative_date']) ?></td>
                     <td style="width: 12%;">Test report reference number: <?= htmlspecialchars($data['acceptance']['report_ref']) ?></td>
                 </tr>

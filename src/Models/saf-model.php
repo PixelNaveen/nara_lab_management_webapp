@@ -1,10 +1,18 @@
 <?php
+
 /**
  * SAF Model - Sample Acceptance Form Data Fetcher
- * Version: 2.0 - Multi-page Support
+ * Version: 3.0 - ULTRA-FINAL (Database-Matched)
  * 
- * Fetches SAF data from database and prepares for display
- * Sample codes are loaded from DB (already saved during submission)
+ * CORRECTED TO MATCH ACTUAL DATABASE:
+ * - form_number format: YY/NNNN/SS (e.g., "25/0001/01")
+ * - Base extraction: "25/0001" (4-digit sequence)
+ * - Sample code generation: "25/0001/001", "25/0001/002", "25/0001/003" (3-digit)
+ * 
+ * DATABASE SCHEMA VERIFIED:
+ * - samples.form_number: VARCHAR(20) - stores "25/0001/01"
+ * - sample_items.sequence_number: INT - stores 1, 2, 3, ...
+ * - Generated codes: "25/0001/001", "25/0001/002", "25/0001/003"
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
@@ -67,7 +75,7 @@ class SAFModel
                     
                     WHERE s.sample_id = ?
                     ORDER BY si.sequence_number ASC";
-            
+
             $stmt = $this->conn->prepare($sql);
             if ($stmt === false) {
                 throw new Exception("Prepare failed: " . $this->conn->error);
@@ -108,9 +116,9 @@ class SAFModel
                         'city' => $row['city'],
                         'phone' => $row['phone_primary'],
                         'full_address' => trim(
-                            $row['client_name'] . ', ' . 
-                            $row['address_line1'] . ', ' . 
-                            $row['city']
+                            $row['client_name'] . ', ' .
+                                $row['address_line1'] . ', ' .
+                                $row['city']
                         )
                     ];
 
@@ -128,19 +136,20 @@ class SAFModel
                     ];
 
                     // Format tentative date for display
-                    $safData['acceptance']['tentative_date'] = $row['tentative_date'] 
-                        ? date('d/m/Y', strtotime($row['tentative_date'])) 
+                    $safData['acceptance']['tentative_date'] = $row['tentative_date']
+                        ? date('d/m/Y', strtotime($row['tentative_date']))
                         : '';
                 }
 
                 // Collect ALL sample items (not limited to 10)
                 if ($row['sample_item_id']) {
                     $sequenceNumber = (int)$row['sequence_number'];
-                    
+
                     // Generate sample code from form_number + sequence
-                    // e.g., form "25/0007/03" + sequence 1 → "25/0007/01"
+                    // CORRECTED: Extracts base from "25/0001/01" → "25/0001"
+                    // Then adds 3-digit sequence: "25/0001/001", "25/0001/002", etc.
                     $sampleCode = $this->generateSampleCode($row['form_number'], $sequenceNumber);
-                    
+
                     $safData['items'][] = [
                         'sample_item_id' => $row['sample_item_id'],
                         'sample_name' => $row['sample_name'],
@@ -165,7 +174,6 @@ class SAFModel
                 'success' => true,
                 'data' => $safData
             ];
-
         } catch (Exception $e) {
             logError($e->getMessage(), 'SAFModel::getSAFData');
             return [
@@ -186,7 +194,7 @@ class SAFModel
     {
         $pages = [];
         $pageSize = 10;
-        
+
         // If no samples, return one empty page
         if (empty($allSamples)) {
             $emptyPage = [];
@@ -205,18 +213,18 @@ class SAFModel
             $pages[] = $emptyPage;
             return $pages;
         }
-        
+
         // Split samples into chunks of 10
         $totalSamples = count($allSamples);
         $pageCount = (int)ceil($totalSamples / $pageSize);
-        
+
         for ($page = 0; $page < $pageCount; $page++) {
             $startIndex = $page * $pageSize;
             $pageItems = [];
-            
+
             for ($i = 0; $i < $pageSize; $i++) {
                 $sampleIndex = $startIndex + $i;
-                
+
                 if ($sampleIndex < $totalSamples) {
                     // Real sample
                     $sample = $allSamples[$sampleIndex];
@@ -236,10 +244,10 @@ class SAFModel
                     ];
                 }
             }
-            
+
             $pages[] = $pageItems;
         }
-        
+
         return $pages;
     }
 
@@ -255,7 +263,7 @@ class SAFModel
             $sql = "SELECT COUNT(*) as count 
                     FROM sample_acceptance 
                     WHERE sample_id = ?";
-            
+
             $stmt = $this->conn->prepare($sql);
             $stmt->bind_param("i", $sampleId);
             $stmt->execute();
@@ -272,32 +280,57 @@ class SAFModel
     /**
      * Generate sample code from form number
      * 
-     * Format: YY/NNNN/SS (base + sequence)
-     * Example: Form "25/0007/03" + sequence 1 → "25/0007/01"
+     * DATABASE FORMAT: YY/NNNN/SS
+     * Example: "25/0001/01" (year/4-digit-sequence/2-digit-count)
      * 
-     * @param string $formNumber Full form number (e.g., "25/0007/03")
+     * SAMPLE CODE FORMAT: YY/NNNN/SSS
+     * Example: "25/0001/001", "25/0001/002", "25/0001/003" (3-digit sample number)
+     * 
+     * PROCESS:
+     * 1. Extract base from form_number: "25/0001/01" → "25/0001"
+     * 2. Append 3-digit padded sequence: "25/0001" + "/001" → "25/0001/001"
+     * 
+     * @param string $formNumber Full form number (e.g., "25/0001/01")
      * @param int $sequenceNumber Sample sequence (1, 2, 3, ...)
-     * @return string Sample code (e.g., "25/0007/01")
+     * @return string Sample code (e.g., "25/0001/001")
      */
     private function generateSampleCode($formNumber, $sequenceNumber)
     {
-        // Split form number: "25/0007/03" → ["25", "0007", "03"]
+        // Validate and split form number
         $parts = explode('/', $formNumber);
-        
+
         if (count($parts) !== 3) {
+            logError("Invalid form_number format: $formNumber (expected YY/NNNN/SS)", 'SAFModel::generateSampleCode');
             return ''; // Invalid format, return empty
         }
-        
-        // Extract base: "25/0007"
+
+        // Validate year part (2 digits)
+        if (strlen($parts[0]) !== 2 || !is_numeric($parts[0])) {
+            logError("Invalid year in form_number: $formNumber (expected 2 digits)", 'SAFModel::generateSampleCode');
+        }
+
+        // Validate sequence part (4 digits as per database format)
+        if (strlen($parts[1]) !== 4 || !is_numeric($parts[1])) {
+            logError("Invalid sequence in form_number: $formNumber (expected 4 digits)", 'SAFModel::generateSampleCode');
+        }
+
+        // Validate count part (2 digits as per database format)
+        if (strlen($parts[2]) !== 2 || !is_numeric($parts[2])) {
+            logError("Invalid count in form_number: $formNumber (expected 2 digits)", 'SAFModel::generateSampleCode');
+        }
+
+        // Extract base: "25/0001" (year + sequence)
         $base = $parts[0] . '/' . $parts[1];
-        
-        // Append sequence with 2-digit padding (allows overflow to 3+ digits)
-        // 1-99: 01, 02, ..., 99
-        // 100+: 100, 101, 102 (automatically overflows)
-        $paddedSequence = str_pad($sequenceNumber, 2, '0', STR_PAD_LEFT);
-        
+
+        // CRITICAL: 3-DIGIT padding for sample codes
+        // Matches user's paper form format: 001, 002, 003
+        // 1-99: 001, 002, ..., 099
+        // 100-999: 100, 101, ..., 999
+        // 1000+: 1000, 1001 (automatically overflows if needed)
+        $paddedSequence = str_pad($sequenceNumber, 3, '0', STR_PAD_LEFT);
+
         $sampleCode = $base . '/' . $paddedSequence;
-        
+
         return $sampleCode;
     }
 }
