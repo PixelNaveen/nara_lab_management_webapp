@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Main Index File
  * Laboratory Management System
@@ -39,7 +40,8 @@ $pageMap = [
     'param-variants' => 'manage-param-variants.php',
     'swab-parameter' => 'swab-param.php',
     'pricing' => 'param-prices.php',
-    'methods' => 'manage-test-methods.php'
+    'methods' => 'manage-test-methods.php',
+    'samples' => 'sample-records-view.php',
 ];
 
 // Resolve the file path safely
@@ -52,11 +54,14 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NARA Lab Management System</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="public/images/Nara logo.png">
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -69,7 +74,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/style.css">
     <link rel="stylesheet" href="public/assets/css/header.css">
     <link rel="stylesheet" href="public/assets/css/sidebar.css">
-    <link rel="stylesheet" href="public/assets/css/dashboard.css">
+    <!-- <link rel="stylesheet" href="public/assets/css/dashboard.css"> -->
     <link rel="stylesheet" href="public/assets/css/manage-users.css">
     <link rel="stylesheet" href="public/assets/css/manage-clients.css">
     <link rel="stylesheet" href="public/assets/css/manage-param.css">
@@ -81,13 +86,15 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
 
     <!-- Clean URL: Remove ?from= parameter after page load -->
     <?php if (isset($_GET['from'])): ?>
-    <script>
-        if (window.history.replaceState) {
-            const url = new URL(window.location);
-            url.searchParams.delete('from');
-            window.history.replaceState({path: url.toString()}, '', url.toString());
-        }
-    </script>
+        <script>
+            if (window.history.replaceState) {
+                const url = new URL(window.location);
+                url.searchParams.delete('from');
+                window.history.replaceState({
+                    path: url.toString()
+                }, '', url.toString());
+            }
+        </script>
     <?php endif; ?>
 </head>
 
@@ -138,6 +145,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <!-- ==================================================================== -->
 
     <!-- Session Check Script -->
-    
+
 </body>
+
 </html>
