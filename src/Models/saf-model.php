@@ -130,10 +130,15 @@ class SAFModel
                         'validity_ok' => $row['validity_ok']
                     ];
 
+                    $testCharges  = (float)($row['test_charges'] ?? 0);
+                    $totalCharges = (float)($row['total_charges'] ?? 0);
+
                     $safData['acknowledgement'] = [
-                        'test_charges' => (float)($row['test_charges'] ?? 0),
-                        'total_charges' => (float)($row['total_charges'] ?? 0)
+                        'test_charges' => $testCharges,
+                        'additional_charges' => max(0, $totalCharges - $testCharges),
+                        'total_charges' => $totalCharges
                     ];
+
 
                     // Format tentative date for display
                     $safData['acceptance']['tentative_date'] = $row['tentative_date']
