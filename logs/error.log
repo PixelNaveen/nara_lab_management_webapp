@@ -7,3 +7,5 @@
 [2025-12-14 14:11:21] [SampleModel::saveSample] Duplicate entry '' for key 'idx_unique_payment_ref'
 [2025-12-14 14:11:21] [SampleModel::saveSample] Duplicate entry '' for key 'idx_unique_payment_ref'
 [2025-12-14 14:45:05] [SampleModel::saveSample] Duplicate entry '' for key 'idx_unique_payment_ref'
+[2025-12-18 05:47:27] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Food – Coliforms + Food – E. coli + Food – Faecal coliforms) | Individual: Rs. 6250 | Combo: Rs. 3875 | Savings: Rs. 2375 (38%)
+[2025-12-18 05:47:27] [TotalValidation] Total mismatch - Frontend: Rs. 6250, Backend: Rs. 3875, Diff: Rs. 2375, Combos: 1

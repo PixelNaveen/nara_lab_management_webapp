@@ -1,512 +1,616 @@
 <?php
-
 /**
- * Sample Controller - COMPLETE FINAL VERSION
- * Version: 5.0 - With Combo Detection & Smart UI Support
+ * Pricing Controller - PERFECT VERSION FOR ACTUAL MODEL
+ * Works with the actual PricingModel methods
+ * 
+ * @package LabManagementSystem
+ * @subpackage Controllers
+ * @version 2.0 - Matched to actual model
  */
-
-require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/../Helpers/functions.php';
-require_once __DIR__ . '/../Models/sample-model.php';
 
 session_start();
 
+// Include dependencies
+require_once __DIR__ . '/../../Config/Database.php';
+require_once __DIR__ . '/../Helpers/functions.php';
+require_once __DIR__ . '/../Models/pricing-model.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
+// ========== AUTHENTICATION CHECK ==========
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in'])) {
-    sendJsonResponse([
-        'success' => false,
+    echo json_encode([
+        'status' => 'error',
         'message' => 'Unauthorized access. Please log in.'
     ]);
+    exit;
 }
 
+// ========== CSRF VALIDATION ==========
+$readOnlyActions = [
+    'fetchActiveParameters',
+    'fetchAllIndividuals',
+    'fetchAllCombos',
+    'getIndividualById',
+    'getComboById',
+    'previewComboName'
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    if (!in_array($action, $readOnlyActions)) {
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid security token'
+            ]);
+            exit;
+        }
+    }
+}
+
+// ========== MODEL INITIALIZATION ==========
 try {
-    $sampleModel = new SampleModel();
+    $model = new PricingModel();
 } catch (Exception $e) {
-    logError($e->getMessage(), 'SampleModel initialization');
-    sendJsonResponse([
-        'success' => false,
+    logError($e->getMessage(), 'PricingModel initialization');
+    echo json_encode([
+        'status' => 'error',
         'message' => 'Database connection failed. Please try again.'
     ]);
+    exit;
 }
 
-$action = $_POST['action'] ?? $_GET['action'] ?? '';
+// ========== ACTION ROUTER ==========
+$action = $_POST['action'] ?? '';
 
 try {
     switch ($action) {
-        case 'searchClients':
-            handleSearchClients($sampleModel);
+        
+        // ==================== FETCH ACTIVE PARAMETERS ====================
+        case 'fetchActiveParameters':
+            try {
+                $parameters = $model->getActiveParameters();
+                
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $parameters
+                ]);
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'fetchActiveParameters');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to load parameters: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'createClient':
-            handleCreateClient($sampleModel);
+        
+        // ==================== INDIVIDUAL PRICES ====================
+        
+        case 'fetchAllIndividuals':
+            try {
+                $filters = [
+                    'search' => trim($_POST['search'] ?? ''),
+                    'is_active' => $_POST['is_active'] ?? ''
+                ];
+                
+                $prices = $model->getAllIndividualPrices($filters);
+                
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $prices
+                ]);
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'fetchAllIndividuals');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to load prices: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'updateClient':
-            handleUpdateClient($sampleModel);
+        
+        case 'getIndividualById':
+            try {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Invalid ID'
+                    ]);
+                    exit;
+                }
+                
+                $price = $model->getIndividualPriceById($id);
+                
+                if ($price) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'data' => $price
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Price not found'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'getIndividualById');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to load price: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'getParameters':
-            handleGetParameters($sampleModel);
+        
+        case 'insertIndividual':
+            try {
+                $parameterId = intval($_POST['parameter_id'] ?? 0);
+                $testCharge = floatval($_POST['test_charge'] ?? 0);
+                $isActive = intval($_POST['is_active'] ?? 1);
+                
+                // Validation
+                if ($parameterId <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Please select a parameter',
+                        'field' => 'parameter_id'
+                    ]);
+                    exit;
+                }
+                
+                if ($testCharge < 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Price cannot be negative',
+                        'field' => 'test_charge'
+                    ]);
+                    exit;
+                }
+                
+                // Check for existing active price
+                if ($model->hasIndividualPrice($parameterId)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'This parameter already has a price. Please edit the existing price instead.',
+                        'field' => 'parameter_id'
+                    ]);
+                    exit;
+                }
+                
+                // Check for deleted price (reactivation)
+                $deleted = $model->findDeletedIndividualPrice($parameterId);
+                
+                if ($deleted) {
+                    // Reactivate existing deleted price
+                    $success = $model->reactivateIndividualPrice(
+                        $deleted['pricing_id'],
+                        $testCharge,
+                        $isActive
+                    );
+                    
+                    if ($success) {
+                        echo json_encode([
+                            'status' => 'success',
+                            'message' => 'Price reactivated successfully',
+                            'pricing_id' => $deleted['pricing_id']
+                        ]);
+                    } else {
+                        echo json_encode([
+                            'status' => 'error',
+                            'message' => 'Failed to reactivate price'
+                        ]);
+                    }
+                } else {
+                    // Insert new price
+                    $pricingId = $model->insertIndividualPrice($parameterId, $testCharge, $isActive);
+                    
+                    if ($pricingId) {
+                        echo json_encode([
+                            'status' => 'success',
+                            'message' => 'Price added successfully',
+                            'pricing_id' => $pricingId
+                        ]);
+                    } else {
+                        echo json_encode([
+                            'status' => 'error',
+                            'message' => 'Failed to add price'
+                        ]);
+                    }
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'insertIndividual');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error adding price: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'getCombos':
-            handleGetCombos($sampleModel);
+        
+        case 'updateIndividual':
+            try {
+                $id = intval($_POST['id'] ?? 0);
+                $testCharge = floatval($_POST['test_charge'] ?? 0);
+                $isActive = intval($_POST['is_active'] ?? 1);
+                
+                if ($id <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Invalid ID'
+                    ]);
+                    exit;
+                }
+                
+                if ($testCharge < 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Price cannot be negative',
+                        'field' => 'test_charge'
+                    ]);
+                    exit;
+                }
+                
+                // Get current data to extract parameter_id
+                $current = $model->getIndividualPriceById($id);
+                if (!$current) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Price not found'
+                    ]);
+                    exit;
+                }
+                
+                // Update with same parameter_id
+                $success = $model->updateIndividualPrice(
+                    $id,
+                    $current['parameter_id'],
+                    $testCharge,
+                    $isActive
+                );
+                
+                if ($success) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Price updated successfully'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Failed to update price'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'updateIndividual');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error updating price: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'searchSampleNames':
-            handleSearchSampleNames($sampleModel);
+        
+        case 'deleteIndividual':
+            try {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Invalid ID'
+                    ]);
+                    exit;
+                }
+                
+                $success = $model->softDeleteIndividualPrice($id);
+                
+                if ($success) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Price deleted successfully'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Failed to delete price'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'deleteIndividual');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error deleting price: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'validatePaymentReference':
-            handleValidatePaymentReference();
+        
+        // ==================== COMBO PRICES ====================
+        
+        case 'fetchAllCombos':
+            try {
+                $filters = [
+                    'search' => trim($_POST['search'] ?? ''),
+                    'is_active' => $_POST['is_active'] ?? ''
+                ];
+                
+                $combos = $model->getAllComboPrices($filters);
+                
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $combos
+                ]);
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'fetchAllCombos');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to load combos: ' . $e->getMessage()
+                ]);
+            }
             break;
-
-        case 'saveSample':
-            handleSaveSample($sampleModel);
+        
+        case 'getComboById':
+            try {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Invalid ID'
+                    ]);
+                    exit;
+                }
+                
+                $combo = $model->getComboPriceById($id);
+                
+                if ($combo) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'data' => $combo
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Combo not found'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'getComboById');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to load combo: ' . $e->getMessage()
+                ]);
+            }
             break;
-
+        
+        case 'insertCombo':
+            try {
+                // Parse parameter IDs
+                $parameterIds = $_POST['parameter_ids'] ?? [];
+                if (!is_array($parameterIds)) {
+                    $parameterIds = json_decode($parameterIds, true) ?? [];
+                }
+                $parameterIds = array_filter(array_map('intval', $parameterIds));
+                
+                $testCharge = floatval($_POST['test_charge'] ?? 0);
+                $isActive = intval($_POST['is_active'] ?? 1);
+                
+                // Validation
+                if (count($parameterIds) < 2) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Please select at least 2 parameters',
+                        'field' => 'parameter_ids'
+                    ]);
+                    exit;
+                }
+                
+                if ($testCharge < 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Price cannot be negative',
+                        'field' => 'test_charge'
+                    ]);
+                    exit;
+                }
+                
+                // Check for duplicate combo
+                if ($model->hasExactCombo($parameterIds)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'A combo with these exact parameters already exists',
+                        'field' => 'parameter_ids'
+                    ]);
+                    exit;
+                }
+                
+                // Insert combo
+                $comboId = $model->insertCombo($parameterIds, $testCharge, $isActive);
+                
+                if ($comboId) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Combo created successfully',
+                        'combo_id' => $comboId
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Failed to create combo'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'insertCombo');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error creating combo: ' . $e->getMessage()
+                ]);
+            }
+            break;
+        
+        case 'updateCombo':
+            try {
+                $comboId = intval($_POST['id'] ?? 0);
+                
+                // Parse parameter IDs
+                $parameterIds = $_POST['parameter_ids'] ?? [];
+                if (!is_array($parameterIds)) {
+                    $parameterIds = json_decode($parameterIds, true) ?? [];
+                }
+                $parameterIds = array_filter(array_map('intval', $parameterIds));
+                
+                $testCharge = floatval($_POST['test_charge'] ?? 0);
+                $isActive = intval($_POST['is_active'] ?? 1);
+                
+                // Validation
+                if ($comboId <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Invalid ID'
+                    ]);
+                    exit;
+                }
+                
+                if (count($parameterIds) < 2) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Please select at least 2 parameters',
+                        'field' => 'parameter_ids'
+                    ]);
+                    exit;
+                }
+                
+                if ($testCharge < 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Price cannot be negative',
+                        'field' => 'test_charge'
+                    ]);
+                    exit;
+                }
+                
+                // Check for duplicate combo (excluding current)
+                if ($model->hasExactCombo($parameterIds, $comboId)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'A combo with these exact parameters already exists',
+                        'field' => 'parameter_ids'
+                    ]);
+                    exit;
+                }
+                
+                // Update combo
+                $success = $model->updateCombo($comboId, $parameterIds, $testCharge, $isActive);
+                
+                if ($success) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Combo updated successfully'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Failed to update combo'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'updateCombo');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error updating combo: ' . $e->getMessage()
+                ]);
+            }
+            break;
+        
+        case 'deleteCombo':
+            try {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Invalid ID'
+                    ]);
+                    exit;
+                }
+                
+                $success = $model->softDeleteCombo($id);
+                
+                if ($success) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Combo deleted successfully'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Failed to delete combo'
+                    ]);
+                }
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'deleteCombo');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error deleting combo: ' . $e->getMessage()
+                ]);
+            }
+            break;
+        
+        // ==================== COMBO NAME PREVIEW ====================
+        
+        case 'previewComboName':
+            try {
+                // Parse parameter IDs
+                $parameterIds = $_POST['parameter_ids'] ?? [];
+                if (!is_array($parameterIds)) {
+                    $parameterIds = json_decode($parameterIds, true) ?? [];
+                }
+                $parameterIds = array_filter(array_map('intval', $parameterIds));
+                
+                if (count($parameterIds) < 2) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Select at least 2 parameters'
+                    ]);
+                    exit;
+                }
+                
+                $comboName = $model->generateComboName($parameterIds);
+                
+                echo json_encode([
+                    'status' => 'success',
+                    'combo_name' => $comboName
+                ]);
+            } catch (Exception $e) {
+                logError($e->getMessage(), 'previewComboName');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error generating combo name: ' . $e->getMessage()
+                ]);
+            }
+            break;
+        
         default:
-            sendJsonResponse([
-                'success' => false,
+            echo json_encode([
+                'status' => 'error',
                 'message' => 'Invalid action: ' . $action
             ]);
     }
 } catch (Exception $e) {
-    logError($e->getMessage(), 'Controller: ' . $action);
-    sendJsonResponse([
-        'success' => false,
+    logError($e->getMessage(), 'PricingController: ' . $action);
+    echo json_encode([
+        'status' => 'error',
         'message' => 'Server error: ' . $e->getMessage()
     ]);
 }
 
-function handleSearchClients($model)
-{
-    $query = trim($_GET['query'] ?? '');
+exit;
 
-    if (strlen($query) < 2) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Search query must be at least 2 characters'
-        ]);
-    }
-
-    $result = $model->searchClients($query);
-    sendJsonResponse($result);
-}
-
-function handleCreateClient($model)
-{
-    $requiredFields = ['client_name', 'phone_primary'];
-    foreach ($requiredFields as $field) {
-        if (empty($_POST[$field])) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => ucfirst(str_replace('_', ' ', $field)) . ' is required',
-                'field' => $field
-            ]);
-        }
-    }
-
-    if (!validatePhone($_POST['phone_primary'])) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Phone number must be 10 digits starting with 0',
-            'field' => 'phone_primary'
-        ]);
-    }
-
-    $data = [
-        'client_name' => sanitizeInput($_POST['client_name']),
-        'address_line1' => sanitizeInput($_POST['address_line1'] ?? ''),
-        'city' => sanitizeInput($_POST['city'] ?? ''),
-        'phone_primary' => sanitizeInput($_POST['phone_primary']),
-        'contact_person' => sanitizeInput($_POST['contact_person'] ?? '')
-    ];
-
-    $result = $model->createClient($data);
-    sendJsonResponse($result);
-}
-
-function handleUpdateClient($model)
-{
-    $clientId = intval($_POST['client_id'] ?? 0);
-
-    if ($clientId === 0) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Client ID is required',
-            'field' => 'client_id'
-        ]);
-    }
-
-    if (empty($_POST['client_name']) || empty($_POST['phone_primary'])) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Client name and phone are required',
-            'field' => empty($_POST['client_name']) ? 'client_name' : 'phone_primary'
-        ]);
-    }
-
-    if (!validatePhone($_POST['phone_primary'])) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Phone number must be 10 digits starting with 0',
-            'field' => 'phone_primary'
-        ]);
-    }
-
-    $data = [
-        'client_id' => $clientId,
-        'client_name' => sanitizeInput($_POST['client_name']),
-        'address_line1' => sanitizeInput($_POST['address_line1'] ?? ''),
-        'city' => sanitizeInput($_POST['city'] ?? ''),
-        'phone_primary' => sanitizeInput($_POST['phone_primary']),
-        'contact_person' => sanitizeInput($_POST['contact_person'] ?? '')
-    ];
-
-    $result = $model->updateClient($data);
-    sendJsonResponse($result);
-}
-
-function handleGetParameters($model)
-{
-    $submissionType = $_GET['type'] ?? 'regular';
-
-    if (!in_array($submissionType, ['regular', 'swab'])) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Invalid submission type. Must be "regular" or "swab"'
-        ]);
-    }
-
-    $result = $model->getParameters($submissionType);
-    sendJsonResponse($result);
-}
-
-/**
- * NEW: Get all active combos for frontend detection
- */
-function handleGetCombos($model)
-{
-    $result = $model->getCombos();
-    sendJsonResponse($result);
-}
-
-function handleSearchSampleNames($model)
-{
-    $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
-
-    if (strlen($query) < 2) {
-        sendJsonResponse([
-            'success' => true,
-            'names' => [],
-            'count' => 0
-        ]);
-    }
-
-    $result = $model->searchSampleNames($query);
-    sendJsonResponse($result);
-}
-
-function handleValidatePaymentReference()
-{
-    $reference = trim($_POST['payment_reference'] ?? $_GET['payment_reference'] ?? '');
-
-    if (empty($reference)) {
-        sendJsonResponse([
-            'success' => true,
-            'is_unique' => true,
-            'message' => 'No reference provided'
-        ]);
-    }
-
-    $formatValidation = validatePaymentReference($reference);
-    if (!$formatValidation['valid']) {
-        sendJsonResponse([
-            'success' => true,
-            'is_unique' => false,
-            'message' => $formatValidation['message']
-        ]);
-    }
-
-    try {
-        $database = new Database();
-        $conn = $database->connect();
-        $isUnique = isPaymentReferenceUnique($conn, $reference);
-
-        sendJsonResponse([
-            'success' => true,
-            'is_unique' => $isUnique,
-            'message' => $isUnique ? 'Payment reference is available' : 'Payment reference already exists'
-        ]);
-    } catch (Exception $e) {
-        logError($e->getMessage(), 'handleValidatePaymentReference');
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Database error checking payment reference'
-        ]);
-    }
-}
-
-/**
- * MAIN SUBMISSION HANDLER - WITH COMBO PRICING FIX
- */
-function handleSaveSample($model)
-{
-    try {
-        // VALIDATION
-        $requiredFields = [
-            'client_id' => 'Client',
-            'submission_type' => 'Submission type',
-            'received_date' => 'Received date',
-            'tentative_date' => 'Tentative date',
-            'payment_status' => 'Payment status'
-        ];
-
-        foreach ($requiredFields as $field => $label) {
-            if (!isset($_POST[$field]) || $_POST[$field] === '') {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => "$label is required",
-                    'field' => $field
-                ]);
-            }
-        }
-
-        $clientId = intval($_POST['client_id']);
-        if ($clientId <= 0) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Invalid client selected',
-                'field' => 'client_id'
-            ]);
-        }
-
-        if (!in_array($_POST['submission_type'], ['regular', 'swab'])) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Invalid submission type',
-                'field' => 'submission_type'
-            ]);
-        }
-
-        $receivedDateValidation = validateReceivedDate($_POST['received_date']);
-        if (!$receivedDateValidation['valid']) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Received date: ' . $receivedDateValidation['message'],
-                'field' => 'received_date'
-            ]);
-        }
-
-        $tentativeDateValidation = validateTentativeDate($_POST['tentative_date']);
-        if (!$tentativeDateValidation['valid']) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Tentative date: ' . $tentativeDateValidation['message'],
-                'field' => 'tentative_date'
-            ]);
-        }
-
-        $paymentStatus = $_POST['payment_status'];
-        if (!in_array($paymentStatus, ['Paid', 'Not Paid', 'Pending'])) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Invalid payment status',
-                'field' => 'payment_status'
-            ]);
-        }
-
-        if ($paymentStatus === 'Paid') {
-            if (empty($_POST['payment_reference'])) {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => 'Payment reference is required when payment status is Paid',
-                    'field' => 'payment_reference'
-                ]);
-            }
-
-            $database = new Database();
-            $conn = $database->connect();
-            if (!isPaymentReferenceUnique($conn, $_POST['payment_reference'])) {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => 'This payment reference already exists',
-                    'field' => 'payment_reference'
-                ]);
-            }
-        }
-
-        // PARSE DATA
-        if (empty($_POST['samples'])) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'No samples provided',
-                'field' => 'samples'
-            ]);
-        }
-
-        $samplesData = is_string($_POST['samples'])
-            ? json_decode($_POST['samples'], true)
-            : $_POST['samples'];
-
-        if (!is_array($samplesData) || count($samplesData) === 0) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Invalid samples data',
-                'field' => 'samples'
-            ]);
-        }
-
-        if (empty($_POST['tests'])) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'No tests selected',
-                'field' => 'tests'
-            ]);
-        }
-
-        $testsData = is_string($_POST['tests'])
-            ? json_decode($_POST['tests'], true)
-            : $_POST['tests'];
-
-        if (!is_array($testsData) || count($testsData) === 0) {
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Invalid tests data',
-                'field' => 'tests'
-            ]);
-        }
-
-        // Validate max 10 tests per sample
-        $testsBySample = [];
-        foreach ($testsData as $test) {
-            $sampleIndex = $test['sample'];
-            if (!isset($testsBySample[$sampleIndex])) {
-                $testsBySample[$sampleIndex] = 0;
-            }
-            $testsBySample[$sampleIndex]++;
-        }
-
-        foreach ($testsBySample as $sampleIndex => $testCount) {
-            if ($testCount > 10) {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => "Sample $sampleIndex has $testCount tests. Maximum 10 tests allowed",
-                    'field' => 'tests'
-                ]);
-            }
-        }
-
-        // COMBO PRICING FIX - Calculate ACTUAL charges with combo detection
-        try {
-            $database = new Database();
-            $conn = $database->connect();
-
-            $calculationResult = calculateTestChargesWithCombos(
-                $testsData,
-                $conn,
-                $_POST['submission_type']
-            );
-
-            if (!$calculationResult['success']) {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => 'Failed to calculate test charges: ' . $calculationResult['message'],
-                    'field' => 'tests'
-                ]);
-            }
-
-            // Use CORRECT total (with combo pricing applied)
-            $testChargesTotal = $calculationResult['total'];
-            $additionalCharges = floatval($_POST['additional_charges'] ?? 0);
-            $grandTotal = $testChargesTotal + $additionalCharges;
-
-            // Log combo application
-            if ($calculationResult['combos_count'] > 0) {
-                $comboNames = array_column($calculationResult['combos_detected'], 'combo_name');
-                logError(
-                    "✓ COMBOS APPLIED: {$calculationResult['combos_count']} combos (" .
-                        implode(', ', $comboNames) . ") | " .
-                        "Individual: Rs. {$calculationResult['individual_total']} | " .
-                        "Combo: Rs. {$testChargesTotal} | " .
-                        "Savings: Rs. {$calculationResult['savings']} ({$calculationResult['discount_percentage']}%)",
-                    'ComboSuccess'
-                );
-            }
-
-            // Validate frontend didn't send inflated total
-            $frontendTotal = floatval($_POST['test_charges_total'] ?? 0);
-            $difference = abs($frontendTotal - $testChargesTotal);
-
-            if ($difference > 0.01) {
-                logError(
-                    "Total mismatch - Frontend: Rs. $frontendTotal, Backend: Rs. $testChargesTotal, " .
-                        "Diff: Rs. $difference, Combos: {$calculationResult['combos_count']}",
-                    'TotalValidation'
-                );
-
-                // If frontend total EXCEEDS max possible, reject
-                $maxPossibleTotal = 0;
-                foreach ($testsData as $test) {
-                    $maxPossibleTotal += (float)$test['charge'];
-                }
-
-                if ($frontendTotal > $maxPossibleTotal + 0.01) {
-                    sendJsonResponse([
-                        'success' => false,
-                        'message' => 'Invalid total submitted. Price tampering detected.',
-                        'field' => 'test_charges_total'
-                    ]);
-                }
-            }
-        } catch (Exception $e) {
-            logError($e->getMessage(), 'ComboCalculation');
-            sendJsonResponse([
-                'success' => false,
-                'message' => 'Error calculating charges: ' . $e->getMessage()
-            ]);
-        }
-
-        // PREPARE DATA FOR MODEL
-        $submissionData = [
-            'client_id' => $clientId,
-            'submission_type' => sanitizeInput($_POST['submission_type']),
-            'received_date' => sanitizeInput($_POST['received_date']),
-            'tentative_date' => sanitizeInput($_POST['tentative_date']),
-            'submitted_by' => sanitizeInput($_SESSION['fullname']),
-            'additional_notes' => sanitizeInput($_POST['additional_notes'] ?? ''),
-            'additional_charges' => $additionalCharges,
-            'test_charges_total' => $testChargesTotal,
-            'grand_total' => $grandTotal,
-            'payment_status' => sanitizeInput($_POST['payment_status']),
-            'payment_reference' => sanitizeInput($_POST['payment_reference'] ?? ''),
-            'samples' => $samplesData,
-            'tests' => $testsData,
-            'combo_calculation' => $calculationResult
-        ];
-
-        // SAVE TO DATABASE
-        $result = $model->saveSample($submissionData);
-
-        // Add combo details to response for UI
-        if ($result['success'] && isset($calculationResult['combos_detected'])) {
-            $result['pricing_details'] = [
-                'individual_total' => $calculationResult['individual_total'],
-                'combo_total' => $calculationResult['total'],
-                'discount' => $calculationResult['savings'],
-                'discount_percentage' => $calculationResult['discount_percentage'],
-                'combos_applied' => $calculationResult['combos_detected']
-            ];
-        }
-
-        sendJsonResponse($result);
-    } catch (Exception $e) {
-        logError($e->getMessage(), 'handleSaveSample');
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
-        ]);
-    }
-}
+// ==================== NOTES ====================
+// 1. sendJsonResponse() is already defined in functions.php - DO NOT redefine
+// 2. All model methods called match the actual PricingModel class
+// 3. Model returns arrays/values directly - wrapped in status/message here
+// 4. All exits are explicit to prevent double output
+// 5. Comprehensive error handling on all operations
+// 6. CSRF protection on write operations
+// 7. Input validation before model calls
+// 8. Duplicate checking before inserts
+// 9. Reactivation logic for soft-deleted items
+// 10. Transaction safety handled in model layer
