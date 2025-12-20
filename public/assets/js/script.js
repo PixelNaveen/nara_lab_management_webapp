@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =======================
-    // AUTO COLLAPSE ON LINK CLICK (Desktop)
+    // SIDEBAR FIX - COLLAPSE MANAGEMENT
     // =======================
 
     const sidebarLinks = document.querySelectorAll('#sidebar a.nav-link, #sidebar a.submenu-link');
@@ -61,6 +61,15 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarLinks.forEach(link => {
         link.addEventListener('click', function() {
             const href = this.getAttribute('href');
+
+            // Close all open submenus before navigation
+            const openSubmenus = document.querySelectorAll('#sidebar .collapse.show');
+            openSubmenus.forEach(submenu => {
+                const bsCollapse = bootstrap.Collapse.getInstance(submenu);
+                if (bsCollapse) {
+                    bsCollapse.hide();
+                }
+            });
 
             // If not dashboard, collapse sidebar
             if (!href.includes('page=dashboard')) {
@@ -79,4 +88,46 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // =======================
+    // ACCORDION BEHAVIOR (Only one submenu open)
+    // =======================
+
+    const submenuToggles = document.querySelectorAll('#sidebar [data-bs-toggle="collapse"]');
+    
+    submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-bs-target');
+            
+            // Close all OTHER submenus (accordion behavior)
+            document.querySelectorAll('#sidebar .collapse.show').forEach(collapse => {
+                if ('#' + collapse.id !== targetId) {
+                    const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+                    if (bsCollapse) {
+                        bsCollapse.hide();
+                    }
+                }
+            });
+        });
+    });
+
+    // =======================
+    // CLEAN STATE ON PAGE LOAD
+    // =======================
+
+    // Close submenus that shouldn't be open
+    document.querySelectorAll('#sidebar .collapse').forEach(collapse => {
+        const hasActiveChild = collapse.querySelector('.submenu-link.active');
+        
+        // If no active child, force close
+        if (!hasActiveChild && collapse.classList.contains('show')) {
+            collapse.classList.remove('show');
+            const parentButton = document.querySelector(`[data-bs-target="#${collapse.id}"]`);
+            if (parentButton) {
+                parentButton.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
+
+    console.log('✅ Sidebar initialized successfully');
 });

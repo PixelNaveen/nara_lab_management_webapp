@@ -96,14 +96,6 @@
     transform: rotate(180deg);
 }
 
-/* Ensure submenu stays visible when expanded */
-.collapse.show {
-    display: block !important;
-    visibility: visible !important;
-    height: auto !important;
-    opacity: 1 !important;
-}
-
 /* Sidebar Overlay for Mobile */
 .sidebar-overlay {
     display: none;
@@ -145,12 +137,68 @@
     outline-offset: 2px;
 }
 
-.logout-link{
+.logout-link {
     font-weight: bold;
     font-size: 13pt;
     font-family: serif;
 }
 
-.sidebar-footer{
+.sidebar-footer {
    background-color: white;
+}
+
+/* =====================================================
+   COLLAPSE FIX - CRITICAL
+   ===================================================== */
+
+/* Bootstrap Collapse Integration - Let Bootstrap control height */
+.collapse {
+    transition: height 0.35s ease;
+}
+
+.collapsing {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+}
+
+/* When expanded - NO height: auto !important (breaks Bootstrap) */
+.collapse.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* height removed - let Bootstrap animate it naturally */
+}
+
+/* Ensure submenu container is visible */
+.submenu {
+    display: block !important;
+}
+
+.submenu .submenu-link {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* When parent has .show, submenu must be visible */
+.collapse.show .submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.collapse.show .submenu-link {
+    display: flex !important;
+    opacity: 1 !important;
+}
+
+/* When collapsed, hide everything */
+.collapse:not(.show) {
+    display: none;
+}
+
+.collapse:not(.show) .submenu,
+.collapse:not(.show) .submenu-link {
+    display: none;
 }
