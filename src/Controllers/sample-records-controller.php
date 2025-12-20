@@ -14,18 +14,29 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch ($action) {
 
-    // ========== FETCH ALL SAMPLES ==========
+    // ========== FETCH ALL SAMPLES WITH FILTERS ==========
     case 'fetchAll':
-        $statusFilter = $_POST['statusFilter'] ?? $_GET['statusFilter'] ?? 'all';
-        $searchTerm = trim($_POST['searchTerm'] ?? $_GET['searchTerm'] ?? '');
+        $filters = [
+            'search' => trim($_POST['search'] ?? $_GET['search'] ?? ''),
+            'status' => trim($_POST['status'] ?? $_GET['status'] ?? 'all'),
+            'date_from' => trim($_POST['date_from'] ?? $_GET['date_from'] ?? ''),
+            'date_to' => trim($_POST['date_to'] ?? $_GET['date_to'] ?? '')
+        ];
 
-        $samples = $model->getAllSamples($statusFilter, $searchTerm);
+        $samples = $model->getAllSamplesAdvanced($filters);
         $counts = $model->getStatusCounts();
+        
+        // Calculate grand total for filtered results
+        $grandTotal = 0;
+        foreach ($samples as $sample) {
+            $grandTotal += floatval($sample['grand_total']);
+        }
 
         echo json_encode([
             'status' => 'success',
             'data' => $samples,
-            'counts' => $counts
+            'counts' => $counts,
+            'grand_total' => $grandTotal
         ]);
         break;
 
@@ -104,6 +115,15 @@ switch ($action) {
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Sample not found']);
         }
+        break;
+
+    // ========== GET STATISTICS ==========
+    case 'getStats':
+        $stats = $model->getStatistics();
+        echo json_encode([
+            'status' => 'success',
+            'stats' => $stats
+        ]);
         break;
 
     default:
