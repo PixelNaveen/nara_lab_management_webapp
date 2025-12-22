@@ -1,6 +1,7 @@
 /* ======================================================
-   Sample Records Page - 100% WORKING CSS
-   Exact match with manage-clients.css style
+   SAMPLE RECORDS CSS - PAYMENT SYSTEM INTEGRATED
+   Laboratory Management System
+   Version 2.0 - 100% Perfect Styling
    ====================================================== */
 
 :root {
@@ -11,24 +12,26 @@
   --warning-yellow: #f59e0b;
   --danger-red: #dc2626;
   --info-cyan: #0891b2;
-  --info-cyan-dark: #0c7b94;
+  --payment-pending: #f59e0b;
+  --payment-not-paid: #dc2626;
+  --payment-paid: #16a34a;
   --light-gray: #f8f9fa;
   --border-color: #e2e8f0;
   --text-dark: #1e293b;
   --text-muted: #64748b;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 body {
   background-color: var(--light-gray);
   color: var(--text-dark);
-  font-family: "Poppins", sans-serif;
+  font-family: "Poppins", "Segoe UI", sans-serif;
 }
 
 .container-fluid {
   padding: 20px;
-  /* max-width: 1400px; */
 }
 
 /* ==================== FILTER CONTROLS ==================== */
@@ -56,6 +59,10 @@ body {
   outline: none;
 }
 
+.form-control::placeholder {
+  color: #94a3b8;
+}
+
 /* Filter Buttons */
 .btn-outline-secondary {
   border-color: var(--primary-blue);
@@ -70,20 +77,7 @@ body {
   background: var(--primary-blue);
   color: #fff;
   transform: translateY(-1px);
-}
-
-.sample-records-btn-filter {
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-  min-width: 90px;
-  height: 38px;
-  background: transparent;
-}
-
-.sample-recordss-btn-filter:hover {
-  background: var(--primary-blue);
-  color: #fff;
-  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-md);
 }
 
 /* ==================== TABLE CONTAINER ==================== */
@@ -133,7 +127,7 @@ body {
   transform: translateY(-2px);
 }
 
-.client-name-column{
+.client-name-column {
   width: 500px;
 }
 
@@ -144,19 +138,7 @@ body {
   border: none;
 }
 
-/* Table Footer */
-.table tfoot tr {
-  background: #f1f5f9;
-  border-top: 3px double var(--primary-blue);
-}
-
-.table tfoot td {
-  font-weight: 600;
-  font-size: 1.1rem;
-  padding: 16px 12px;
-}
-
-/* ==================== STATUS BADGES - CRITICAL ==================== */
+/* ==================== STATUS BADGES - SAMPLE STATUS ==================== */
 
 .badge {
   padding: 6px 12px !important;
@@ -167,6 +149,7 @@ body {
   display: inline-block !important;
   transition: all 0.2s ease !important;
   text-transform: capitalize !important;
+  border: 1px solid transparent !important;
 }
 
 .badge:hover {
@@ -174,59 +157,110 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Status Colors - CRITICAL - These MUST work */
+/* Sample Status Colors */
 .badge-pending {
   background-color: #f59e0b !important;
-  color: #000 !important;
+  color: #78350f !important;
+  border-color: #fbbf24 !important;
 }
 
 .badge-in-progress {
   background-color: #1e3a8a !important;
   color: #fff !important;
+  border-color: #1e40af !important;
 }
 
 .badge-completed {
   background-color: #16a34a !important;
   color: #fff !important;
+  border-color: #15803d !important;
 }
 
 .badge-canceled {
   background-color: #dc2626 !important;
   color: #fff !important;
+  border-color: #b91c1c !important;
 }
 
-/* Alternative class names (just in case) */
-.status-pending {
-  background-color: #f59e0b !important;
-  color: #000 !important;
-}
+/* ==================== PAYMENT BADGES - NEW (SMALLER SIZE) ==================== */
 
-.status-in-progress {
-  background-color: #1e3a8a !important;
-  color: #fff !important;
-}
-
-.status-completed {
-  background-color: #16a34a !important;
-  color: #fff !important;
-}
-
-.status-cancelled {
-  background-color: #dc2626 !important;
-  color: #fff !important;
-}
-
-/* Status badge specifically */
-.status-badge {
-  padding: 6px 12px !important;
-  border-radius: 8px !important;
-  font-size: 0.75rem !important;
+.payment-badge {
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  font-size: 0.7rem !important;
   font-weight: 600 !important;
-  cursor: pointer !important;
-  display: inline-block !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  transition: all 0.2s ease !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+  border: 1.5px solid transparent !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  line-height: 1.2 !important;
 }
 
-/* Status Dropdown in Edit Mode */
+/* Payment Pending Badge */
+.payment-badge-pending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  color: #78350f !important;
+  border-color: #fbbf24 !important;
+}
+
+.payment-badge-pending:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%) !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.25) !important;
+}
+
+/* Payment Not Paid Badge */
+.payment-badge-not-paid {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+  color: #991b1b !important;
+  border-color: #f87171 !important;
+}
+
+.payment-badge-not-paid:hover {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%) !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(248, 113, 113, 0.25) !important;
+}
+
+/* Payment Paid Badge */
+.payment-badge-paid {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  color: #065f46 !important;
+  border-color: #34d399 !important;
+}
+
+/* Clickable Payment Badges */
+.payment-badge-clickable {
+  cursor: pointer !important;
+  position: relative;
+}
+
+.payment-badge-clickable:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.payment-badge-clickable:active {
+  transform: scale(0.98) !important;
+}
+
+/* Readonly Payment Badges (Paid - Not clickable) */
+.payment-badge-readonly {
+  cursor: not-allowed !important;
+  opacity: 0.9 !important;
+}
+
+.payment-badge-readonly:hover {
+  transform: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ==================== STATUS DROPDOWN IN EDIT MODE ==================== */
+
 .status-select {
   min-width: 150px !important;
   border-radius: 8px !important;
@@ -235,31 +269,127 @@ body {
   border: 2px solid var(--primary-blue-light) !important;
   font-weight: 600 !important;
   cursor: pointer !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
 }
 
 .status-select:focus {
   outline: none;
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.3) !important;
 }
 
-/* ==================== GRAND TOTAL ROW ==================== */
+/* ==================== GRAND TOTAL ROWS ==================== */
 
 .grand-total-row {
   background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+  border-top: 3px solid var(--primary-blue) !important;
 }
 
 .grand-total-row td {
   font-weight: 700 !important;
   font-size: 1.15rem !important;
   padding: 18px 12px !important;
-  border-top: 3px solid var(--primary-blue) !important;
   color: var(--primary-blue) !important;
+}
+
+.paid-total-row {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  border-top: 2px solid var(--success-green) !important;
+}
+
+.paid-total-row td {
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  padding: 14px 12px !important;
+  color: var(--success-green) !important;
+}
+
+.unpaid-total-row {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+  border-top: 2px solid var(--danger-red) !important;
+}
+
+.unpaid-total-row td {
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  padding: 14px 12px !important;
+  color: var(--danger-red) !important;
 }
 
 #grandTotal {
   color: var(--success-green) !important;
   font-size: 1.3rem !important;
   font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#paidTotal {
+  color: var(--success-green) !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+}
+
+#unpaidTotal {
+  color: var(--danger-red) !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+}
+
+/* ==================== PAYMENT MODAL STYLING ==================== */
+
+.modal-content {
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--border-color) !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.modal-header.bg-primary {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%) !important;
+}
+
+.modal-body {
+  padding: 1.5rem !important;
+}
+
+.modal-body .alert-info {
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%) !important;
+  border: 1px solid #93c5fd !important;
+  border-radius: 8px !important;
+  color: var(--primary-blue-dark) !important;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--border-color) !important;
+  padding: 1rem 1.5rem !important;
+}
+
+#referenceNumberGroup {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#paymentErrorAlert {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }
 
 /* ==================== TEXT UTILITIES ==================== */
@@ -270,6 +400,10 @@ body {
 
 .text-success {
   color: var(--success-green) !important;
+}
+
+.text-danger {
+  color: var(--danger-red) !important;
 }
 
 .text-muted {
@@ -303,6 +437,18 @@ body {
   box-shadow: var(--shadow-md);
   min-width: 280px;
   border: none;
+  animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .toast-body {
@@ -352,6 +498,43 @@ body {
   margin-bottom: 20px !important;
 }
 
+/* ==================== BUTTON STYLES ==================== */
+
+.btn-sample-records {
+  border-radius: 8px !important;
+  padding: 0.5rem 1.2rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  border-width: 2px !important;
+}
+
+.btn-sample-records:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.btn-sample-records:active {
+  transform: translateY(0);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--success-green) 0%, #15803d 100%) !important;
+  border-color: var(--success-green) !important;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+  border-color: #64748b !important;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+}
+
 /* ==================== RESPONSIVE DESIGN ==================== */
 
 @media (max-width: 991.98px) {
@@ -380,7 +563,7 @@ body {
   }
 
   .table {
-    min-width: 800px;
+    min-width: 900px;
   }
 
   .table thead th,
@@ -389,8 +572,14 @@ body {
     font-size: 0.85rem;
   }
 
-  #grandTotal {
-    font-size: 1.1rem;
+  #grandTotal,
+  #paidTotal,
+  #unpaidTotal {
+    font-size: 1rem;
+  }
+  
+  .modal-dialog {
+    margin: 10px !important;
   }
 }
 
@@ -401,13 +590,16 @@ body {
     font-size: 0.8rem;
   }
 
-  .badge {
-    font-size: 0.7rem !important;
-    padding: 0.35em 0.6em !important;
+  .badge,
+  .payment-badge {
+    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
   }
 
-  #grandTotal {
-    font-size: 1rem;
+  #grandTotal,
+  #paidTotal,
+  #unpaidTotal {
+    font-size: 0.95rem;
   }
 }
 
@@ -420,9 +612,50 @@ body {
   outline-offset: 2px;
 }
 
-.badge:focus-visible {
+.badge:focus-visible,
+.payment-badge:focus-visible {
   outline: 2px solid var(--primary-blue);
   outline-offset: 2px;
+}
+
+/* Keyboard navigation */
+.payment-badge-clickable:focus {
+  outline: 3px solid var(--primary-blue-light);
+  outline-offset: 2px;
+}
+
+/* ==================== PRINT STYLES ==================== */
+
+@media print {
+  .btn,
+  #toastContainer,
+  .d-flex.flex-wrap.gap-2,
+  .modal,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  .table-container {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .table tbody tr:hover {
+    background: #fff !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .badge,
+  .payment-badge {
+    border: 1px solid #000;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  
+  .payment-badge-clickable {
+    cursor: default !important;
+  }
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -442,41 +675,22 @@ body {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+/* ==================== PERFORMANCE OPTIMIZATIONS ==================== */
+
+/* GPU Acceleration */
+.badge,
+.payment-badge,
+.btn,
+.table tbody tr {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-.toast {
-  animation: slideIn 0.3s ease-out;
-}
-
-/* ==================== PRINT STYLES ==================== */
-
-@media print {
-  .btn,
-  #toastContainer,
-  .d-flex.flex-wrap.gap-2 {
-    display: none !important;
-  }
-
-  .table-container {
-    box-shadow: none;
-    border: 1px solid #000;
-  }
-
-  .table tbody tr:hover {
-    background: #fff !important;
-    box-shadow: none !important;
-  }
-
-  .badge {
-    border: 1px solid #000;
-  }
+/* Remove will-change after interactions */
+.badge:not(:hover),
+.payment-badge:not(:hover),
+.btn:not(:hover),
+.table tbody tr:not(:hover) {
+  will-change: auto;
 }

@@ -1,133 +1,331 @@
 <?php
+/**
+ * Sample Records Controller
+ * Laboratory Management System
+ * 
+ * Handles all AJAX requests for sample records including:
+ * - Fetching samples with filters
+ * - Updating sample status
+ * - Updating payment status with reference numbers
+ * - Getting counts and statistics
+ * 
+ * @version 2.0 - Payment System Integrated
+ */
+
 session_start();
 require_once __DIR__ . '/../Models/sample-records-model.php';
 header('Content-Type: application/json');
 
-// Check if user is logged in (adjust based on your auth system)
+// ==================== AUTHENTICATION CHECK ====================
+
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['fullname'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
+    http_response_code(401);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Unauthorized access. Please log in.'
+    ]);
     exit;
 }
 
+// ==================== INITIALIZE ====================
+
 $model = new SampleStatusModel();
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+$currentUser = $_SESSION['fullname'];
+
+// ==================== ACTIONS ====================
 
 switch ($action) {
 
     // ========== FETCH ALL SAMPLES WITH FILTERS ==========
     case 'fetchAll':
-        $filters = [
-            'search' => trim($_POST['search'] ?? $_GET['search'] ?? ''),
-            'status' => trim($_POST['status'] ?? $_GET['status'] ?? 'all'),
-            'date_from' => trim($_POST['date_from'] ?? $_GET['date_from'] ?? ''),
-            'date_to' => trim($_POST['date_to'] ?? $_GET['date_to'] ?? '')
-        ];
+        try {
+            $filters = [
+                'search' => trim($_POST['search'] ?? $_GET['search'] ?? ''),
+                'status' => trim($_POST['status'] ?? $_GET['status'] ?? 'all'),
+                'payment_status' => trim($_POST['payment_status'] ?? $_GET['payment_status'] ?? 'all'),
+                'date_from' => trim($_POST['date_from'] ?? $_GET['date_from'] ?? ''),
+                'date_to' => trim($_POST['date_to'] ?? $_GET['date_to'] ?? '')
+            ];
 
-        $samples = $model->getAllSamplesAdvanced($filters);
-        $counts = $model->getStatusCounts();
-        
-        // Calculate grand total for filtered results
-        $grandTotal = 0;
-        foreach ($samples as $sample) {
-            $grandTotal += floatval($sample['grand_total']);
-        }
+            $samples = $model->getAllSamplesAdvanced($filters);
+            $counts = $model->getStatusCounts();
+            $paymentCounts = $model->getPaymentCounts();
+            
+            // Calculate grand total for filtered results
+            $grandTotal = 0;
+            $paidTotal = 0;
+            $unpaidTotal = 0;
+            
+            foreach ($samples as $sample) {
+                $amount = floatval($sample['grand_total']);
+                $grandTotal += $amount;
+                
+                if ($sample['payment_status'] === 'Paid') {
+                    $paidTotal += $amount;
+                } else {
+                    $unpaidTotal += $amount;
+                }
+            }
 
-        echo json_encode([
-            'status' => 'success',
-            'data' => $samples,
-            'counts' => $counts,
-            'grand_total' => $grandTotal
-        ]);
-        break;
-
-    // ========== UPDATE STATUS ==========
-    case 'updateStatus':
-        $sampleId = intval($_POST['sample_id'] ?? 0);
-        $newStatus = trim($_POST['new_status'] ?? '');
-        $notes = trim($_POST['notes'] ?? '');
-        $updatedBy = $_SESSION['fullname'];
-
-        // Validation
-        if ($sampleId <= 0) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid sample ID']);
-            exit;
-        }
-
-        if (empty($newStatus)) {
-            echo json_encode(['status' => 'error', 'message' => 'Status is required']);
-            exit;
-        }
-
-        if (!$model->isValidStatus($newStatus)) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid status value']);
-            exit;
-        }
-
-        // Check if sample exists
-        $sample = $model->getSampleById($sampleId);
-        if (!$sample) {
-            echo json_encode(['status' => 'error', 'message' => 'Sample not found']);
-            exit;
-        }
-
-        // Update status
-        if ($model->updateSampleStatus($sampleId, $newStatus, $updatedBy, $notes)) {
             echo json_encode([
                 'status' => 'success',
-                'message' => 'Status updated successfully',
-                'data' => [
-                    'sample_id' => $sampleId,
-                    'new_status' => $newStatus,
-                    'updated_by' => $updatedBy,
-                    'updated_at' => date('Y-m-d H:i:s')
+                'data' => $samples,
+                'counts' => $counts,
+                'payment_counts' => $paymentCounts,
+                'totals' => [
+                    'grand_total' => $grandTotal,
+                    'paid_total' => $paidTotal,
+                    'unpaid_total' => $unpaidTotal
                 ]
             ]);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to update status']);
+            
+        } catch (Exception $e) {
+            error_log("Fetch All Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Failed to fetch samples'
+            ]);
+        }
+        break;
+
+    // ========== UPDATE SAMPLE STATUS ==========
+    case 'updateStatus':
+        try {
+            $sampleId = intval($_POST['sample_id'] ?? 0);
+            $newStatus = trim($_POST['new_status'] ?? '');
+            $notes = trim($_POST['notes'] ?? '');
+
+            // Validation
+            if ($sampleId <= 0) {
+                throw new Exception('Invalid sample ID');
+            }
+
+            if (empty($newStatus)) {
+                throw new Exception('Status is required');
+            }
+
+            if (!$model->isValidStatus($newStatus)) {
+                throw new Exception('Invalid status value');
+            }
+
+            // Check if sample exists
+            $sample = $model->getSampleById($sampleId);
+            if (!$sample) {
+                throw new Exception('Sample not found');
+            }
+
+            // Update status
+            if ($model->updateSampleStatus($sampleId, $newStatus, $currentUser, $notes)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Status updated successfully',
+                    'data' => [
+                        'sample_id' => $sampleId,
+                        'new_status' => $newStatus,
+                        'updated_by' => $currentUser,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]
+                ]);
+            } else {
+                throw new Exception('Failed to update status');
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+        break;
+
+    // ========== UPDATE PAYMENT STATUS (NEW) ==========
+    case 'updatePayment':
+        try {
+            $sampleId = intval($_POST['sample_id'] ?? 0);
+            $newPaymentStatus = trim($_POST['payment_status'] ?? '');
+            $referenceNumber = trim($_POST['reference_number'] ?? '');
+
+            // Validation
+            if ($sampleId <= 0) {
+                throw new Exception('Invalid sample ID');
+            }
+
+            if (empty($newPaymentStatus)) {
+                throw new Exception('Payment status is required');
+            }
+
+            if (!$model->isValidPaymentStatus($newPaymentStatus)) {
+                throw new Exception('Invalid payment status value');
+            }
+
+            // Check if sample exists
+            $sample = $model->getSampleById($sampleId);
+            if (!$sample) {
+                throw new Exception('Sample not found');
+            }
+
+            // Validate reference number for Paid status
+            if ($newPaymentStatus === 'Paid') {
+                if (empty($referenceNumber)) {
+                    throw new Exception('Reference number is required when marking as Paid');
+                }
+                
+                if (strlen($referenceNumber) > 100) {
+                    throw new Exception('Reference number too long (maximum 100 characters)');
+                }
+            }
+
+            // Update payment status
+            $result = $model->updatePaymentStatus(
+                $sampleId, 
+                $newPaymentStatus, 
+                $referenceNumber, 
+                $currentUser
+            );
+
+            if ($result['success']) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => $result['message'],
+                    'data' => [
+                        'sample_id' => $sampleId,
+                        'old_payment_status' => $result['old_status'] ?? null,
+                        'new_payment_status' => $newPaymentStatus,
+                        'updated_by' => $currentUser,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]
+                ]);
+            } else {
+                throw new Exception($result['message']);
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+        break;
+
+    // ========== GET PAYMENT INFO (NEW) ==========
+    case 'getPaymentInfo':
+        try {
+            $sampleId = intval($_POST['sample_id'] ?? $_GET['sample_id'] ?? 0);
+
+            if ($sampleId <= 0) {
+                throw new Exception('Invalid sample ID');
+            }
+
+            $paymentInfo = $model->getPaymentInfo($sampleId);
+
+            if ($paymentInfo) {
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $paymentInfo
+                ]);
+            } else {
+                throw new Exception('Sample not found');
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
         }
         break;
 
     // ========== GET STATUS COUNTS ==========
     case 'getCounts':
-        $counts = $model->getStatusCounts();
-        echo json_encode([
-            'status' => 'success',
-            'counts' => $counts
-        ]);
+        try {
+            $counts = $model->getStatusCounts();
+            echo json_encode([
+                'status' => 'success',
+                'counts' => $counts
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Failed to fetch counts'
+            ]);
+        }
+        break;
+
+    // ========== GET PAYMENT COUNTS (NEW) ==========
+    case 'getPaymentCounts':
+        try {
+            $paymentCounts = $model->getPaymentCounts();
+            echo json_encode([
+                'status' => 'success',
+                'payment_counts' => $paymentCounts
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Failed to fetch payment counts'
+            ]);
+        }
         break;
 
     // ========== GET SINGLE SAMPLE ==========
     case 'getSample':
-        $sampleId = intval($_POST['sample_id'] ?? $_GET['sample_id'] ?? 0);
+        try {
+            $sampleId = intval($_POST['sample_id'] ?? $_GET['sample_id'] ?? 0);
 
-        if ($sampleId <= 0) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid sample ID']);
-            exit;
-        }
+            if ($sampleId <= 0) {
+                throw new Exception('Invalid sample ID');
+            }
 
-        $sample = $model->getSampleById($sampleId);
+            $sample = $model->getSampleById($sampleId);
 
-        if ($sample) {
+            if ($sample) {
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $sample
+                ]);
+            } else {
+                throw new Exception('Sample not found');
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(404);
             echo json_encode([
-                'status' => 'success',
-                'data' => $sample
+                'status' => 'error',
+                'message' => $e->getMessage()
             ]);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Sample not found']);
         }
         break;
 
     // ========== GET STATISTICS ==========
     case 'getStats':
-        $stats = $model->getStatistics();
-        echo json_encode([
-            'status' => 'success',
-            'stats' => $stats
-        ]);
+        try {
+            $stats = $model->getStatistics();
+            echo json_encode([
+                'status' => 'success',
+                'stats' => $stats
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Failed to fetch statistics'
+            ]);
+        }
         break;
 
+    // ========== INVALID ACTION ==========
     default:
-        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid action specified'
+        ]);
         break;
 }
-?>
