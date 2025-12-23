@@ -36,20 +36,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =======================
-    // DESKTOP BEHAVIOR
+    // DESKTOP BEHAVIOR - ENHANCED
     // =======================
 
-    // Desktop: toggle collapse state
+    // Desktop: toggle collapse state with smooth transition
     if (sidebarToggleDesktop) {
         sidebarToggleDesktop.addEventListener('click', function() {
+            // Toggle the collapsed state
             document.body.classList.toggle('sidebar-collapsed');
+            
+            // Force a reflow to ensure smooth transition
+            void document.body.offsetHeight;
+            
+            // Save state
             localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+            
+            // Trigger resize event to help charts and other components adjust
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 300);
         });
     }
 
     // Restore sidebar state from localStorage
     if (localStorage.getItem('sidebarCollapsed') === 'true') {
         document.body.classList.add('sidebar-collapsed');
+        // Trigger resize after restoration
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
     }
 
     // =======================
@@ -129,5 +144,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    console.log('✅ Sidebar initialized successfully');
+    // =======================
+    // TRANSITION HELPER - Ensures smooth animations
+    // =======================
+    
+    // Monitor sidebar state changes and ensure proper transitions
+    const observeBodyClass = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class') {
+                const pageWrapper = document.getElementById('page-content-wrapper');
+                const header = document.querySelector('header');
+                
+                if (pageWrapper && header) {
+                    // Force reflow for smooth transition
+                    void pageWrapper.offsetHeight;
+                    void header.offsetHeight;
+                }
+            }
+        });
+    });
+
+    // Start observing body class changes
+    observeBodyClass.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+
+    console.log('✅ Sidebar initialized successfully with enhanced transitions');
 });

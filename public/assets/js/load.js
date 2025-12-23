@@ -9,6 +9,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     setTimeout(() => {
         loader.classList.add("hidden");
-        setTimeout(() => { loader.style.display = 'none'; }, 600);
+        setTimeout(() => { loader.style.display = 'none'; }, 3000);
     }, delay);
 });

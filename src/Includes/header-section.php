@@ -99,8 +99,8 @@ $pageTitle = isset($pageTitles[$currentPage]) ? $pageTitles[$currentPage] : 'Das
                             <?php echo htmlspecialchars($userInitials); ?>
                         </div>
                         <div class="text-start d-none d-md-block">
-                            <p class="mb-0 small fw-semibold text-dark"><?php echo htmlspecialchars($currentUser['fullname']); ?></p>
-                            <p class="mb-0 text-muted" style="font-size: 0.75rem;"><?php echo htmlspecialchars($currentUser['role']); ?></p>
+                            <!-- <p class="mb-0 small fw-semibold text-dark"><?php echo htmlspecialchars($currentUser['fullname']); ?></p> -->
+                            <!-- <p class="mb-0 text-muted" style="font-size: 0.75rem;"><?php echo htmlspecialchars($currentUser['role']); ?></p> -->
                         </div>
                         <i class="bi bi-chevron-down text-secondary d-none d-md-block"></i>
                     </div>
