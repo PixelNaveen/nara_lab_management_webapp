@@ -1,4 +1,4 @@
-// assets/js/script.js
+// assets/js/script.js - COMPLETE FILE WITH SMOOTH ANIMATIONS
 
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
@@ -8,104 +8,140 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarToggleDesktop = document.getElementById('sidebarToggleDesktop');
 
     // =======================
+    // CRITICAL FIX: Ensure sidebar starts hidden on mobile
+    // =======================
+    function initializeSidebarState() {
+        if (window.innerWidth < 992) {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+            document.body.style.overflow = '';
+        } else {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                document.body.classList.add('sidebar-collapsed');
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            }
+        }
+    }
+
+    initializeSidebarState();
+
+    // =======================
     // MOBILE BEHAVIOR
     // =======================
 
-    // Mobile: open sidebar
     if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
+        sidebarToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             sidebar.classList.add('show');
             sidebarOverlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
         });
     }
 
-    // Mobile: close sidebar
+    function closeMobileSidebar() {
+        sidebar.classList.remove('show');
+        sidebarOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+        
+        const openSubmenus = document.querySelectorAll('#sidebar .collapse.show');
+        openSubmenus.forEach(submenu => {
+            const bsCollapse = bootstrap.Collapse.getInstance(submenu);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            }
+        });
+    }
+
     if (sidebarClose) {
-        sidebarClose.addEventListener('click', function() {
-            sidebar.classList.remove('show');
-            sidebarOverlay.classList.remove('show');
+        sidebarClose.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeMobileSidebar();
         });
     }
 
-    // Mobile: click outside to close
     if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
-            sidebar.classList.remove('show');
-            sidebarOverlay.classList.remove('show');
+        sidebarOverlay.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeMobileSidebar();
         });
     }
 
     // =======================
-    // DESKTOP BEHAVIOR - ENHANCED
+    // DESKTOP BEHAVIOR
     // =======================
 
-    // Desktop: toggle collapse state with smooth transition
     if (sidebarToggleDesktop) {
         sidebarToggleDesktop.addEventListener('click', function() {
-            // Toggle the collapsed state
             document.body.classList.toggle('sidebar-collapsed');
-            
-            // Force a reflow to ensure smooth transition
             void document.body.offsetHeight;
-            
-            // Save state
             localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
-            
-            // Trigger resize event to help charts and other components adjust
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
             }, 300);
         });
     }
 
-    // Restore sidebar state from localStorage
-    if (localStorage.getItem('sidebarCollapsed') === 'true') {
-        document.body.classList.add('sidebar-collapsed');
-        // Trigger resize after restoration
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 100);
-    }
-
     // =======================
-    // SIDEBAR FIX - COLLAPSE MANAGEMENT
+    // AUTO-CLOSE ON NAVIGATION - WITH SMOOTH ANIMATION
     // =======================
 
     const sidebarLinks = document.querySelectorAll('#sidebar a.nav-link, #sidebar a.submenu-link');
  
     sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
+        link.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
-
-            // Close all open submenus before navigation
-            const openSubmenus = document.querySelectorAll('#sidebar .collapse.show');
-            openSubmenus.forEach(submenu => {
-                const bsCollapse = bootstrap.Collapse.getInstance(submenu);
-                if (bsCollapse) {
-                    bsCollapse.hide();
-                }
-            });
-
-            // If not dashboard, collapse sidebar
-            if (!href.includes('page=dashboard')) {
-                document.body.classList.add('sidebar-collapsed');
-                localStorage.setItem('sidebarCollapsed', true);
-            } else {
-                // Keep sidebar open for dashboard
-                document.body.classList.remove('sidebar-collapsed');
-                localStorage.setItem('sidebarCollapsed', false);
-            }
-
-            // Also close sidebar if on mobile (extra safeguard)
+            
             if (window.innerWidth < 992) {
+                // SMOOTH ANIMATION: Prevent default, animate, then navigate
+                e.preventDefault();
+                
+                // Start close animation
                 sidebar.classList.remove('show');
                 sidebarOverlay.classList.remove('show');
+                document.body.style.overflow = '';
+                
+                // Close submenus
+                const openSubmenus = document.querySelectorAll('#sidebar .collapse.show');
+                openSubmenus.forEach(submenu => {
+                    const bsCollapse = bootstrap.Collapse.getInstance(submenu);
+                    if (bsCollapse) {
+                        bsCollapse.hide();
+                    }
+                });
+                
+                // Wait for animation to complete (500ms), then navigate
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 550); // Longer animation for smoother, more visible effect
+                
+            } else {
+                // Desktop behavior
+                const openSubmenus = document.querySelectorAll('#sidebar .collapse.show');
+                openSubmenus.forEach(submenu => {
+                    const bsCollapse = bootstrap.Collapse.getInstance(submenu);
+                    if (bsCollapse) {
+                        bsCollapse.hide();
+                    }
+                });
+
+                if (!href.includes('page=dashboard')) {
+                    document.body.classList.add('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                } else {
+                    document.body.classList.remove('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                }
             }
         });
     });
 
     // =======================
-    // ACCORDION BEHAVIOR (Only one submenu open)
+    // ACCORDION BEHAVIOR
     // =======================
 
     const submenuToggles = document.querySelectorAll('#sidebar [data-bs-toggle="collapse"]');
@@ -114,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
         toggle.addEventListener('click', function() {
             const targetId = this.getAttribute('data-bs-target');
             
-            // Close all OTHER submenus (accordion behavior)
             document.querySelectorAll('#sidebar .collapse.show').forEach(collapse => {
                 if ('#' + collapse.id !== targetId) {
                     const bsCollapse = bootstrap.Collapse.getInstance(collapse);
@@ -130,11 +165,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // CLEAN STATE ON PAGE LOAD
     // =======================
 
-    // Close submenus that shouldn't be open
     document.querySelectorAll('#sidebar .collapse').forEach(collapse => {
         const hasActiveChild = collapse.querySelector('.submenu-link.active');
         
-        // If no active child, force close
         if (!hasActiveChild && collapse.classList.contains('show')) {
             collapse.classList.remove('show');
             const parentButton = document.querySelector(`[data-bs-target="#${collapse.id}"]`);
@@ -145,10 +178,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // =======================
-    // TRANSITION HELPER - Ensures smooth animations
+    // WINDOW RESIZE HANDLER
     // =======================
     
-    // Monitor sidebar state changes and ensure proper transitions
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (window.innerWidth >= 992) {
+                sidebar.classList.remove('show');
+                sidebarOverlay.classList.remove('show');
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.remove('show');
+                sidebarOverlay.classList.remove('show');
+                document.body.classList.remove('sidebar-collapsed');
+                document.body.style.overflow = '';
+            }
+        }, 250);
+    });
+
+    // =======================
+    // TRANSITION HELPER
+    // =======================
+    
     const observeBodyClass = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.attributeName === 'class') {
@@ -156,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const header = document.querySelector('header');
                 
                 if (pageWrapper && header) {
-                    // Force reflow for smooth transition
                     void pageWrapper.offsetHeight;
                     void header.offsetHeight;
                 }
@@ -164,11 +216,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Start observing body class changes
     observeBodyClass.observe(document.body, {
         attributes: true,
         attributeFilter: ['class']
     });
 
-    console.log('✅ Sidebar initialized successfully with enhanced transitions');
+    // =======================
+    // PREVENT BODY SCROLL
+    // =======================
+    
+    const observeSidebar = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class' && window.innerWidth < 992) {
+                if (sidebar.classList.contains('show')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+    });
+
+    observeSidebar.observe(sidebar, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+
+    console.log('✅ Sidebar initialized with smooth animations');
 });
