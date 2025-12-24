@@ -86,6 +86,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     
     <!-- ✅ CORRECTED PATH: Added 'public/' prefix -->
     <link rel="stylesheet" href="public/assets/css/sidebar-layout-fixes.css">
+   
 
     <!-- Clean URL: Remove ?from= parameter after page load -->
     <?php if (isset($_GET['from'])): ?>

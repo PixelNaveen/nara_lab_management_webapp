@@ -33,7 +33,7 @@
 
       /* Dashboard Container - matches client management structure */
       .dashboard-container {
-        padding: 20px;
+        padding: 10px;
         max-width: 100%;
         overflow-x: hidden; /* Prevent horizontal scroll */
       }
@@ -508,14 +508,14 @@
     <div class="dashboard-container">
       <div class="dashboard-content-wrapper">
         <!-- Page Header -->
-        <div class="page-header">
+        <!-- <div class="page-header">
           <h1 class="page-title">Dashboard Overview</h1>
           <div class="page-subtitle">
             <span class="current-date">Year 2025 Performance</span>
             <span>•</span>
             <span>Last updated: Just now</span>
           </div>
-        </div>
+        </div> -->
 
         <!-- Period Selector -->
         <div class="period-selector">
@@ -672,8 +672,8 @@
           </div>
         </div>
 
-        <!-- Recent Samples Table -->
-        <div class="table-section">
+        <!-- Recent Samples Table 
+         <div class="table-section">
           <div class="table-card">
             <div class="section-header">
               <h3 class="section-title">Recent Sample Submissions</h3>
@@ -734,9 +734,9 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-        </div>
+            </div> 
+           </div>
+        </div> -->
       </div>
     </div>
 

@@ -1,4 +1,10 @@
-/* assets/css/dashboard.css */
+/* =====================================================
+   DASHBOARD CSS - FULLY RESPONSIVE
+   Laboratory Management System
+   Deep Dive Responsive Design for All Devices
+   ===================================================== */
+
+/* ==================== CORE STYLES ==================== */
 
 /* Custom Card Styles */
 .card-stat {
@@ -46,11 +52,10 @@
 .quick-info-label {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #495057; /* Darker shade for better readability */
+    color: #495057;
     letter-spacing: 0.5px;
     margin: 0;
 }
-
 
 @keyframes fadeIn {
     from {
@@ -62,3 +67,735 @@
         transform: translateY(0);
     }
 }
+
+/* ==================== RESPONSIVE BREAKPOINTS ==================== */
+
+/* ========================================
+   EXTRA SMALL DEVICES (Mobile Phones)
+   320px - 575px
+   ======================================== */
+
+@media (max-width: 575.98px) {
+    
+    /* Container & Layout */
+    .dashboard-container {
+        padding: 8px !important;
+    }
+    
+    /* Page Header */
+    .page-header {
+        margin-bottom: 20px !important;
+    }
+    
+    .page-title {
+        font-size: 20px !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .page-subtitle {
+        font-size: 12px !important;
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+    
+    .current-date {
+        font-size: 12px !important;
+    }
+    
+    /* Period Selector */
+    .period-selector {
+        padding: 12px !important;
+        margin-bottom: 16px !important;
+        gap: 8px !important;
+        flex-direction: column;
+    }
+    
+    .period-btn {
+        width: 100% !important;
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        text-align: center;
+    }
+    
+    /* Comparison Cards */
+    .comparison-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .comparison-card {
+        padding: 16px !important;
+    }
+    
+    .card-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 20px !important;
+    }
+    
+    .card-title {
+        font-size: 11px !important;
+    }
+    
+    .card-value {
+        font-size: 24px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .comparison-row {
+        flex-direction: column;
+        gap: 12px;
+        padding: 10px 0 !important;
+    }
+    
+    .comparison-item {
+        width: 100%;
+    }
+    
+    .comparison-label {
+        font-size: 11px !important;
+    }
+    
+    .comparison-value {
+        font-size: 14px !important;
+    }
+    
+    .comparison-badge {
+        font-size: 11px !important;
+        padding: 3px 10px !important;
+        margin-top: 6px !important;
+    }
+    
+    /* Charts */
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .chart-card {
+        padding: 16px !important;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .chart-title {
+        font-size: 16px !important;
+    }
+    
+    .chart-subtitle {
+        font-size: 12px !important;
+    }
+    
+    .chart-toggle {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .toggle-btn {
+        flex: 1;
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Chart Canvas - Better mobile height */
+    .chart-container {
+        height: 250px !important;
+        margin-bottom: 12px;
+    }
+    
+    canvas {
+        max-height: 250px !important;
+    }
+    
+    /* Tables */
+    .table-responsive {
+        border-radius: 8px !important;
+        margin-bottom: 12px;
+    }
+    
+    .table {
+        font-size: 12px !important;
+    }
+    
+    .table thead th {
+        padding: 8px 6px !important;
+        font-size: 10px !important;
+    }
+    
+    .table tbody td {
+        padding: 8px 6px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Action Buttons */
+    .btn-action {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+    }
+    
+    /* Stats List */
+    .stats-list {
+        padding: 0 !important;
+    }
+    
+    .stats-item {
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Quick Info */
+    .quick-info-label {
+        font-size: 0.95rem !important;
+    }
+    
+    /* Badge */
+    .badge-status {
+        padding: 0.2rem 0.6rem !important;
+        font-size: 0.65rem !important;
+    }
+    
+    /* Hide less important columns on very small screens */
+    .table .hide-xs {
+        display: none !important;
+    }
+    
+    /* Full-width buttons on mobile */
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .action-buttons .btn {
+        width: 100% !important;
+    }
+}
+
+/* ========================================
+   SMALL DEVICES (Large Phones, Small Tablets)
+   576px - 767px
+   ======================================== */
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+    
+    /* Container */
+    .dashboard-container {
+        padding: 12px !important;
+    }
+    
+    /* Page Header */
+    .page-title {
+        font-size: 22px !important;
+    }
+    
+    .page-subtitle {
+        font-size: 13px !important;
+    }
+    
+    /* Period Selector */
+    .period-selector {
+        padding: 14px 16px !important;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .period-btn {
+        min-width: 100px;
+        padding: 9px 18px !important;
+    }
+    
+    /* Comparison Cards - 2 columns */
+    .comparison-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 14px !important;
+    }
+    
+    .comparison-card {
+        padding: 18px !important;
+    }
+    
+    .card-value {
+        font-size: 28px !important;
+    }
+    
+    /* Charts */
+    .chart-container {
+        height: 280px !important;
+    }
+    
+    canvas {
+        max-height: 280px !important;
+    }
+    
+    /* Tables */
+    .table thead th {
+        padding: 10px 8px !important;
+        font-size: 11px !important;
+    }
+    
+    .table tbody td {
+        padding: 10px 8px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* ========================================
+   MEDIUM DEVICES (Tablets)
+   768px - 991px
+   ======================================== */
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    
+    /* Container */
+    .dashboard-container {
+        padding: 16px !important;
+    }
+    
+    /* Page Header */
+    .page-title {
+        font-size: 24px !important;
+    }
+    
+    .page-subtitle {
+        font-size: 14px !important;
+    }
+    
+    /* Period Selector */
+    .period-selector {
+        padding: 16px 18px !important;
+        justify-content: flex-start;
+    }
+    
+    .period-btn {
+        padding: 9px 20px !important;
+    }
+    
+    /* Comparison Cards - 2 columns */
+    .comparison-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+    
+    .comparison-card {
+        padding: 20px !important;
+    }
+    
+    .card-icon {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 22px !important;
+    }
+    
+    .card-value {
+        font-size: 30px !important;
+    }
+    
+    /* Charts - Stack vertically */
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 18px !important;
+    }
+    
+    .chart-container {
+        height: 320px !important;
+    }
+    
+    canvas {
+        max-height: 320px !important;
+    }
+    
+    /* Tables */
+    .table {
+        font-size: 13px !important;
+    }
+    
+    .table thead th {
+        padding: 12px 10px !important;
+    }
+    
+    .table tbody td {
+        padding: 12px 10px !important;
+    }
+}
+
+/* ========================================
+   LARGE DEVICES (Desktops)
+   992px - 1199px
+   ======================================== */
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    
+    /* Container */
+    .dashboard-container {
+        padding: 18px !important;
+    }
+    
+    /* Page Header */
+    .page-title {
+        font-size: 26px !important;
+    }
+    
+    /* Comparison Cards - 3 columns */
+    .comparison-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 18px !important;
+    }
+    
+    .comparison-card {
+        padding: 22px !important;
+    }
+    
+    .card-value {
+        font-size: 32px !important;
+    }
+    
+    /* Charts - 2 column layout */
+    .charts-grid {
+        grid-template-columns: 2fr 1fr !important;
+        gap: 20px !important;
+    }
+    
+    .chart-container {
+        height: 340px !important;
+    }
+    
+    canvas {
+        max-height: 340px !important;
+    }
+}
+
+/* ========================================
+   EXTRA LARGE DEVICES (Large Desktops)
+   1200px+
+   ======================================== */
+
+@media (min-width: 1200px) {
+    
+    /* Container */
+    .dashboard-container {
+        padding: 20px !important;
+        max-width: 1800px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-title {
+        font-size: 28px !important;
+    }
+    
+    /* Comparison Cards - 4 columns for wide screens */
+    .comparison-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+        gap: 20px !important;
+    }
+    
+    .comparison-card {
+        padding: 24px !important;
+    }
+    
+    .card-value {
+        font-size: 36px !important;
+    }
+    
+    /* Charts */
+    .charts-grid {
+        grid-template-columns: 2fr 1fr !important;
+        gap: 24px !important;
+    }
+    
+    .chart-container {
+        height: 380px !important;
+    }
+    
+    canvas {
+        max-height: 380px !important;
+    }
+}
+
+/* ==================== LANDSCAPE ORIENTATION ==================== */
+
+/* Mobile Landscape - optimize horizontal space */
+@media (max-width: 767.98px) and (orientation: landscape) {
+    
+    .comparison-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .chart-container {
+        height: 220px !important;
+    }
+    
+    canvas {
+        max-height: 220px !important;
+    }
+    
+    .period-selector {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+    }
+    
+    .period-btn {
+        width: auto !important;
+        min-width: 80px;
+    }
+}
+
+/* Tablet Landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    
+    .comparison-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    
+    .charts-grid {
+        grid-template-columns: 1.5fr 1fr !important;
+    }
+}
+
+/* ==================== TOUCH DEVICE OPTIMIZATIONS ==================== */
+
+@media (hover: none) and (pointer: coarse) {
+    
+    /* Larger tap targets for touch */
+    .period-btn,
+    .toggle-btn,
+    .btn-action {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .card-stat:hover,
+    .comparison-card:hover,
+    .btn-action:hover {
+        transform: none;
+    }
+    
+    /* Increase spacing for easier tapping */
+    .period-selector {
+        gap: 12px !important;
+    }
+    
+    .chart-toggle {
+        gap: 10px !important;
+    }
+}
+
+/* ==================== PRINT STYLES ==================== */
+
+@media print {
+    
+    /* Hide interactive elements */
+    .period-selector,
+    .chart-toggle,
+    .btn-action,
+    .action-buttons {
+        display: none !important;
+    }
+    
+    /* Optimize layout for print */
+    .dashboard-container {
+        padding: 0 !important;
+    }
+    
+    .comparison-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        page-break-inside: avoid;
+    }
+    
+    .comparison-card {
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+    }
+    
+    .chart-card {
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+    }
+    
+    /* Reduce chart heights for print */
+    .chart-container {
+        height: 250px !important;
+    }
+    
+    /* Adjust font sizes */
+    .page-title {
+        font-size: 22px !important;
+    }
+    
+    .card-value {
+        font-size: 24px !important;
+    }
+    
+    /* Ensure colors print correctly */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+
+/* ==================== ACCESSIBILITY ENHANCEMENTS ==================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    
+    .comparison-card,
+    .chart-card,
+    .period-selector {
+        border: 2px solid #000 !important;
+    }
+    
+    .badge-status {
+        border: 1px solid currentColor !important;
+    }
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .card-stat:hover,
+    .comparison-card:hover,
+    .btn-action:hover {
+        transform: none !important;
+    }
+}
+
+/* Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+    
+    /* Add dark mode styles here if needed */
+    /* Example:
+    .comparison-card,
+    .chart-card {
+        background: #1a1a1a !important;
+        color: #ffffff !important;
+    }
+    */
+}
+
+/* ==================== UTILITY CLASSES FOR RESPONSIVE ==================== */
+
+/* Responsive text sizing */
+.text-responsive {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+}
+
+.heading-responsive {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+/* Responsive spacing */
+.spacing-responsive {
+    padding: clamp(1rem, 2vw, 2rem);
+}
+
+/* Show/Hide based on screen size */
+.show-mobile {
+    display: none !important;
+}
+
+@media (max-width: 767.98px) {
+    .hide-mobile {
+        display: none !important;
+    }
+    
+    .show-mobile {
+        display: block !important;
+    }
+}
+
+.show-tablet {
+    display: none !important;
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .hide-tablet {
+        display: none !important;
+    }
+    
+    .show-tablet {
+        display: block !important;
+    }
+}
+
+.show-desktop {
+    display: none !important;
+}
+
+@media (min-width: 992px) {
+    .hide-desktop {
+        display: none !important;
+    }
+    
+    .show-desktop {
+        display: block !important;
+    }
+}
+
+/* ==================== PERFORMANCE OPTIMIZATIONS ==================== */
+
+/* Prevent layout shift */
+.comparison-grid,
+.charts-grid {
+    min-height: 200px;
+}
+
+/* GPU acceleration for animations */
+.card-stat,
+.comparison-card,
+.btn-action {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Remove will-change after animation */
+.card-stat:not(:hover),
+.comparison-card:not(:hover),
+.btn-action:not(:hover) {
+    will-change: auto;
+}
+
+/* Optimize font loading */
+@supports (font-display: swap) {
+    body {
+        font-display: swap;
+    }
+}
+
+/* ==================== CONTAINER QUERIES (Future-proof) ==================== */
+
+/* When container queries are fully supported */
+@supports (container-type: inline-size) {
+    
+    .comparison-card {
+        container-type: inline-size;
+    }
+    
+    @container (max-width: 300px) {
+        .card-value {
+            font-size: 24px !important;
+        }
+    }
+}
+
+/* ==================== END OF RESPONSIVE STYLES ==================== */

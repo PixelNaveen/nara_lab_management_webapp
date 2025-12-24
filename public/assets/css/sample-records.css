@@ -157,29 +157,45 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Sample Status Colors */
+/* Sample Status Colors - Light Gradient Style */
 .badge-pending {
-  background-color: #f59e0b !important;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
   color: #78350f !important;
   border-color: #fbbf24 !important;
 }
 
+.badge-pending:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%) !important;
+}
+
 .badge-in-progress {
-  background-color: #1e3a8a !important;
-  color: #fff !important;
-  border-color: #1e40af !important;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+  color: #1e3a8a !important;
+  border-color: #60a5fa !important;
+}
+
+.badge-in-progress:hover {
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%) !important;
 }
 
 .badge-completed {
-  background-color: #16a34a !important;
-  color: #fff !important;
-  border-color: #15803d !important;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  color: #065f46 !important;
+  border-color: #34d399 !important;
+}
+
+.badge-completed:hover {
+  background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%) !important;
 }
 
 .badge-canceled {
-  background-color: #dc2626 !important;
-  color: #fff !important;
-  border-color: #b91c1c !important;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+  color: #991b1b !important;
+  border-color: #f87171 !important;
+}
+
+.badge-canceled:hover {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%) !important;
 }
 
 /* ==================== PAYMENT BADGES - NEW (SMALLER SIZE) ==================== */
