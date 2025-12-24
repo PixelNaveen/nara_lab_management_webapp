@@ -1,4 +1,4 @@
-/* assets/css/sidebar.css */
+/* assets/css/sidebar.css - COMPLETE FILE - REPLACE ENTIRE FILE WITH THIS */
 
 /* Root Variables for Sidebar */
 :root {
@@ -96,7 +96,8 @@
     transform: rotate(180deg);
 }
 
-/* Sidebar Overlay for Mobile */
+/* ==================== SIDEBAR OVERLAY - FIXED ==================== */
+
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -105,28 +106,49 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1040;
+    z-index: 1045;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
 }
 
-/* Mobile Styles for Sidebar */
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* ==================== MOBILE STYLES - FIXED ==================== */
+
 @media (max-width: 991.98px) {
     .sidebar {
-        transform: translateX(-100%);
+        transform: translateX(-100%) !important;
     }
     
     .sidebar.show {
-        transform: translateX(0);
+        transform: translateX(0) !important;
     }
-    
-    .sidebar-overlay.show {
-        display: block;
+
+    .sidebar-close-btn {
+        display: flex !important;
     }
 }
 
-/* Desktop Sidebar Toggle */
+/* ==================== DESKTOP STYLES - FIXED ==================== */
+
 @media (min-width: 992px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
     body.sidebar-collapsed .sidebar {
         transform: translateX(-100%);
+    }
+
+    .sidebar-close-btn {
+        display: none !important;
     }
 }
 
@@ -147,11 +169,38 @@
    background-color: white;
 }
 
+/* ==================== CLOSE BUTTON STYLES ==================== */
+
+.sidebar-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 0.375rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 10;
+}
+
+.sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-close-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 /* =====================================================
    COLLAPSE FIX - CRITICAL
    ===================================================== */
 
-/* Bootstrap Collapse Integration - Let Bootstrap control height */
 .collapse {
     transition: height 0.35s ease;
 }
@@ -162,15 +211,12 @@
     transition: height 0.35s ease;
 }
 
-/* When expanded - NO height: auto !important (breaks Bootstrap) */
 .collapse.show {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    /* height removed - let Bootstrap animate it naturally */
 }
 
-/* Ensure submenu container is visible */
 .submenu {
     display: block !important;
 }
@@ -181,7 +227,6 @@
     visibility: visible !important;
 }
 
-/* When parent has .show, submenu must be visible */
 .collapse.show .submenu {
     display: block !important;
     opacity: 1 !important;
@@ -193,7 +238,6 @@
     opacity: 1 !important;
 }
 
-/* When collapsed, hide everything */
 .collapse:not(.show) {
     display: none;
 }
