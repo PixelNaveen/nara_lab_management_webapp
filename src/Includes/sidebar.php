@@ -1,9 +1,8 @@
 <?php
-// includes/sidebar.php
+// includes/sidebar.php - COMPLETE FILE - REPLACE ENTIRE FILE WITH THIS
 
 $currentPage = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
-// Menu items with proper navigation URLs
 $menuItems = [
     ['id' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'bi-house-door', 'url' => 'index.php?page=dashboard'],
     ['id' => 'clients', 'label' => 'Client Management', 'icon' => 'bi-building', 'url' => 'index.php?page=clients'],
@@ -43,11 +42,13 @@ $menuItems = [
     ]]
 ];
 
-function isActive($menuId, $currentPage) {
+function isActive($menuId, $currentPage)
+{
     return $currentPage === $menuId;
 }
 
-function hasActiveSubmenu($submenu, $currentPage) {
+function hasActiveSubmenu($submenu, $currentPage)
+{
     foreach ($submenu as $item) {
         if ($item['id'] === $currentPage) {
             return true;
@@ -57,9 +58,11 @@ function hasActiveSubmenu($submenu, $currentPage) {
 }
 ?>
 
-<!-- Sidebar -->
 <div class="sidebar bg-gradient-primary text-white" id="sidebar">
-    <!-- User Info -->
+    <button class="sidebar-close-btn" id="sidebarClose" type="button" aria-label="Close sidebar">
+        <i class="bi bi-x-lg" style="font-size: 1.25rem;"></i>
+    </button>
+
     <div class="p-3 bg-white bg-opacity-10">
         <div class="d-flex align-items-center gap-2">
             <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center fw-semibold" style="width: 40px; height: 40px; min-width: 40px;">
@@ -72,9 +75,8 @@ function hasActiveSubmenu($submenu, $currentPage) {
         </div>
     </div>
 
-    <!-- Navigation Menu -->
     <nav class="sidebar-nav flex-grow-1 overflow-auto py-3 px-2">
-        <?php foreach ($menuItems as $item): 
+        <?php foreach ($menuItems as $item):
             $isItemActive = isActive($item['id'], $currentPage);
             $hasSubmenu = isset($item['submenu']);
             $submenuActive = $hasSubmenu ? hasActiveSubmenu($item['submenu'], $currentPage) : false;
@@ -97,9 +99,9 @@ function hasActiveSubmenu($submenu, $currentPage) {
                     <div class="collapse <?php echo $submenuActive ? 'show' : ''; ?>" id="submenu-<?php echo $item['id']; ?>">
                         <div class="submenu ps-4 mt-1">
                             <?php foreach ($item['submenu'] as $subItem): ?>
-                                <a href="<?php echo $subItem['url']; ?>" 
-                                   class="nav-link submenu-link <?php echo isActive($subItem['id'], $currentPage) ? 'active' : ''; ?>"
-                                   <?php if (isActive($subItem['id'], $currentPage)) echo 'aria-current="page"'; ?>>
+                                <a href="<?php echo $subItem['url']; ?>"
+                                    class="nav-link submenu-link <?php echo isActive($subItem['id'], $currentPage) ? 'active' : ''; ?>"
+                                    <?php if (isActive($subItem['id'], $currentPage)) echo 'aria-current="page"'; ?>>
                                     <i class="bi bi-circle-fill me-2" style="font-size: 0.4rem;"></i>
                                     <?php echo $subItem['label']; ?>
                                 </a>
@@ -107,9 +109,9 @@ function hasActiveSubmenu($submenu, $currentPage) {
                         </div>
                     </div>
                 <?php else: ?>
-                    <a href="<?php echo $item['url']; ?>" 
-                       class="nav-link d-flex align-items-center gap-2 <?php echo $isItemActive ? 'active' : ''; ?>"
-                       <?php if ($isItemActive) echo 'aria-current="page"'; ?>>
+                    <a href="<?php echo $item['url']; ?>"
+                        class="nav-link d-flex align-items-center gap-2 <?php echo $isItemActive ? 'active' : ''; ?>"
+                        <?php if ($isItemActive) echo 'aria-current="page"'; ?>>
                         <i class="bi <?php echo $item['icon']; ?>"></i>
                         <span class="text-truncate"><?php echo $item['label']; ?></span>
                     </a>
@@ -117,15 +119,6 @@ function hasActiveSubmenu($submenu, $currentPage) {
             </div>
         <?php endforeach; ?>
     </nav>
-
-    <!-- Sidebar Footer -->
-  <!--  <div class="sidebar-footer p-2 border-top border-white border-opacity-25">
-        <a href="logout.php" class="nav-link d-flex align-items-center gap-2 text-danger logout-link">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-        </a>
-    </div> -->
 </div>
 
-<!-- Sidebar Overlay (for mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
