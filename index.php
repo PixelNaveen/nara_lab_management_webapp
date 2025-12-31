@@ -74,7 +74,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/style.css">
     <link rel="stylesheet" href="public/assets/css/header.css">
     <link rel="stylesheet" href="public/assets/css/sidebar.css">
-    <!-- <link rel="stylesheet" href="public/assets/css/dashboard.css"> -->
+    <link rel="stylesheet" href="public/assets/css/dashboard.css">
     <link rel="stylesheet" href="public/assets/css/manage-users.css">
     <link rel="stylesheet" href="public/assets/css/manage-clients.css">
     <link rel="stylesheet" href="public/assets/css/manage-param.css">
@@ -85,7 +85,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/sample-submission.css">
     
     <!-- ✅ CORRECTED PATH: Added 'public/' prefix -->
-    <link rel="stylesheet" href="public/assets/css/sidebar-layout-fixes.css">
+    <!-- <link rel="stylesheet" href="public/assets/css/sidebar-layout-fixes.css"> -->
    
 
     <!-- Clean URL: Remove ?from= parameter after page load -->
