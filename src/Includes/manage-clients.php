@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid">
 
   <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
     <input type="text" class="form-control" id="searchInput" placeholder="Search by name, city or phone" style="max-width: 250px;" />
@@ -117,7 +117,8 @@
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
   <div id="toastContainer"></div>
 </div>
-
+</div>
+</div>
 <script>
   // ===== CLIENT MANAGEMENT SCRIPT =====
 

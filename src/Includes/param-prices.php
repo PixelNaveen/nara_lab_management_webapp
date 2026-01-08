@@ -1,5 +1,5 @@
 <div class="page-manage-parameters">
-  <div class="parameters-container container">
+  <div class="parameters-container container-fluide">
     <!-- Filter + Add -->
     <div class="parameters-card-filter d-flex align-items-center gap-2 mb-3">
       <input type="text" id="searchInput" placeholder="Search by Name" class="form-control" style="max-width:250px;">

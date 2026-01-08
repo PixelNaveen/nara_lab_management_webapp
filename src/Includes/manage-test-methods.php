@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluide">
 
   <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
     <input type="text" class="form-control" id="searchInput" placeholder="Search by method name or standard body" style="max-width: 250px;" />

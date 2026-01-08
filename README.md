@@ -1,13 +1,19 @@
 # File Tree: project
 
-**Generated:** 12/10/2025, 12:56:28 PM
-**Root Path:** `c:\Users\Naveen\Desktop\project`
+**Generated:** 1/8/2026, 9:21:02 AM
+**Root Path:** `d:\project`
 
 ```
+├── 📁 .zencoder
+│   └── 📁 workflows
+├── 📁 .zenflow
+│   └── 📁 workflows
 ├── 📁 Config
-│   └── 🐘 Database.php
+│   ├── 🐘 Database.php
+│   └── 🐘 roles-permissions.php
 ├── 📁 db
 │   ├── 📄 lab (10).sql
+│   ├── 📄 lab (27).sql
 │   ├── 📄 lab (latest).sql
 │   └── 📄 lab.sql
 ├── 📁 logs
@@ -17,29 +23,46 @@
 │   │   │   ├── 🎨 dashboard.css
 │   │   │   ├── 🎨 header.css
 │   │   │   ├── 🎨 login.css
+│   │   │   ├── 🎨 manage-cities.css
 │   │   │   ├── 🎨 manage-clients.css
+│   │   │   ├── 🎨 manage-extra-items.css
 │   │   │   ├── 🎨 manage-param-variants.css
 │   │   │   ├── 🎨 manage-param.css
 │   │   │   ├── 🎨 manage-test-methods.css
 │   │   │   ├── 🎨 manage-users.css
 │   │   │   ├── 🎨 param-prices.css
+│   │   │   ├── 🎨 saf-styles.css
+│   │   │   ├── 🎨 sample-records.css
 │   │   │   ├── 🎨 sample-submission.css
+│   │   │   ├── 🎨 sidebar-layout-fixes.css
 │   │   │   ├── 🎨 sidebar.css
 │   │   │   ├── 🎨 style.css
 │   │   │   └── 🎨 swab-param.css
-│   │   └── 📁 js
-│   │       ├── 📄 load.js
-│   │       ├── 📄 sample-submission.js
-│   │       └── 📄 script.js
+│   │   ├── 📁 js
+│   │   │   ├── 📄 load.js
+│   │   │   ├── 📄 saf-handler.js
+│   │   │   ├── 📄 sample-records.js
+│   │   │   ├── 📄 sample-submission.js
+│   │   │   └── 📄 script.js
+│   │   └── 📁 libs
+│   │       ├── 📄 html2pdf.bundle.min.js.LICENSE.txt
+│   │       ├── 📄 html2pdf.js
+│   │       └── 📄 html2pdf.min.js.LICENSE.txt
 │   └── 📁 images
 │       └── 🖼️ Nara logo.png
 ├── 📁 src
 │   ├── 📁 Controllers
+│   │   ├── 🐘 CityController.php
+│   │   ├── 🐘 ExtraItemsController.php
 │   │   ├── 🐘 auth-controller.php
 │   │   ├── 🐘 client-controller.php
 │   │   ├── 🐘 dashboard-controller.php
 │   │   ├── 🐘 parameter-controller.php
 │   │   ├── 🐘 pricing-controller.php
+│   │   ├── 🐘 saf-controller.php
+│   │   ├── 🐘 sample-controller-debug.php
+│   │   ├── 🐘 sample-controller.php
+│   │   ├── 🐘 sample-records-controller.php
 │   │   ├── 🐘 swab-controller.php
 │   │   ├── 🐘 test-method-controller.php
 │   │   ├── 🐘 user-controller.php
@@ -47,28 +70,38 @@
 │   ├── 📁 Helpers
 │   │   └── 🐘 functions.php
 │   ├── 📁 Includes
+│   │   ├── 📁 Templates
+│   │   ├── 🐘 access-control.php
 │   │   ├── 🐘 auth.php
 │   │   ├── 🐘 dashboard-page.php
 │   │   ├── 🐘 form-info.php
 │   │   ├── 🐘 header-section.php
 │   │   ├── 🐘 loader.php
+│   │   ├── 🐘 manage-cities.php
 │   │   ├── 🐘 manage-clients.php
+│   │   ├── 🐘 manage-extra-items.php
 │   │   ├── 🐘 manage-param-variants.php
 │   │   ├── 🐘 manage-param.php
 │   │   ├── 🐘 manage-test-methods.php
 │   │   ├── 🐘 manage-users.php
 │   │   ├── 🐘 param-prices.php
+│   │   ├── 🐘 saf-template.php
+│   │   ├── 🐘 sample-records-view.php
 │   │   ├── 🐘 sample-submission.php
 │   │   ├── 🐘 sidebar.php
 │   │   ├── 🐘 swab-param.php
 │   │   └── 🐘 table-view.php
 │   ├── 📁 Models
+│   │   ├── 🐘 CityModel.php
+│   │   ├── 🐘 ExtraItemsModel.php
 │   │   ├── 🐘 auth-model.php
 │   │   ├── 🐘 client-model.php
 │   │   ├── 🐘 dashboard-model.php
 │   │   ├── 🐘 parameter-model.php
 │   │   ├── 🐘 pricing-model.php
+│   │   ├── 🐘 saf-model.php
 │   │   ├── 🐘 sample-model.php
+│   │   ├── 🐘 sample-records-model.php
 │   │   ├── 🐘 swab-model.php
 │   │   ├── 🐘 test-method-model.php
 │   │   ├── 🐘 user-model.php
@@ -81,12 +114,7 @@
 ├── 🐘 index.php
 ├── ⚙️ package-lock.json
 ├── ⚙️ package.json
-├── 🌐 print.html
-├── 🐘 test-controller.php
-├── 🐘 test-save-sample.php
-├── 🐘 test-submission.php
-├── 🌐 test.html
-└── 🐘 test.php
+└── 🌐 print.html
 ```
 
 ---

@@ -1,5 +1,5 @@
 <div class="page-manage-parameters">
-  <div class="parameters-container container">
+  <div class="parameters-container container-fluide">
     <!-- Filter + New -->
     <div class="parameters-card-filter">
   <input type="text" id="searchInput" placeholder="Search by Parameter Name" class="form-control" style="max-width:250px;">

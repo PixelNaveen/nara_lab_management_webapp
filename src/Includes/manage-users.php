@@ -1,7 +1,7 @@
 <!-- Manage Users Page Wrapper -->
 <div class="page-manage-users">
 
-  <div class="manage-users-container container">
+  <div class="manage-users-container container-fluide">
 
     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
       <input

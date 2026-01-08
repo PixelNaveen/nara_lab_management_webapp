@@ -1,5 +1,5 @@
  <div class="page-manage-variants">
-    <div class="variants-container container">
+    <div class="variants-container container-fluide">
       <!-- Filter + New -->
       <div class="variants-card-filter">
         <input type="text" placeholder="Search by Variant Name" class="form-control" style="max-width:250px;">

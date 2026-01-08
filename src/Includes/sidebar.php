@@ -1,44 +1,57 @@
 <?php
-// includes/sidebar.php - COMPLETE FILE - REPLACE ENTIRE FILE WITH THIS
+// src/Includes/sidebar.php - COMPLETE RBAC IMPLEMENTATION
+
+require_once __DIR__ . '/../../Config/roles-permissions.php';
 
 $currentPage = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
+
+// Get user role
+$userRole = $user['role'] ?? 'Client';
 
 $menuItems = [
     ['id' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'bi-house-door', 'url' => 'index.php?page=dashboard'],
     ['id' => 'clients', 'label' => 'Client Management', 'icon' => 'bi-building', 'url' => 'index.php?page=clients'],
     ['id' => 'users', 'label' => 'User Management', 'icon' => 'bi-people', 'url' => 'index.php?page=users'],
     ['id' => 'sample-submission', 'label' => 'Sample Submission', 'icon' => 'bi-file-text', 'url' => 'index.php?page=sample-submission'],
+    
     ['id' => 'manage-forms', 'label' => 'Form Management', 'icon' => 'bi-clipboard-check', 'submenu' => [
         ['id' => 'form-info', 'label' => 'Sample Information', 'url' => 'index.php?page=form-info'],
         ['id' => 'form-acceptance', 'label' => 'Sample Acceptance', 'url' => 'index.php?page=form-acceptance'],
         ['id' => 'form-acknowledgement', 'label' => 'Sample Acknowledgement', 'url' => 'index.php?page=form-acknowledgement'],
         ['id' => 'form-analyst', 'label' => 'Sample Analyst Report', 'url' => 'index.php?page=form-analyst']
     ]],
+    
     ['id' => 'testing', 'label' => 'Testing & Analysis', 'icon' => 'bi-bar-chart', 'submenu' => [
         ['id' => 'test-assignment', 'label' => 'Assign Tests', 'url' => 'index.php?page=test-assignment'],
         ['id' => 'test-results', 'label' => 'Enter Results', 'url' => 'index.php?page=test-results'],
         ['id' => 'test-status', 'label' => 'Test Status Tracking', 'url' => 'index.php?page=test-status']
     ]],
+    
     ['id' => 'parameters', 'label' => 'Test Parameters', 'icon' => 'bi-gear-wide-connected', 'submenu' => [
         ['id' => 'manage-parameter', 'label' => 'Manage Parameter', 'url' => 'index.php?page=manage-parameter'],
         ['id' => 'param-variants', 'label' => 'Parameter Variants', 'url' => 'index.php?page=param-variants'],
         ['id' => 'swab-parameter', 'label' => 'Swab Parameter', 'url' => 'index.php?page=swab-parameter']
     ]],
+    
     ['id' => 'methods', 'label' => 'Test Methods', 'icon' => 'bi-funnel', 'url' => 'index.php?page=methods'],
     ['id' => 'pricing', 'label' => 'Pricing Management', 'icon' => 'bi-currency-dollar', 'url' => 'index.php?page=pricing'],
     ['id' => 'samples', 'label' => 'Sample Records', 'icon' => 'bi-search', 'url' => 'index.php?page=samples'],
+    
     ['id' => 'reports', 'label' => 'Reports & Analytics', 'icon' => 'bi-graph-up', 'submenu' => [
         ['id' => 'report-daily', 'label' => 'Daily Summary', 'url' => 'index.php?page=report-daily'],
         ['id' => 'report-client', 'label' => 'Client Reports', 'url' => 'index.php?page=report-client'],
         ['id' => 'report-revenue', 'label' => 'Revenue Analysis', 'url' => 'index.php?page=report-revenue'],
         ['id' => 'report-turnaround', 'label' => 'Turnaround Time', 'url' => 'index.php?page=report-turnaround']
     ]],
+    
     ['id' => 'settings', 'label' => 'Settings', 'icon' => 'bi-gear', 'submenu' => [
         ['id' => 'settings-general', 'label' => 'General Settings', 'url' => 'index.php?page=settings-general'],
         ['id' => 'settings-lab', 'label' => 'Lab Configuration', 'url' => 'index.php?page=settings-lab'],
         ['id' => 'settings-users', 'label' => 'User Roles & Permissions', 'url' => 'index.php?page=settings-users'],
         ['id' => 'settings-backup', 'label' => 'Backup & Restore', 'url' => 'index.php?page=settings-backup'],
-        ['id' => 'settings-notifications', 'label' => 'Notifications', 'url' => 'index.php?page=settings-notifications']
+        ['id' => 'settings-notifications', 'label' => 'Notifications', 'url' => 'index.php?page=settings-notifications'],
+        ['id' => 'manage-cities', 'label' => 'Manage Cities', 'url' => 'index.php?page=manage-cities'],
+        ['id' => 'manage-extra-items', 'label' => 'Manage Extra Items', 'url' => 'index.php?page=manage-extra-items']
     ]]
 ];
 
@@ -47,10 +60,31 @@ function isActive($menuId, $currentPage)
     return $currentPage === $menuId;
 }
 
-function hasActiveSubmenu($submenu, $currentPage)
+function hasActiveSubmenu($submenu, $currentPage, $userRole)
 {
     foreach ($submenu as $item) {
-        if ($item['id'] === $currentPage) {
+        if (RolePermissions::hasPermission($userRole, $item['id']) && $item['id'] === $currentPage) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Check if user has access to menu item
+ */
+function hasAccess($item, $userRole)
+{
+    return RolePermissions::hasPermission($userRole, $item['id']);
+}
+
+/**
+ * Check if submenu has any visible items
+ */
+function hasVisibleSubmenu($submenu, $userRole)
+{
+    foreach ($submenu as $item) {
+        if (RolePermissions::hasPermission($userRole, $item['id'])) {
             return true;
         }
     }
@@ -69,17 +103,28 @@ function hasActiveSubmenu($submenu, $currentPage)
                 <?php echo $user['initials']; ?>
             </div>
             <div class="flex-grow-1 overflow-hidden">
-                <p class="mb-0 small fw-medium text-truncate"><?php echo $user['name']; ?></p>
-                <p class="mb-0 text-white-50" style="font-size: 0.75rem;"><?php echo $user['role']; ?></p>
+                <p class="mb-0 small fw-medium text-truncate"><?php echo htmlspecialchars($user['name']); ?></p>
+                <p class="mb-0 text-white-50" style="font-size: 0.75rem;"><?php echo htmlspecialchars($user['role']); ?></p>
             </div>
         </div>
     </div>
 
     <nav class="sidebar-nav flex-grow-1 overflow-auto py-3 px-2">
         <?php foreach ($menuItems as $item):
+            // Check if user has access to this menu item
+            if (!hasAccess($item, $userRole)) {
+                continue;
+            }
+            
             $isItemActive = isActive($item['id'], $currentPage);
             $hasSubmenu = isset($item['submenu']);
-            $submenuActive = $hasSubmenu ? hasActiveSubmenu($item['submenu'], $currentPage) : false;
+            
+            // For submenus, check if there are any visible items
+            if ($hasSubmenu && !hasVisibleSubmenu($item['submenu'], $userRole)) {
+                continue;
+            }
+            
+            $submenuActive = $hasSubmenu ? hasActiveSubmenu($item['submenu'], $currentPage, $userRole) : false;
         ?>
             <div class="nav-item mb-1">
                 <?php if ($hasSubmenu): ?>
@@ -98,7 +143,12 @@ function hasActiveSubmenu($submenu, $currentPage)
 
                     <div class="collapse <?php echo $submenuActive ? 'show' : ''; ?>" id="submenu-<?php echo $item['id']; ?>">
                         <div class="submenu ps-4 mt-1">
-                            <?php foreach ($item['submenu'] as $subItem): ?>
+                            <?php foreach ($item['submenu'] as $subItem): 
+                                // Check access for submenu items
+                                if (!RolePermissions::hasPermission($userRole, $subItem['id'])) {
+                                    continue;
+                                }
+                            ?>
                                 <a href="<?php echo $subItem['url']; ?>"
                                     class="nav-link submenu-link <?php echo isActive($subItem['id'], $currentPage) ? 'active' : ''; ?>"
                                     <?php if (isActive($subItem['id'], $currentPage)) echo 'aria-current="page"'; ?>>

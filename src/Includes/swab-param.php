@@ -1,5 +1,5 @@
 <div class="page-swab-parameters">
-  <div class="swab-parameters-container container">
+  <div class="swab-parameters-container container-fluide">
     <!-- Info Banner -->
     <div class="alert alert-info mb-3">
       <i class="fas fa-info-circle"></i> This page manages swab pricing for swab-enabled parameters. 
