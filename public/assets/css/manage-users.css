@@ -217,6 +217,10 @@ body {
   cursor: pointer;
 }
 
+
+.toggle-password{
+  border: 1px solid rgb(243, 243, 243);
+}
 /* ===== Buttons ===== */
 .manage-users-btn-success {
   background-color: var(--success-green);
