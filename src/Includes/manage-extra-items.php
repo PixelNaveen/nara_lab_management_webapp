@@ -7,7 +7,7 @@
 <div class="items-container">
     
     <!-- Statistics Cards -->
-    <div class="row mb-4">
+    <!-- <div class="row mb-4">
         <div class="col-md-4">
             <div class="stat-card">
                 <div class="stat-icon bg-primary">
@@ -43,7 +43,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Filter Card -->
     <div class="items-card-filter">
