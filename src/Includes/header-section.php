@@ -30,7 +30,9 @@ $pageTitles = [
     'settings-lab' => 'Lab Configuration',
     'settings-users' => 'User Roles & Permissions',
     'settings-backup' => 'Backup & Restore',
-    'settings-notifications' => 'Notifications'
+    'settings-notifications' => 'Notifications',
+    'manage-cities' => 'Manage Cities',
+    'manage-extra-items' => 'Manage Extra Items'
 ];
 
 $currentPage = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
