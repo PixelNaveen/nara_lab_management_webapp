@@ -136,6 +136,7 @@ body {
   background: var(--primary-blue-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(30, 58, 138, 0.3);
+  color: white;
 }
 
 /* Table */
