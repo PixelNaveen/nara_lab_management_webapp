@@ -65,8 +65,8 @@ body {
 
 /* Filter Buttons */
 .btn-outline-secondary {
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
+  /* border-color: var(--primary-blue); */
+  /* color: var(--primary-blue); */
   min-width: 90px;
   height: 38px;
   font-weight: 500;
@@ -74,7 +74,7 @@ body {
 }
 
 .btn-outline-secondary:hover {
-  background: var(--primary-blue);
+  /* background: var(--primary-blue); */
   color: #fff;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);

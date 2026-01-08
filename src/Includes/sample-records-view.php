@@ -52,9 +52,7 @@
                 <div id="customDateRange" style="display: none; margin-left: 10px;" class="d-flex gap-2">
                     <input type="date" class="form-control" id="dateFrom" style="max-width: 160px;">
                     <input type="date" class="form-control" id="dateTo" style="max-width: 160px;">
-                    <button id="btnResetFilters" class="btn-sample-records btn-outline-secondary" title="Reset Filters">
-                        <i class="fas fa-redo"></i>
-                    </button>
+                   <!-- <button class="btn btn-outline-secondary" id="btnReset">Reset</button> -->
                 </div>
 
             </div>

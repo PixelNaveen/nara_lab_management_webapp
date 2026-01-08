@@ -7,6 +7,7 @@
       <option>All Standard Bodies</option>
       <option>ISO</option>
       <option>SLS</option>
+      <option>APHA</option>
     </select>
 
     <select class="form-select" id="statusFilter" style="max-width: 120px;">
