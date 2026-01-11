@@ -132,6 +132,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeDateRestrictions();
   initializeEventListeners();
   initializeRealTimeValidation();
+  initializeCityAutocomplete(); // ← CITY AUTOCOMPLETE
   showStep(1);
 });
 
@@ -445,10 +446,14 @@ function selectClientFromSearch() {
   document.getElementById("addressLine1").value = this.dataset.address;
   document.getElementById("city").value = this.dataset.city;
 
+  // ← FIX: Load city_id when city is populated
+  loadCityIdForClient(this.dataset.city);
+
   // Store original values for change detection
   document.getElementById("originalClientName").value = this.dataset.name;
   document.getElementById("originalPhone").value = this.dataset.phone;
   document.getElementById("originalContactPerson").value = this.dataset.contact;
+  document.getElementById("originalCity").value = this.dataset.city; // ← FIX: Store original city
 
   // Update search box and hide results
   document.getElementById("clientSearch").value = this.dataset.name;
@@ -540,18 +545,21 @@ async function updateClientIfModified() {
     .getElementById("phonePrimary")
     .value.replace(/[\s-]/g, "");
   const currentContact = document.getElementById("contactPerson").value.trim();
+  const currentCity = document.getElementById("city").value.trim(); // ← FIX: Get current city
 
   const originalName = document.getElementById("originalClientName").value;
   const originalPhone = document.getElementById("originalPhone").value;
   const originalContact = document.getElementById(
     "originalContactPerson"
   ).value;
+  const originalCity = document.getElementById("originalCity").value; // ← FIX: Get original city
 
-  // Check if modified
+  // Check if modified (INCLUDING CITY)
   const isModified =
     currentName !== originalName ||
     currentPhone !== originalPhone ||
-    currentContact !== originalContact;
+    currentContact !== originalContact ||
+    currentCity !== originalCity; // ← FIX: Include city in change detection
 
   if (!isModified) {
     return true; // No changes
@@ -583,6 +591,7 @@ async function updateClientIfModified() {
       document.getElementById("originalClientName").value = currentName;
       document.getElementById("originalPhone").value = currentPhone;
       document.getElementById("originalContactPerson").value = currentContact;
+      document.getElementById("originalCity").value = currentCity; // ← FIX: Update original city
 
       showToast("Client information updated", "success");
       return true;
@@ -1579,5 +1588,257 @@ function openSAFPreview(sampleId, acRef, formNumber) {
         // Fallback: Show link to open SAF manually
         const message = `✅ Sample submitted!\n📄 Click here to view SAF:\n${window.location.origin}/${safUrl}`;
         showToast(message, 'success');
+    }
+}
+
+// ==========================================
+// CITY AUTOCOMPLETE FUNCTIONS
+// ==========================================
+
+/**
+ * Initialize city autocomplete functionality
+ */
+function initializeCityAutocomplete() {
+    const cityInput = document.getElementById('city');
+    const cityAutocomplete = document.getElementById('cityAutocomplete');
+    
+    if (!cityInput || !cityAutocomplete) {
+        console.warn('City autocomplete elements not found');
+        return;
+    }
+
+    cityInput.addEventListener('input', debounce(handleCitySearch, 400));
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#city') && !e.target.closest('#cityAutocomplete')) {
+            closeCityAutocomplete();
+        }
+    });
+
+    cityInput.addEventListener('keydown', handleCityKeyboardNavigation);
+    
+    console.log('✓ City autocomplete initialized');
+}
+
+/**
+ * Handle city search input
+ */
+async function handleCitySearch() {
+    const cityInput = document.getElementById('city');
+    const cityAutocomplete = document.getElementById('cityAutocomplete');
+    const query = cityInput.value.trim();
+
+    if (query.length < 2) {
+        closeCityAutocomplete();
+        return;
+    }
+
+    cityAutocomplete.innerHTML = '<div class="city-autocomplete-loading">Searching...</div>';
+    cityAutocomplete.classList.add('show');
+
+    try {
+        const response = await fetch(
+            `${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`
+        );
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.cities && data.cities.length > 0) {
+            displayCityResults(data.cities);
+        } else {
+            cityAutocomplete.innerHTML = `
+                <div class="city-autocomplete-empty">
+                    No cities found matching "${escapeHtml(query)}"
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('City search error:', error);
+        cityAutocomplete.innerHTML = `
+            <div class="city-autocomplete-empty text-danger">
+                Error searching cities
+            </div>
+        `;
+    }
+}
+
+/**
+ * Display city search results in dropdown
+ */
+function displayCityResults(cities) {
+    const cityAutocomplete = document.getElementById('cityAutocomplete');
+    
+    const html = cities.map((city, index) => `
+        <div class="city-autocomplete-item" 
+             data-city-id="${city.city_id}" 
+             data-city-name="${escapeHtml(city.city_name)}"
+             data-index="${index}">
+            ${escapeHtml(city.city_name)}
+        </div>
+    `).join('');
+
+    cityAutocomplete.innerHTML = html;
+    cityAutocomplete.classList.add('show');
+
+    cityAutocomplete.querySelectorAll('.city-autocomplete-item').forEach(item => {
+        item.addEventListener('click', selectCityFromAutocomplete);
+    });
+}
+
+/**
+ * Handle city selection from autocomplete
+ */
+async function selectCityFromAutocomplete() {
+    const cityId = this.getAttribute('data-city-id');
+    const cityName = this.getAttribute('data-city-name');
+    
+    const cityInput = document.getElementById('city');
+    const selectedCityId = document.getElementById('selectedCityId');
+
+    cityInput.value = cityName;
+    
+    if (selectedCityId) {
+        selectedCityId.value = cityId;
+    }
+
+    closeCityAutocomplete();
+
+    try {
+        await trackCityUsage(cityId);
+    } catch (error) {
+        console.warn('Failed to track city usage:', error);
+    }
+
+    if (cityInput.classList.contains('is-invalid')) {
+        cityInput.classList.remove('is-invalid');
+        cityInput.classList.add('is-valid');
+    }
+
+    console.log(`✓ City selected: ${cityName} (ID: ${cityId})`);
+}
+
+/**
+ * Track city usage for analytics
+ */
+async function trackCityUsage(cityId) {
+    const formData = new FormData();
+    formData.append('action', 'trackCityUsage');
+    formData.append('city_id', cityId);
+
+    try {
+        await fetch(API_BASE, {
+            method: 'POST',
+            body: formData
+        });
+    } catch (error) {
+        console.debug('City usage tracking failed:', error);
+    }
+}
+
+/**
+ * Close city autocomplete dropdown
+ */
+function closeCityAutocomplete() {
+    const cityAutocomplete = document.getElementById('cityAutocomplete');
+    if (cityAutocomplete) {
+        cityAutocomplete.classList.remove('show');
+        cityAutocomplete.innerHTML = '';
+    }
+}
+
+/**
+ * Handle keyboard navigation in city autocomplete
+ */
+function handleCityKeyboardNavigation(e) {
+    const cityAutocomplete = document.getElementById('cityAutocomplete');
+    
+    if (!cityAutocomplete.classList.contains('show')) {
+        return;
+    }
+
+    const items = cityAutocomplete.querySelectorAll('.city-autocomplete-item');
+    
+    if (items.length === 0) {
+        return;
+    }
+
+    let currentIndex = -1;
+    const activeItem = cityAutocomplete.querySelector('.city-autocomplete-item.active');
+    
+    if (activeItem) {
+        currentIndex = parseInt(activeItem.getAttribute('data-index'));
+    }
+
+    switch(e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            currentIndex = (currentIndex + 1) % items.length;
+            highlightCityItem(items, currentIndex);
+            break;
+            
+        case 'ArrowUp':
+            e.preventDefault();
+            currentIndex = (currentIndex - 1 + items.length) % items.length;
+            highlightCityItem(items, currentIndex);
+            break;
+            
+        case 'Enter':
+            e.preventDefault();
+            if (currentIndex >= 0) {
+                items[currentIndex].click();
+            }
+            break;
+            
+        case 'Escape':
+            e.preventDefault();
+            closeCityAutocomplete();
+            break;
+    }
+}
+
+/**
+ * Highlight a specific city item in the dropdown
+ */
+function highlightCityItem(items, index) {
+    items.forEach(item => item.classList.remove('active'));
+    items[index].classList.add('active');
+    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+/**
+ * Load city ID when selecting existing client
+ * CRITICAL FIX: This ensures city_id is populated when loading client data
+ */
+async function loadCityIdForClient(cityName) {
+    if (!cityName || cityName.trim() === '') {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(cityName)}`
+        );
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.city_id) {
+            const selectedCityId = document.getElementById('selectedCityId');
+            if (selectedCityId) {
+                selectedCityId.value = data.city_id;
+                console.log(`✓ City ID loaded: ${data.city_name} (ID: ${data.city_id})`);
+            }
+        } else {
+            console.log(`City not found in database: ${cityName}`);
+        }
+    } catch (error) {
+        console.warn('Error loading city ID:', error);
     }
 }

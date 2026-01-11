@@ -58,6 +58,18 @@ try {
             handleSearchSampleNames($sampleModel);
             break;
 
+        case 'searchCities':
+            handleSearchCities($sampleModel);
+            break;
+
+        case 'findCityByName':
+            handleFindCityByName($sampleModel);
+            break;
+
+        case 'trackCityUsage':
+            handleTrackCityUsage($sampleModel);
+            break;
+
         case 'validatePaymentReference':
             handleValidatePaymentReference();
             break;
@@ -510,3 +522,74 @@ function handleSaveSample($model)
         ]);
     }
 }
+
+/**
+ * ==========================================
+ * CITY AUTOCOMPLETE HANDLERS
+ * ==========================================
+ */
+
+function handleSearchCities($model)
+{
+    $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
+
+    if (strlen($query) < 2) {
+        sendJsonResponse([
+            'success' => true,
+            'cities' => [],
+            'count' => 0,
+            'message' => 'Query too short - need at least 2 characters'
+        ]);
+    }
+
+    $result = $model->searchCities($query);
+    sendJsonResponse($result);
+}
+
+function handleFindCityByName($model)
+{
+    $cityName = trim($_GET['city_name'] ?? $_POST['city_name'] ?? '');
+
+    if (empty($cityName)) {
+        sendJsonResponse([
+            'success' => false,
+            'message' => 'City name is required'
+        ]);
+    }
+
+    $result = $model->findCityByName($cityName);
+    
+    if ($result === null) {
+        sendJsonResponse([
+            'success' => false,
+            'message' => 'Error finding city'
+        ]);
+    }
+
+    sendJsonResponse($result);
+}
+
+function handleTrackCityUsage($model)
+{
+    $cityId = intval($_POST['city_id'] ?? 0);
+
+    if ($cityId <= 0) {
+        sendJsonResponse([
+            'success' => false,
+            'message' => 'Invalid city ID'
+        ]);
+    }
+
+    $success = $model->incrementCityUsage($cityId);
+    
+    sendJsonResponse([
+        'success' => $success,
+        'message' => $success ? 'Usage tracked' : 'Failed to track usage'
+    ]);
+}
+
+/**
+ * ==========================================
+ * END CITY AUTOCOMPLETE HANDLERS
+ * ==========================================
+ */

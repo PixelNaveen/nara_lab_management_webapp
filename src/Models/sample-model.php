@@ -353,7 +353,127 @@ class SampleModel
     /**
      * Save complete sample submission
      */
-    public function saveSample($data)
+
+    // ==========================================
+    // CITY AUTOCOMPLETE METHODS
+    // ==========================================
+    
+    public function searchCities($query)
+    {
+        try {
+            $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
+
+            $sql = "SELECT city_id, city_name 
+                    FROM cities 
+                    WHERE is_active = 1 
+                      AND is_deleted = 0
+                      AND LOWER(city_name) LIKE LOWER(?) 
+                    ORDER BY usage_count DESC, city_name ASC 
+                    LIMIT 20";
+
+            $stmt = $this->conn->prepare($sql);
+            if ($stmt === false) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("s", $searchTerm);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $cities = [];
+            while ($row = $result->fetch_assoc()) {
+                $cities[] = [
+                    'city_id' => (int)$row['city_id'],
+                    'city_name' => $row['city_name']
+                ];
+            }
+
+            return [
+                'success' => true,
+                'cities' => $cities,
+                'count' => count($cities)
+            ];
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::searchCities');
+            return [
+                'success' => false,
+                'message' => 'Database error: ' . $e->getMessage(),
+                'cities' => [],
+                'count' => 0
+            ];
+        }
+    }
+
+    public function findCityByName($cityName)
+    {
+        try {
+            if (empty($cityName)) {
+                return null;
+            }
+
+            $sql = "SELECT city_id, city_name 
+                    FROM cities 
+                    WHERE LOWER(city_name) = LOWER(?) 
+                      AND is_active = 1 
+                      AND is_deleted = 0 
+                    LIMIT 1";
+
+            $stmt = $this->conn->prepare($sql);
+            if ($stmt === false) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("s", $cityName);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($row = $result->fetch_assoc()) {
+                return [
+                    'success' => true,
+                    'city_id' => (int)$row['city_id'],
+                    'city_name' => $row['city_name']
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'City not found',
+                'city_id' => null,
+                'city_name' => $cityName
+            ];
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::findCityByName');
+            return null;
+        }
+    }
+
+    public function incrementCityUsage($cityId)
+    {
+        try {
+            $sql = "UPDATE cities 
+                    SET usage_count = usage_count + 1 
+                    WHERE city_id = ? 
+                      AND is_active = 1 
+                      AND is_deleted = 0";
+
+            $stmt = $this->conn->prepare($sql);
+            if ($stmt === false) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("i", $cityId);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::incrementCityUsage');
+            return false;
+        }
+    }
+
+    // ==========================================
+    // END CITY METHODS
+    // ==========================================
+
+        public function saveSample($data)
     {
         $this->conn->begin_transaction();
 

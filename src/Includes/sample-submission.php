@@ -67,6 +67,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                     <input type="hidden" id="originalClientName" value="">
                     <input type="hidden" id="originalPhone" value="">
                     <input type="hidden" id="originalContactPerson" value="">
+                    <input type="hidden" id="originalCity" value="">
 
                     <!-- STEP 1: CLIENT INFORMATION -->
                     <div class="step active" data-step="1">
@@ -114,7 +115,15 @@ $userId = $_SESSION['user_id'] ?? 0;
 
                             <div class="col-md-6">
                                 <label class="form-label">City</label>
-                                <input type="text" class="form-control" id="city">
+                                <div class="position-relative">
+                                    <input type="text"
+                                        class="form-control"
+                                        id="city"
+                                        placeholder="Type to search cities..."
+                                        autocomplete="off">
+                                    <input type="hidden" id="selectedCityId" value="">
+                                    <div class="city-autocomplete" id="cityAutocomplete"></div>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
