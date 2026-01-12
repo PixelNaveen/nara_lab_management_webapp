@@ -242,19 +242,67 @@ function calculateGrandTotal($testCharges, $additionalCharges = 0.00)
     return (float)$testCharges + (float)$additionalCharges;
 }
 
+
 /**
- * Detect combos from selected tests
- * Returns array of detected combos with their full pricing
+ * Helper Functions - ENHANCED WITH DYNAMIC SWAB PRICING
+ * Version: 7.0 - PRODUCTION READY - COMBO BUG FIXED + DYNAMIC SWAB PRICING
+ * 
+ * CRITICAL FIXES:
+ * - Implements greedy algorithm for combo detection
+ * - Prevents overlapping combo application
+ * - Ensures largest matching combo is always selected
+ * - DYNAMIC swab pricing per parameter (not hard-coded)
+ * - Future-proof for new combos and variable swab prices
+ */
+
+// ... (keep all previous functions unchanged until detectCombos)
+
+/**
+ * ============================================================================
+ * ENHANCED: Detect combos using GREEDY ALGORITHM with DYNAMIC SWAB PRICING
+ * ============================================================================
+ * 
+ * This function implements a greedy algorithm to detect the best (largest)
+ * matching combos from user's selected tests, preventing overlap.
+ * 
+ * NEW FEATURE: Dynamic swab pricing per parameter
+ * - Each parameter can have its own swab price in the database
+ * - Combo swab surcharge = SUM of individual parameter swab prices
+ * - No hard-coded values - fully database-driven
+ * 
+ * Algorithm:
+ * 1. Fetch all combos sorted by parameter count (largest first)
+ * 2. For each combo, check if ALL its parameters are in user selection
+ * 3. Check if ANY of those parameters are already used in a previous combo
+ * 4. If swab submission, calculate TOTAL swab surcharge from database
+ * 5. If valid, add the combo and mark parameters as used
+ * 6. Continue until all combos are processed
+ * 
+ * This ensures:
+ * - Largest matching combo is always selected first
+ * - No overlapping combos (e.g., 2-param won't apply if 3-param already did)
+ * - Accurate swab pricing per parameter
+ * - Future-proof: works automatically with new combos and price changes
+ * 
+ * @param array $tests Array of selected tests with parameter_id
+ * @param mysqli $conn Database connection
+ * @param string $submissionType 'regular' or 'swab'
+ * @return array Array of detected combos with pricing info
  */
 function detectCombos($tests, $conn, $submissionType = 'regular')
 {
     try {
+        // Extract and sort parameter IDs from selected tests
         $parameterIds = array_unique(array_column($tests, 'parameter_id'));
-
+        sort($parameterIds); // Sort for consistent comparison
+        
+        // Need at least 2 parameters for a combo
         if (count($parameterIds) < 2) {
             return [];
         }
 
+        // Fetch all active combos, sorted by parameter count DESCENDING
+        // This ensures we process larger combos first (greedy algorithm)
         $sql = "SELECT 
                     pc.combo_id,
                     pc.combo_name,
@@ -269,7 +317,7 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
                   AND cp.is_active = 1
                   AND cp.is_deleted = 0
                 GROUP BY pc.combo_id
-                ORDER BY param_count DESC";
+                ORDER BY param_count DESC, pc.combo_id ASC";
 
         $result = $conn->query($sql);
         if (!$result) {
@@ -278,38 +326,65 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
         }
 
         $detectedCombos = [];
-        $usedParameters = [];  // CRITICAL FIX: Track used parameters
+        $usedParameters = []; // Track which parameters are already in a combo
 
+        // Process each combo (largest first due to ORDER BY)
         while ($combo = $result->fetch_assoc()) {
-            $comboParams = explode(',', $combo['param_ids']);
-
-            // CRITICAL FIX: Check if ALL params match AND none are already used
-            $matchesAll = true;
-            $alreadyUsed = false;
-
+            // Get combo's parameter IDs as sorted array
+            $comboParams = array_map('intval', explode(',', $combo['param_ids']));
+            sort($comboParams); // Ensure sorted for consistent comparison
+            
+            // ============================================================
+            // CRITICAL CHECK 1: Do ALL combo parameters exist in selection?
+            // ============================================================
+            $allParamsPresent = true;
             foreach ($comboParams as $comboParam) {
                 if (!in_array($comboParam, $parameterIds)) {
-                    $matchesAll = false;
-                    break;
-                }
-                if (in_array($comboParam, $usedParameters)) {
-                    $alreadyUsed = true;
+                    $allParamsPresent = false;
                     break;
                 }
             }
-
-            // Skip if not all match OR if any parameter already used
-            if (!$matchesAll || $alreadyUsed) {
+            
+            // If not all parameters are selected, skip this combo
+            if (!$allParamsPresent) {
                 continue;
             }
-
+            
+            // ============================================================
+            // CRITICAL CHECK 2: Are ANY parameters already used?
+            // ============================================================
+            // This prevents overlapping combos (e.g., if 3-param combo [1,2,3]
+            // is already detected, we won't also detect 2-param combo [1,2])
+            $hasConflict = false;
+            foreach ($comboParams as $comboParam) {
+                if (in_array($comboParam, $usedParameters)) {
+                    $hasConflict = true;
+                    break;
+                }
+            }
+            
+            // If any parameter is already used, skip this combo
+            if ($hasConflict) {
+                continue;
+            }
+            
+            // ============================================================
+            // ENHANCED: DYNAMIC SWAB VALIDATION AND PRICING
+            // ============================================================
             if ($submissionType === 'swab') {
+                // Verify ALL combo parameters are swab-enabled AND get their swab prices
                 $placeholders = implode(',', array_fill(0, count($comboParams), '?'));
-                $swabCheckSql = "SELECT COUNT(*) as count 
-                                 FROM test_parameters 
-                                 WHERE parameter_id IN ($placeholders) 
-                                 AND swab_enabled = 1";
-
+                
+                // ENHANCED QUERY: Get both count AND sum of swab prices
+                $swabCheckSql = "SELECT 
+                                    COUNT(*) as swab_enabled_count,
+                                    SUM(COALESCE(sp.swab_price, 0)) as total_swab_price
+                                 FROM test_parameters tp
+                                 LEFT JOIN swab_param sp ON tp.parameter_id = sp.param_id
+                                    AND sp.is_active = 1 AND sp.is_deleted = 0
+                                 WHERE tp.parameter_id IN ($placeholders) 
+                                    AND tp.swab_enabled = 1";
+                
                 $swabStmt = $conn->prepare($swabCheckSql);
                 if ($swabStmt) {
                     $types = str_repeat('i', count($comboParams));
@@ -317,17 +392,32 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
                     $swabStmt->execute();
                     $swabResult = $swabStmt->get_result();
                     $swabRow = $swabResult->fetch_assoc();
-
-                    if ($swabRow['count'] != count($comboParams)) {
-                        continue;
+                    
+                    // All parameters must be swab-enabled
+                    if ($swabRow['swab_enabled_count'] != count($comboParams)) {
+                        continue; // Skip this combo - not all params are swab-enabled
                     }
-
-                    $swabSurcharge = 375.00 * count($comboParams);
+                    
+                    // DYNAMIC SWAB SURCHARGE: Sum of individual parameter swab prices
+                    // This replaces the hard-coded "375.00 * count($comboParams)"
+                    $swabSurcharge = (float)$swabRow['total_swab_price'];
+                    
+                    // Add the calculated surcharge to combo price
                     $combo['combo_price'] = (float)$combo['combo_price'] + $swabSurcharge;
+                    
+                    // Optional: Log for debugging/audit
+                    // logDebug(
+                    //     "Combo {$combo['combo_id']}: Base price = {$combo['combo_price']}, " .
+                    //     "Swab surcharge = {$swabSurcharge}, " .
+                    //     "Final price = " . ((float)$combo['combo_price'] + $swabSurcharge),
+                    //     'detectCombos'
+                    // );
                 }
             }
 
-            // Add combo to detected list
+            // ============================================================
+            // ✅ COMBO IS VALID - Add it to detected list
+            // ============================================================
             $detectedCombos[] = [
                 'combo_id' => (int)$combo['combo_id'],
                 'combo_name' => $combo['combo_name'],
@@ -336,13 +426,15 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
                 'param_count' => (int)$combo['param_count']
             ];
 
-            // CRITICAL FIX: Mark these parameters as used
+            // Mark all these parameters as USED
+            // This prevents smaller combos with overlapping parameters from being detected
             foreach ($comboParams as $paramId) {
                 $usedParameters[] = $paramId;
             }
         }
 
         return $detectedCombos;
+        
     } catch (Exception $e) {
         logError($e->getMessage(), 'detectCombos');
         return [];
@@ -351,15 +443,89 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
 
 /**
  * ============================================================================
- * COMBO PRICING FIX - Calculate charges with FULL combo price
+ * NEW HELPER: Get swab price breakdown for transparency
  * ============================================================================
  * 
- * This calculates:
- * 1. Individual total (sum of all individual prices)
- * 2. Combo total (full combo price, not divided)
- * 3. Discount amount (individual - combo)
+ * This function returns detailed swab pricing for a combo, showing the
+ * individual swab price for each parameter.
  * 
- * For UI display: Individual → Discount → Combo Price
+ * Useful for:
+ * - Displaying itemized pricing to users
+ * - Audit trails
+ * - Price verification
+ * - Debugging
+ * 
+ * @param array $parameterIds Array of parameter IDs in the combo
+ * @param mysqli $conn Database connection
+ * @return array Array with total and per-parameter breakdown
+ */
+function getSwabPriceBreakdown($parameterIds, $conn)
+{
+    try {
+        if (empty($parameterIds)) {
+            return [
+                'success' => false,
+                'total' => 0.00,
+                'breakdown' => []
+            ];
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($parameterIds), '?'));
+        $sql = "SELECT 
+                    tp.parameter_id,
+                    tp.parameter_name,
+                    COALESCE(sp.swab_price, 0) as swab_price
+                FROM test_parameters tp
+                LEFT JOIN swab_param sp ON tp.parameter_id = sp.param_id
+                    AND sp.is_active = 1 AND sp.is_deleted = 0
+                WHERE tp.parameter_id IN ($placeholders)
+                ORDER BY tp.parameter_id";
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+        
+        $types = str_repeat('i', count($parameterIds));
+        $stmt->bind_param($types, ...$parameterIds);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $breakdown = [];
+        $total = 0.00;
+        
+        while ($row = $result->fetch_assoc()) {
+            $swabPrice = (float)$row['swab_price'];
+            $breakdown[] = [
+                'parameter_id' => (int)$row['parameter_id'],
+                'parameter_name' => $row['parameter_name'],
+                'swab_price' => $swabPrice
+            ];
+            $total += $swabPrice;
+        }
+        
+        return [
+            'success' => true,
+            'total' => round($total, 2),
+            'breakdown' => $breakdown,
+            'parameter_count' => count($breakdown)
+        ];
+        
+    } catch (Exception $e) {
+        logError($e->getMessage(), 'getSwabPriceBreakdown');
+        return [
+            'success' => false,
+            'total' => 0.00,
+            'breakdown' => [],
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
+/**
+ * ============================================================================
+ * ENHANCED: Calculate test charges with combos and dynamic swab pricing
+ * ============================================================================
  */
 function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 'regular')
 {
@@ -383,7 +549,7 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
         // Process each sample
         foreach ($testsBySample as $sampleIndex => $sampleTests) {
 
-            // Detect combos for this sample
+            // Detect combos for this sample using ENHANCED greedy algorithm with dynamic swab pricing
             $detectedCombos = detectCombos($sampleTests, $conn, $submissionType);
 
             // Mark which tests are in combos
@@ -394,6 +560,12 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
                     $combosByParameterId[$paramId] = $combo;
                 }
 
+                // Get swab price breakdown for transparency (optional)
+                $swabBreakdown = null;
+                if ($submissionType === 'swab') {
+                    $swabBreakdown = getSwabPriceBreakdown($combo['parameter_ids'], $conn);
+                }
+
                 // Add to overall list
                 $allCombosDetected[] = [
                     'sample' => $sampleIndex,
@@ -401,7 +573,8 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
                     'combo_name' => $combo['combo_name'],
                     'combo_price' => $combo['combo_price'],
                     'param_count' => $combo['param_count'],
-                    'parameter_ids' => $combo['parameter_ids']
+                    'parameter_ids' => $combo['parameter_ids'],
+                    'swab_breakdown' => $swabBreakdown // Include swab details if applicable
                 ];
             }
 
@@ -409,7 +582,6 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
             $sampleIndividualTotal = 0.00;
             $sampleComboTotal = 0.00;
 
-            // CRITICAL FIX: Handle BOTH combo and individual tests correctly
             if (!empty($detectedCombos)) {
                 // Step 1: Add combo prices
                 foreach ($detectedCombos as $combo) {
@@ -459,8 +631,8 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
         return [
             'success' => true,
             'tests_with_charges' => $allTestsWithCharges,
-            'total' => round($finalTotal, 2),                          // Final price (with combos)
-            'individual_total' => round($individualGrandTotal, 2),     // Original price
+            'total' => round($finalTotal, 2),
+            'individual_total' => round($individualGrandTotal, 2),
             'combos_detected' => $allCombosDetected,
             'combos_count' => count($allCombosDetected),
             'savings' => round($totalSavings, 2),
@@ -476,6 +648,30 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
         ];
     }
 }
+
+/**
+ * ============================================================================
+ * NEW: Debug logging function (optional but recommended)
+ * ============================================================================
+ */
+// function logDebug($message, $context = '')
+// {
+//     // Only log in development environment
+//     if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
+//         $logDir = __DIR__ . '/../../logs';
+//         if (!file_exists($logDir)) {
+//             mkdir($logDir, 0755, true);
+//         }
+
+//         $timestamp = date('Y-m-d H:i:s');
+//         $contextStr = $context ? "[$context] " : '';
+//         $log = "[DEBUG {$timestamp}] {$contextStr}{$message}" . PHP_EOL;
+
+//         file_put_contents($logDir . '/debug.log', $log, FILE_APPEND);
+//     }
+// }
+
+// ... (keep all other functions unchanged)
 
 /**
  * Get parameter price from database

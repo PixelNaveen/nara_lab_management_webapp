@@ -1061,6 +1061,11 @@ async function loadCombos() {
  * Detect which combos match currently selected tests
  * Returns array of detected combos sorted by size (largest first)
  */
+/**
+ * CRITICAL FIX: Detect combos with GREEDY ALGORITHM - prevents overlaps
+ * This function now correctly implements greedy algorithm to ensure only
+ * the largest matching combos are detected per sample, preventing overlapping combos.
+ */
 function detectCombosInSelection() {
   const selectedTests = Array.from(
     document.querySelectorAll(".test-checkbox:checked")
@@ -1070,24 +1075,58 @@ function detectCombosInSelection() {
     return [];
   }
 
-  // Get selected parameter IDs
-  const selectedParams = selectedTests.map((cb) => parseInt(cb.dataset.param));
+  // Get selected parameter IDs and sort them
+  const selectedParams = selectedTests
+    .map((cb) => parseInt(cb.dataset.param))
+    .sort((a, b) => a - b);
 
-  // Check which combos match
-  const detected = [];
+  // Sort available combos by parameter count (DESC) - largest first
+  // This is CRITICAL for the greedy algorithm to work correctly
+  const sortedCombos = [...availableCombos].sort(
+    (a, b) => b.parameter_ids.length - a.parameter_ids.length
+  );
 
-  for (const combo of availableCombos) {
-    const comboParams = combo.parameter_ids;
+  const detected = []; // Combos that match
+  const usedParams = new Set(); // Track which parameters are already in a combo
+
+  // GREEDY ALGORITHM: Process combos largest first
+  for (const combo of sortedCombos) {
+    // Convert combo parameter IDs to integers and sort
+    const comboParams = combo.parameter_ids
+      .map((p) => parseInt(p))
+      .sort((a, b) => a - b);
+
+    // ============================================================
+    // CHECK 1: Do ALL combo parameters exist in user selection?
+    // ============================================================
     const allMatch = comboParams.every((pid) => selectedParams.includes(pid));
 
-    if (allMatch) {
-      detected.push(combo);
+    if (!allMatch) {
+      continue; // Skip - not all parameters selected
     }
+
+    // ============================================================
+    // CHECK 2: Are ANY parameters already used in another combo?
+    // ============================================================
+    // This prevents overlapping - e.g., if we already detected combo [1,2,3],
+    // we won't also detect combo [1,2]
+    const hasConflict = comboParams.some((pid) => usedParams.has(pid));
+
+    if (hasConflict) {
+      continue; // Skip - parameters already in another combo
+    }
+
+    // ============================================================
+    // ✅ COMBO IS VALID - Add it to detected list
+    // ============================================================
+    detected.push(combo);
+
+    // Mark all these parameters as USED
+    // This prevents smaller combos with overlapping parameters from being detected
+    comboParams.forEach((pid) => usedParams.add(pid));
   }
 
-  // Sort by parameter count DESC (larger combos first)
-  detected.sort((a, b) => b.parameter_ids.length - a.parameter_ids.length);
-
+  // Return detected combos (already sorted by size, largest first)
   return detected;
 }
 
