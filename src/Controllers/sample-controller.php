@@ -74,6 +74,12 @@ try {
             handleValidatePaymentReference();
             break;
 
+
+        case 'validateSampleName':
+            handleValidateSampleName($sampleModel);
+            break;
+
+        
         case 'saveSample':
             handleSaveSample($sampleModel);
             break;
@@ -593,3 +599,38 @@ function handleTrackCityUsage($model)
  * END CITY AUTOCOMPLETE HANDLERS
  * ==========================================
  */
+/**
+ * ============================================================================
+ * NEW HANDLER: Validate Sample Name
+ * ============================================================================
+ * 
+ * This handler checks if a sample name exists (case-insensitive) and provides
+ * suggestions for proper capitalization
+ */
+function handleValidateSampleName($model)
+{
+    $name = trim($_GET['name'] ?? '');
+    
+    if (empty($name)) {
+        sendJsonResponse([
+            'success' => false,
+            'message' => 'Name is required'
+        ]);
+    }
+    
+    // Get canonical name (existing capitalization)
+    $canonical = getSampleNameCanonical($model->conn, $name);
+    
+    // Normalize for suggestion (if new name)
+    $normalized = normalizeSampleName($name);
+    
+    sendJsonResponse([
+        'success' => true,
+        'input' => $name,
+        'normalized' => $normalized,
+        'exists' => $canonical['exists'],
+        'canonical_name' => $canonical['canonical_name'],
+        'usage_count' => $canonical['usage_count'],
+        'suggestion' => $canonical['exists'] ? $canonical['canonical_name'] : $normalized
+    ]);
+}

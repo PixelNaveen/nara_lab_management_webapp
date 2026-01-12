@@ -311,15 +311,30 @@ class SampleModel
         }
     }
 
+
+    /**
+     * Enhanced search sample names with case-insensitive matching and relevance scoring
+     * 
+     * @param string $query Search query
+     * @return array Result with sample names
+     */
     public function searchSampleNames($query)
     {
         try {
             $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
 
-            $sql = "SELECT sample_name, usage_count 
+            // Enhanced query with case-insensitive search and relevance scoring
+            $sql = "SELECT 
+                        sample_name, 
+                        usage_count,
+                        CASE 
+                            WHEN LOWER(sample_name) = LOWER(?) THEN 3
+                            WHEN LOWER(sample_name) LIKE LOWER(CONCAT(?, '%')) THEN 2
+                            ELSE 1
+                        END as relevance
                     FROM sample_names 
-                    WHERE sample_name LIKE ? 
-                    ORDER BY usage_count DESC, sample_name ASC 
+                    WHERE LOWER(sample_name) LIKE LOWER(?)
+                    ORDER BY relevance DESC, usage_count DESC, sample_name ASC 
                     LIMIT 10";
 
             $stmt = $this->conn->prepare($sql);
@@ -327,13 +342,20 @@ class SampleModel
                 throw new Exception("Prepare failed: " . $this->conn->error);
             }
 
-            $stmt->bind_param("s", $searchTerm);
+            // Bind parameters for relevance scoring
+            $exactMatch = $query;
+            $startsWithMatch = $query;
+            
+            $stmt->bind_param("sss", $exactMatch, $startsWithMatch, $searchTerm);
             $stmt->execute();
             $result = $stmt->get_result();
 
             $names = [];
             while ($row = $result->fetch_assoc()) {
-                $names[] = $row;
+                $names[] = [
+                    'sample_name' => $row['sample_name'],
+                    'usage_count' => $row['usage_count']
+                ];
             }
 
             return [
@@ -349,6 +371,7 @@ class SampleModel
             ];
         }
     }
+
 
     /**
      * Save complete sample submission

@@ -1,13 +1,21 @@
 <?php
 
 /**
- * Helper Functions - COMPLETE WITH COMBO FIX
- * Version: 5.0 FINAL - Production Ready
+ * Helper Functions - COMPLETE ENHANCED VERSION
+ * Version: 6.0 FINAL - Production Ready
  * 
- * COMBO PRICING FIX:
- * - Stores full combo price (not divided)
- * - Calculates individual → discount → combo totals
- * - Future-proof for new combos
+ * ENHANCEMENTS:
+ * - Greedy algorithm for combo detection (prevents overlaps)
+ * - Dynamic swab pricing (database-driven per parameter)
+ * - Case-insensitive sample name matching
+ * - Smart capitalization suggestions
+ * - Future-proof for new combos and variable pricing
+ */
+
+/**
+ * ============================================================================
+ * CORE UTILITY FUNCTIONS
+ * ============================================================================
  */
 
 /**
@@ -242,25 +250,219 @@ function calculateGrandTotal($testCharges, $additionalCharges = 0.00)
     return (float)$testCharges + (float)$additionalCharges;
 }
 
+function validatePaymentReference($reference)
+{
+    if (empty($reference)) {
+        return ['valid' => false, 'message' => 'Payment reference is required'];
+    }
+
+    $reference = trim($reference);
+
+    if (strlen($reference) < 3) {
+        return ['valid' => false, 'message' => 'Payment reference must be at least 3 characters'];
+    }
+
+    if (strlen($reference) > 100) {
+        return ['valid' => false, 'message' => 'Payment reference too long (max 100 characters)'];
+    }
+
+    if (!preg_match('/^[a-zA-Z0-9\-\/\s]+$/', $reference)) {
+        return ['valid' => false, 'message' => 'Payment reference contains invalid characters'];
+    }
+
+    return ['valid' => true, 'message' => 'Valid'];
+}
+
+function formatDate($date, $format = 'd/m/Y')
+{
+    try {
+        if (empty($date)) {
+            return 'N/A';
+        }
+        $dateObj = new DateTime($date);
+        return $dateObj->format($format);
+    } catch (Exception $e) {
+        return $date;
+    }
+}
+
+function sendJsonResponse($data)
+{
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function logError($message, $context = '')
+{
+    $logDir = __DIR__ . '/../../logs';
+    if (!file_exists($logDir)) {
+        mkdir($logDir, 0755, true);
+    }
+
+    $timestamp = date('Y-m-d H:i:s');
+    $contextStr = $context ? "[$context] " : '';
+    $log = "[{$timestamp}] {$contextStr}{$message}" . PHP_EOL;
+
+    file_put_contents($logDir . '/error.log', $log, FILE_APPEND);
+}
 
 /**
- * Helper Functions - ENHANCED WITH DYNAMIC SWAB PRICING
- * Version: 7.0 - PRODUCTION READY - COMBO BUG FIXED + DYNAMIC SWAB PRICING
- * 
- * CRITICAL FIXES:
- * - Implements greedy algorithm for combo detection
- * - Prevents overlapping combo application
- * - Ensures largest matching combo is always selected
- * - DYNAMIC swab pricing per parameter (not hard-coded)
- * - Future-proof for new combos and variable swab prices
+ * ============================================================================
+ * ENHANCED SAMPLE NAME FUNCTIONS
+ * Version: 2.0 - Case-Insensitive Auto-Save with Smart Capitalization
+ * ============================================================================
  */
 
-// ... (keep all previous functions unchanged until detectCombos)
+/**
+ * Normalize sample name for consistency
+ * 
+ * Rules:
+ * 1. Trim whitespace
+ * 2. Convert to Title Case
+ * 3. Remove extra spaces
+ * 4. Handle special cases (pH, RNA, DNA, etc.)
+ * 
+ * @param string $name Sample name input
+ * @return string Normalized sample name
+ */
+function normalizeSampleName($name)
+{
+    // Trim and remove extra spaces
+    $name = trim(preg_replace('/\s+/', ' ', $name));
+    
+    if (empty($name)) {
+        return '';
+    }
+    
+    // Convert to Title Case for consistency
+    $name = mb_convert_case($name, MB_CASE_TITLE, 'UTF-8');
+    
+    // Handle special cases (acronyms and scientific terms)
+    $specialCases = [
+        'Ph ' => 'pH ',
+        ' Ph' => ' pH',
+        'Ph$' => 'pH',
+        'Rna' => 'RNA',
+        'Dna' => 'DNA',
+        'Bod' => 'BOD',
+        'Cod' => 'COD',
+        'Ec' => 'EC',
+        'Tds' => 'TDS',
+        'Tss' => 'TSS',
+        'Do' => 'DO',
+        'Pcr' => 'PCR',
+        'Elisa' => 'ELISA',
+        'Hplc' => 'HPLC',
+        'Gcms' => 'GCMS'
+    ];
+    
+    foreach ($specialCases as $from => $to) {
+        $name = preg_replace('/\b' . preg_quote($from, '/') . '\b/i', $to, $name);
+    }
+    
+    return $name;
+}
+
+/**
+ * Check if sample name exists (case-insensitive)
+ * Returns the existing capitalization if found
+ * 
+ * @param mysqli $conn Database connection
+ * @param string $name Sample name to check
+ * @return array ['exists' => bool, 'canonical_name' => string|null, 'usage_count' => int]
+ */
+function getSampleNameCanonical($conn, $name)
+{
+    try {
+        $sql = "SELECT sample_name, usage_count
+                FROM sample_names 
+                WHERE LOWER(sample_name) = LOWER(?)
+                LIMIT 1";
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return [
+                'exists' => false, 
+                'canonical_name' => null,
+                'usage_count' => 0
+            ];
+        }
+        
+        $stmt->bind_param("s", $name);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            return [
+                'exists' => true,
+                'canonical_name' => $row['sample_name'],
+                'usage_count' => (int)$row['usage_count']
+            ];
+        }
+        
+        return [
+            'exists' => false, 
+            'canonical_name' => null,
+            'usage_count' => 0
+        ];
+        
+    } catch (Exception $e) {
+        logError($e->getMessage(), 'getSampleNameCanonical');
+        return [
+            'exists' => false, 
+            'canonical_name' => null,
+            'usage_count' => 0
+        ];
+    }
+}
+
+/**
+ * Get popular sample names for quick selection
+ * 
+ * @param mysqli $conn Database connection
+ * @param int $limit Number of names to return
+ * @return array Sample names sorted by usage
+ */
+function getPopularSampleNames($conn, $limit = 10)
+{
+    try {
+        $sql = "SELECT sample_name, usage_count
+                FROM sample_names 
+                ORDER BY usage_count DESC, sample_name ASC 
+                LIMIT ?";
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $names = [];
+        while ($row = $result->fetch_assoc()) {
+            $names[] = $row;
+        }
+        
+        return $names;
+        
+    } catch (Exception $e) {
+        logError($e->getMessage(), 'getPopularSampleNames');
+        return [];
+    }
+}
 
 /**
  * ============================================================================
- * ENHANCED: Detect combos using GREEDY ALGORITHM with DYNAMIC SWAB PRICING
+ * COMBO DETECTION & PRICING FUNCTIONS
+ * Version: 7.0 - With Greedy Algorithm & Dynamic Swab Pricing
  * ============================================================================
+ */
+
+/**
+ * Detect combos using GREEDY ALGORITHM with DYNAMIC SWAB PRICING
  * 
  * This function implements a greedy algorithm to detect the best (largest)
  * matching combos from user's selected tests, preventing overlap.
@@ -404,14 +606,6 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
                     
                     // Add the calculated surcharge to combo price
                     $combo['combo_price'] = (float)$combo['combo_price'] + $swabSurcharge;
-                    
-                    // Optional: Log for debugging/audit
-                    // logDebug(
-                    //     "Combo {$combo['combo_id']}: Base price = {$combo['combo_price']}, " .
-                    //     "Swab surcharge = {$swabSurcharge}, " .
-                    //     "Final price = " . ((float)$combo['combo_price'] + $swabSurcharge),
-                    //     'detectCombos'
-                    // );
                 }
             }
 
@@ -442,18 +636,10 @@ function detectCombos($tests, $conn, $submissionType = 'regular')
 }
 
 /**
- * ============================================================================
- * NEW HELPER: Get swab price breakdown for transparency
- * ============================================================================
+ * Get swab price breakdown for transparency
  * 
  * This function returns detailed swab pricing for a combo, showing the
  * individual swab price for each parameter.
- * 
- * Useful for:
- * - Displaying itemized pricing to users
- * - Audit trails
- * - Price verification
- * - Debugging
  * 
  * @param array $parameterIds Array of parameter IDs in the combo
  * @param mysqli $conn Database connection
@@ -523,9 +709,7 @@ function getSwabPriceBreakdown($parameterIds, $conn)
 }
 
 /**
- * ============================================================================
- * ENHANCED: Calculate test charges with combos and dynamic swab pricing
- * ============================================================================
+ * Calculate test charges with combos and dynamic swab pricing
  */
 function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 'regular')
 {
@@ -574,7 +758,7 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
                     'combo_price' => $combo['combo_price'],
                     'param_count' => $combo['param_count'],
                     'parameter_ids' => $combo['parameter_ids'],
-                    'swab_breakdown' => $swabBreakdown // Include swab details if applicable
+                    'swab_breakdown' => $swabBreakdown
                 ];
             }
 
@@ -650,30 +834,6 @@ function calculateTestChargesWithCombos($testsData, $conn, $submissionType = 're
 }
 
 /**
- * ============================================================================
- * NEW: Debug logging function (optional but recommended)
- * ============================================================================
- */
-// function logDebug($message, $context = '')
-// {
-//     // Only log in development environment
-//     if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
-//         $logDir = __DIR__ . '/../../logs';
-//         if (!file_exists($logDir)) {
-//             mkdir($logDir, 0755, true);
-//         }
-
-//         $timestamp = date('Y-m-d H:i:s');
-//         $contextStr = $context ? "[$context] " : '';
-//         $log = "[DEBUG {$timestamp}] {$contextStr}{$message}" . PHP_EOL;
-
-//         file_put_contents($logDir . '/debug.log', $log, FILE_APPEND);
-//     }
-// }
-
-// ... (keep all other functions unchanged)
-
-/**
  * Get parameter price from database
  */
 function getParameterPrice($conn, $parameterId, $includeSwab = false)
@@ -707,61 +867,4 @@ function getParameterPrice($conn, $parameterId, $includeSwab = false)
         logError($e->getMessage(), 'getParameterPrice');
         return null;
     }
-}
-
-function logError($message, $context = '')
-{
-    $logDir = __DIR__ . '/../../logs';
-    if (!file_exists($logDir)) {
-        mkdir($logDir, 0755, true);
-    }
-
-    $timestamp = date('Y-m-d H:i:s');
-    $contextStr = $context ? "[$context] " : '';
-    $log = "[{$timestamp}] {$contextStr}{$message}" . PHP_EOL;
-
-    file_put_contents($logDir . '/error.log', $log, FILE_APPEND);
-}
-
-function sendJsonResponse($data)
-{
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-function formatDate($date, $format = 'd/m/Y')
-{
-    try {
-        if (empty($date)) {
-            return 'N/A';
-        }
-        $dateObj = new DateTime($date);
-        return $dateObj->format($format);
-    } catch (Exception $e) {
-        return $date;
-    }
-}
-
-function validatePaymentReference($reference)
-{
-    if (empty($reference)) {
-        return ['valid' => false, 'message' => 'Payment reference is required'];
-    }
-
-    $reference = trim($reference);
-
-    if (strlen($reference) < 3) {
-        return ['valid' => false, 'message' => 'Payment reference must be at least 3 characters'];
-    }
-
-    if (strlen($reference) > 100) {
-        return ['valid' => false, 'message' => 'Payment reference too long (max 100 characters)'];
-    }
-
-    if (!preg_match('/^[a-zA-Z0-9\-\/\s]+$/', $reference)) {
-        return ['valid' => false, 'message' => 'Payment reference contains invalid characters'];
-    }
-
-    return ['valid' => true, 'message' => 'Valid'];
 }
