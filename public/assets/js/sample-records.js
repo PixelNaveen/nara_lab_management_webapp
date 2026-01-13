@@ -333,7 +333,7 @@ const SampleRecords = (function () {
   function showLoadingState() {
     ELEMENTS.tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-5">
+                <td colspan="7" class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -353,7 +353,7 @@ const SampleRecords = (function () {
   function showEmptyState() {
     ELEMENTS.tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-5">
+                <td colspan="7" class="text-center py-5">
                     <i class="fas fa-inbox fa-3x text-muted mb-3" style="display: block;"></i>
                     <h5 class="text-muted">No samples found</h5>
                     <p class="text-muted small">Try adjusting your search filters</p>
@@ -379,6 +379,7 @@ const SampleRecords = (function () {
     // Attach event listeners to badges
     attachStatusBadgeListeners();
     attachPaymentBadgeListeners();
+    attachEyeIconListeners(); // Eye icon listeners
   }
 
   /**
@@ -438,6 +439,14 @@ const SampleRecords = (function () {
                 </td>
                 <td class="px-3 py-3 text-end">
                     <span class="fw-semibold text-success">${amount}</span>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <button class="btn btn-sm btn-outline-primary eye-icon-btn" 
+                            data-sample-id="${sample.sample_id}"
+                            title="View Details"
+                            style="padding: 4px 10px; border-radius: 6px;">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </td>
             </tr>
         `;
@@ -620,6 +629,25 @@ const SampleRecords = (function () {
     });
   }
 
+  // ==================== EYE ICON HANDLING ====================
+
+  /**
+   * Attach click listeners to eye icon buttons
+   * Clickable but does nothing
+   */
+  function attachEyeIconListeners() {
+    const eyeButtons = document.querySelectorAll(".eye-icon-btn");
+
+    eyeButtons.forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        // Button is clickable but does nothing
+        console.log("👁️ Eye icon clicked for sample ID:", this.dataset.sampleId);
+        // No action taken - just logs to console
+      });
+    });
+  }
+
   /**
    * Open payment modal for a sample
    */
@@ -674,7 +702,7 @@ const SampleRecords = (function () {
    * Populate payment modal with sample data
    */
   function populatePaymentModal(sampleData) {
-    console.log("📝 Populating modal with:", sampleData);
+    console.log("📋 Populating modal with:", sampleData);
 
     // Store sample ID
     ELEMENTS.modalSampleId.value = sampleData.sample_id;
