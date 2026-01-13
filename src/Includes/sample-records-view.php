@@ -49,11 +49,11 @@
                 </select>
 
                 <!-- Custom Date Range (Initially Hidden) -->
-                <div id="customDateRange" style="display: none; margin-left: 10px;" class="d-flex gap-2">
+                <!-- <div id="customDateRange" style="display: none; margin-left: 10px;" class="d-flex gap-2">
                     <input type="date" class="form-control" id="dateFrom" style="max-width: 160px;">
                     <input type="date" class="form-control" id="dateTo" style="max-width: 160px;">
-                   <!-- <button class="btn btn-outline-secondary" id="btnReset">Reset</button> -->
-                </div>
+                  
+                </div> -->
 
             </div>
         </div>
@@ -69,15 +69,16 @@
                             <th class="px-3 py-3">SAMPLE CODE</th>
                             <th class="px-3 py-3 client-name-column">CLIENT</th>
                             <th class="px-3 py-3">STATUS</th>
-                            <th class="px-3 py-3">PAYMENT</th> <!-- NEW COLUMN -->
+                            <th class="px-3 py-3">PAYMENT</th>
                             <th class="px-3 py-3">RECEIVED DATE</th>
                             <th class="px-3 py-3 text-end">AMOUNT (LKR)</th>
+                            <th class="px-3 py-3 text-center" style="width: 80px;">VIEW</th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- Data will be loaded via AJAX -->
                         <tr>
-                            <td colspan="6" class="text-center py-5">
+                            <td colspan="7" class="text-center py-5">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
@@ -87,7 +88,7 @@
                     </tbody>
                     <!-- <tfoot>
                         <tr class="grand-total-row">
-                            <td colspan="5" class="text-end px-3 py-3">
+                            <td colspan="6" class="text-end px-3 py-3">
                                 <strong>Grand Total:</strong>
                             </td>
                             <td class="text-end px-3 py-3">
@@ -95,7 +96,7 @@
                             </td>
                         </tr>
                         <tr class="paid-total-row">
-                            <td colspan="5" class="text-end px-3 py-3">
+                            <td colspan="6" class="text-end px-3 py-3">
                                 <strong>Paid Total:</strong>
                             </td>
                             <td class="text-end px-3 py-3">
@@ -103,7 +104,7 @@
                             </td>
                         </tr>
                         <tr class="unpaid-total-row">
-                            <td colspan="5" class="text-end px-3 py-3">
+                            <td colspan="6" class="text-end px-3 py-3">
                                 <strong>Unpaid Total:</strong>
                             </td>
                             <td class="text-end px-3 py-3">
