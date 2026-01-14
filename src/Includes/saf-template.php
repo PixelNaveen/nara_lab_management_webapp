@@ -1,12 +1,10 @@
 <?php
-
 /**
  * SAF Template - Sample Acceptance Form
- * Version: 2.1 - CORRECTED
+ * FIXED: Hides controls when inside carousel
+ * Only shows form content in carousel mode
  * 
- * FIXED: UTF-8 encoding (proper emojis)
- * FIXED: Payment:: (double colon)
- * FIXED: CSS path handling
+ * @version 3.0 - CAROUSEL COMPATIBLE
  */
 
 if (!isset($data)) {
@@ -16,19 +14,21 @@ if (!isset($data)) {
 
 $totalPages = $data['total_pages'];
 $totalSamples = $data['total_samples'];
+
+// Detect if we're inside carousel (no controls needed)
+$insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] === true;
 ?>
+<?php if (!$insideCarousel): ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sample Acceptance Form - <?= htmlspecialchars($data['acceptance']['report_ref']) ?></title>
     <link rel="stylesheet" href="/public/assets/css/saf-styles.css">
 </head>
-
 <body>
-    <!-- Controls Panel -->
+    <!-- Controls Panel (ONLY when standalone, NOT in carousel) -->
     <div class="controls">
         <h3>📄 Select Format & Download PDF</h3>
 
@@ -40,22 +40,8 @@ $totalSamples = $data['total_samples'];
         <?php endif; ?>
 
         <div class="size-selector">
-            <!-- <label>
-                <input type="radio" name="pageSize" value="half-a4" checked onchange="changePageSize(this.value)">
-                <div class="option-content">
-                    <div class="option-title">Half A4 Landscape</div>
-                    <div class="option-desc">210×148mm on 297×210mm paper • Compact • Form uses left half</div>
-                </div>
-            </label> -->
             <label>
-                <input type="radio" name="pageSize" value="full-a5" onchange="changePageSize(this.value)">
-                <div class="option-content">
-                    <div class="option-title">Full A5 Landscape</div>
-                    <div class="option-desc">210×148mm on 210×148mm paper • Compact • Fills entire page</div>
-                </div>
-            </label>
-            <label>
-                <input type="radio" name="pageSize" value="a4-natural" onchange="changePageSize(this.value)">
+                <input type="radio" name="pageSize" value="a4-natural" checked onchange="changePageSize(this.value)">
                 <div class="option-content">
                     <div class="option-title">A4 Natural Portrait</div>
                     <div class="option-desc">210mm width on A4 paper • Comfortable spacing • Professional format</div>
@@ -71,6 +57,8 @@ $totalSamples = $data['total_samples'];
 
     <!-- SAF Form Container (All Pages) -->
     <div id="formContainer">
+<?php endif; ?>
+
         <?php
         // Loop through each page
         foreach ($data['pages'] as $pageIndex => $pageItems):
@@ -79,7 +67,7 @@ $totalSamples = $data['total_samples'];
         ?>
 
             <!-- Page <?= $currentPage ?> -->
-            <div class="form-container half-a4" style="<?= !$isFirstPage ? 'margin-top: 30px;' : '' ?>">
+            <div class="form-container a4-natural" style="<?= !$isFirstPage ? 'margin-top: 30px;' : '' ?>">
                 <div class="form-title">
                     Sample Acceptance Form
                     <?php if ($totalPages > 1): ?>
@@ -121,7 +109,7 @@ $totalSamples = $data['total_samples'];
                         </tr>
                     <?php endforeach; ?>
 
-                    <!-- Payment Row - FIXED: Payment:: (double colon) -->
+                    <!-- Payment Row -->
                     <tr class="payment-row">
                         <td colspan="3" style="width: 60%;">
                             Payment:
@@ -140,9 +128,6 @@ $totalSamples = $data['total_samples'];
                             Test report reference number: <?= htmlspecialchars($data['acceptance']['report_ref']) ?>
                         </td>
                     </tr>
-
-
-
                 </table>
 
                 <!-- Decision Section -->
@@ -182,11 +167,12 @@ $totalSamples = $data['total_samples'];
             <!-- End Page <?= $currentPage ?> -->
 
         <?php endforeach; ?>
-    </div>
 
-    <!-- JavaScript Libraries -->
+<?php if (!$insideCarousel): ?>
+    </div>
+    <!-- JavaScript Libraries (ONLY when standalone) -->
     <script src="/public/assets/libs/html2pdf.bundle.min.js"></script>
     <script src="/public/assets/js/saf-handler.js"></script>
 </body>
-
 </html>
+<?php endif; ?>

@@ -24,3 +24,5 @@
 [2026-01-12 06:09:28] [TotalValidation] Total mismatch - Frontend: Rs. 6250, Backend: Rs. 3875, Diff: Rs. 2375, Combos: 1
 [2026-01-12 09:03:42] [ComboSuccess] ✓ COMBOS APPLIED: 2 combos (Water and Ice – Coliforms + Water and Ice – E. coli + Water and Ice – Faecal coliforms, Food – Coliforms + Food – E. coli + Food – Faecal coliforms) | Individual: Rs. 10000 | Combo: Rs. 5250 | Savings: Rs. 4750 (47.5%)
 [2026-01-12 09:03:42] [TotalValidation] Total mismatch - Frontend: Rs. 10000, Backend: Rs. 5250, Diff: Rs. 4750, Combos: 2
+[2026-01-14 06:58:58] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Food – Coliforms + Food – E. coli + Food – Faecal coliforms) | Individual: Rs. 6250 | Combo: Rs. 3875 | Savings: Rs. 2375 (38%)
+[2026-01-14 06:58:58] [TotalValidation] Total mismatch - Frontend: Rs. 6250, Backend: Rs. 3875, Diff: Rs. 2375, Combos: 1
