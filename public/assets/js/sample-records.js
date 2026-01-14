@@ -635,18 +635,25 @@ const SampleRecords = (function () {
    * Attach click listeners to eye icon buttons
    * Clickable but does nothing
    */
-  function attachEyeIconListeners() {
-    const eyeButtons = document.querySelectorAll(".eye-icon-btn");
+ function attachEyeIconListeners() {
+  const eyeButtons = document.querySelectorAll(".eye-icon-btn");
 
-    eyeButtons.forEach((button) => {
-      button.addEventListener("click", function (e) {
-        e.preventDefault();
-        // Button is clickable but does nothing
-        console.log("👁️ Eye icon clicked for sample ID:", this.dataset.sampleId);
-        // No action taken - just logs to console
-      });
+  eyeButtons.forEach((button) => {
+    button.addEventListener("click", function (e) {
+      e.preventDefault();
+      
+      const sampleId = this.dataset.sampleId; // Get the sample ID from data attribute
+      
+      console.log("👁️ Eye icon clicked for sample ID:", sampleId);
+      
+      window.open(
+        "/src/Controllers/forms-controller.php?action=view&sample_id=" + sampleId,
+        "_blank",
+        "width=1400,height=900,scrollbars=yes,resizable=yes"
+      );
     });
-  }
+  });
+}
 
   /**
    * Open payment modal for a sample
