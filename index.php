@@ -49,7 +49,7 @@ $pageMap = [
     'swab-parameter' => 'swab-param.php',
     'pricing' => 'param-prices.php',
     'methods' => 'manage-test-methods.php',
-    'samples' => 'sample-records-view.php',
+    'sample-records-view' => 'sample-records-view.php',
     'manage-cities' => 'manage-cities.php',
     'manage-extra-items' => 'manage-extra-items.php'
 ];

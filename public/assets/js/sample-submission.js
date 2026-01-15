@@ -1573,16 +1573,10 @@ async function handleSubmit(e) {
         "success"
       );
 
-      // Keep lock during reload
-      // Open SAF preview in new window
+      // Redirect to sample records page after successful submission
       setTimeout(() => {
-        openSAFPreview(data.sample_id, data.ac_reference, data.form_number);
+        window.location.href = "index.php?page=sample-records-view";
       }, 1500);
-
-      // Reload main page after SAF opens
-      setTimeout(() => {
-        location.reload();
-      }, 3000);
     } else {
       throw new Error(data.message || "Submission failed");
     }
@@ -1594,40 +1588,6 @@ async function handleSubmit(e) {
     submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Form';
     isSubmitting = false; // Release lock on error
   }
-}
-
-/**
- * Open SAF Preview in New Window
- * Opens after successful sample submission
- * 
- * @param {number} sampleId - Sample ID from database
- * @param {string} acRef - AC Reference number
- * @param {string} formNumber - Form number
- */
-function openSAFPreview(sampleId, acRef, formNumber) {
-    console.log(`📄 Opening SAF for Sample ID: ${sampleId}`);
-    console.log(`📋 Form: ${formNumber}, AC Ref: ${acRef}`);
-    
-    // Build SAF URL
-    const safUrl = `src/Controllers/saf-controller.php?action=view&sample_id=${sampleId}`;
-    
-    // Window features for SAF popup
-    const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no,status=no';
-    
-    // Open in new window
-    const safWindow = window.open(safUrl, `SAF_${sampleId}`, windowFeatures);
-    
-    if (safWindow) {
-        console.log('✅ SAF window opened successfully');
-        safWindow.focus();
-    } else {
-        console.error('❌ SAF window blocked by popup blocker');
-        showToast('⚠️ Popup blocked! Please allow popups to view SAF.', 'warning');
-        
-        // Fallback: Show link to open SAF manually
-        const message = `✅ Sample submitted!\n📄 Click here to view SAF:\n${window.location.origin}/${safUrl}`;
-        showToast(message, 'success');
-    }
 }
 
 // ==========================================
