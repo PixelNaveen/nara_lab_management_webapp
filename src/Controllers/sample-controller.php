@@ -70,11 +70,6 @@ try {
             handleTrackCityUsage($sampleModel);
             break;
 
-        case 'validatePaymentReference':
-            handleValidatePaymentReference();
-            break;
-
-
         case 'validateSampleName':
             handleValidateSampleName($sampleModel);
             break;
@@ -227,46 +222,6 @@ function handleSearchSampleNames($model)
     sendJsonResponse($result);
 }
 
-function handleValidatePaymentReference()
-{
-    $reference = trim($_POST['payment_reference'] ?? $_GET['payment_reference'] ?? '');
-
-    if (empty($reference)) {
-        sendJsonResponse([
-            'success' => true,
-            'is_unique' => true,
-            'message' => 'No reference provided'
-        ]);
-    }
-
-    $formatValidation = validatePaymentReference($reference);
-    if (!$formatValidation['valid']) {
-        sendJsonResponse([
-            'success' => true,
-            'is_unique' => false,
-            'message' => $formatValidation['message']
-        ]);
-    }
-
-    try {
-        $database = new Database();
-        $conn = $database->connect();
-        $isUnique = isPaymentReferenceUnique($conn, $reference);
-
-        sendJsonResponse([
-            'success' => true,
-            'is_unique' => $isUnique,
-            'message' => $isUnique ? 'Payment reference is available' : 'Payment reference already exists'
-        ]);
-    } catch (Exception $e) {
-        logError($e->getMessage(), 'handleValidatePaymentReference');
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Database error checking payment reference'
-        ]);
-    }
-}
-
 /**
  * MAIN SUBMISSION HANDLER - WITH COMBO PRICING FIX
  */
@@ -278,8 +233,7 @@ function handleSaveSample($model)
             'client_id' => 'Client',
             'submission_type' => 'Submission type',
             'received_date' => 'Received date',
-            'tentative_date' => 'Tentative date',
-            'payment_status' => 'Payment status'
+            'tentative_date' => 'Tentative date'
         ];
 
         foreach ($requiredFields as $field => $label) {
@@ -327,33 +281,14 @@ function handleSaveSample($model)
             ]);
         }
 
-        $paymentStatus = $_POST['payment_status'];
-        if (!in_array($paymentStatus, ['Paid', 'Not Paid', 'Pending'])) {
+        // Validate receipt email if provided (optional, for one-time use only)
+        $receiptEmail = trim($_POST['receipt_email'] ?? '');
+        if (!empty($receiptEmail) && !validateEmail($receiptEmail)) {
             sendJsonResponse([
                 'success' => false,
-                'message' => 'Invalid payment status',
-                'field' => 'payment_status'
+                'message' => 'Invalid email address format',
+                'field' => 'receipt_email'
             ]);
-        }
-
-        if ($paymentStatus === 'Paid') {
-            if (empty($_POST['payment_reference'])) {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => 'Payment reference is required when payment status is Paid',
-                    'field' => 'payment_reference'
-                ]);
-            }
-
-            $database = new Database();
-            $conn = $database->connect();
-            if (!isPaymentReferenceUnique($conn, $_POST['payment_reference'])) {
-                sendJsonResponse([
-                    'success' => false,
-                    'message' => 'This payment reference already exists',
-                    'field' => 'payment_reference'
-                ]);
-            }
         }
 
         // PARSE DATA
@@ -498,8 +433,8 @@ function handleSaveSample($model)
             'additional_charges' => $additionalCharges,
             'test_charges_total' => $testChargesTotal,
             'grand_total' => $grandTotal,
-            'payment_status' => sanitizeInput($_POST['payment_status']),
-            'payment_reference' => sanitizeInput($_POST['payment_reference'] ?? ''),
+            'payment_status' => 'Not Paid',  // Always set to Not Paid
+            'payment_reference' => '',        // Always empty
             'samples' => $samplesData,
             'tests' => $testsData,
             'combo_calculation' => $calculationResult
@@ -517,6 +452,16 @@ function handleSaveSample($model)
                 'discount_percentage' => $calculationResult['discount_percentage'],
                 'combos_applied' => $calculationResult['combos_detected']
             ];
+        }
+
+        // If email provided and submission successful, log it for email sending
+        if ($result['success'] && !empty($receiptEmail)) {
+            logError(
+                "Receipt email requested: $receiptEmail for Form: {$result['form_number']}",
+                'ReceiptEmail'
+            );
+            // TODO: Implement email sending here
+            // sendReceiptEmail($receiptEmail, $result['form_number'], $submissionData);
         }
 
         sendJsonResponse($result);
