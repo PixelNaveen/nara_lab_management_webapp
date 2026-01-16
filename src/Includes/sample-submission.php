@@ -239,7 +239,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                         <div id="reviewSummary"></div>
 
                         <!-- Payment Status -->
-                        <div class="payment-section">
+                        <!-- <div class="payment-section">
                             <h5 class="mb-3">
                                 <i class="fas fa-credit-card"></i> Payment Status <span class="text-danger">*</span>
                             </h5>
@@ -263,31 +263,32 @@ $userId = $_SESSION['user_id'] ?? 0;
                                     placeholder="Enter payment reference number">
                                 <span class="error-label" id="paymentReferenceError"></span>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Receipt Delivery -->
                         <div class="receipt-delivery-section">
                             <h5 class="mb-3">
-                                <i class="fas fa-envelope"></i> Receipt Delivery (Optional - Future Feature)
+                                <i class="fas fa-envelope"></i> Receipt Delivery
                             </h5>
 
                             <div class="alert alert-warning">
                                 <i class="fas fa-info-circle"></i>
-                                These fields are for future email/SMS receipt delivery and will not be saved to client record.
+                                Optional: Provide an email address to receive the receipt electronically.
                             </div>
 
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <!-- <div class="col-md-6">
                                     <label class="form-label">Mobile Number (for SMS receipt)</label>
                                     <input type="text" class="form-control" id="receiptMobile"
                                         placeholder="0XXXXXXXXX" disabled>
                                     <small class="text-muted">Feature coming soon</small>
-                                </div>
+                                </div> -->
                                 <div class="col-md-6">
                                     <label class="form-label">Email Address (for email receipt)</label>
                                     <input type="email" class="form-control" id="receiptEmail"
-                                        placeholder="client@example.com" disabled>
-                                    <small class="text-muted">Feature coming soon</small>
+                                        placeholder="client@example.com">
+                                    <small class="text-muted">Optional - for sending receipt via email</small>
+                                    <span class="error-label" id="receiptEmailError"></span>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +315,7 @@ $userId = $_SESSION['user_id'] ?? 0;
 
     <!-- Toast Container -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
-        <div id="manageUsersToastContainer"></div>
+        <div id="submissionToastContainer"></div>
     </div>
 
 </div>
