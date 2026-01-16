@@ -39,10 +39,10 @@ function showToast(message, type = "info") {
     info: "bg-info text-dark",
   };
 
-  let toastContainer = document.getElementById("manageUsersToastContainer");
+  let toastContainer = document.getElementById("submissionToastContainer");
   if (!toastContainer) {
     toastContainer = document.createElement("div");
-    toastContainer.id = "manageUsersToastContainer";
+    toastContainer.id = "submissionToastContainer";
     toastContainer.className =
       "toast-container position-fixed bottom-0 end-0 p-3";
     toastContainer.style.zIndex = "1080";
@@ -183,11 +183,7 @@ function initializeEventListeners() {
   document.getElementById("nextBtn").addEventListener("click", handleNext);
   document.getElementById("prevBtn").addEventListener("click", handlePrev);
   document.getElementById("siForm").addEventListener("submit", handleSubmit);
-
-  // Payment Options
-  document.querySelectorAll(".payment-option").forEach((option) => {
-    option.addEventListener("click", selectPaymentStatus);
-  });
+  // Payment Options - Removed (payment auto-set to "Not Paid")
 
   // Additional Charges
   const additionalChargesEl = document.getElementById("additionalCharges");
@@ -316,57 +312,27 @@ function initializeRealTimeValidation() {
     });
   }
 
-  // Payment Reference Validation (ASYNC - Bug Fix #3)
-  const paymentRefEl = document.getElementById("paymentReference");
-  if (paymentRefEl) {
-    paymentRefEl.addEventListener(
-      "blur",
-      debounce(async function () {
-        const ref = this.value.trim();
-
-        if (!ref) {
-          hideError("paymentReference");
-          return;
-        }
-
-        if (ref.length < 3) {
-          showError(
-            "paymentReference",
-            "Payment reference must be at least 3 characters"
-          );
-          return;
-        }
-
-        // Show validating state
-        this.classList.add("is-validating");
-        this.classList.remove("is-valid", "is-invalid");
-
-        try {
-          const formData = new FormData();
-          formData.append("action", "validatePaymentReference");
-          formData.append("payment_reference", ref);
-
-          const res = await fetch(API_BASE, { method: "POST", body: formData });
-          const data = await res.json();
-
-          this.classList.remove("is-validating");
-
-          if (data.success && !data.is_unique) {
-            showError(
-              "paymentReference",
-              "This payment reference already exists"
-            );
-          } else {
-            showSuccess("paymentReference");
-          }
-        } catch (error) {
-          console.error("Payment reference validation error:", error);
-          this.classList.remove("is-validating");
-          showError("paymentReference", "Could not validate payment reference");
-        }
-      }, 500)
-    );
-  }
+  // Payment Reference Validation - Removed (not needed)
+}
+// Email Validation (Real-time) - NEW
+const receiptEmailEl = document.getElementById("receiptEmail");
+if (receiptEmailEl) {
+  const validateEmail = function () {
+    const value = this.value.trim();
+    if (value.length === 0) {
+      hideError("receiptEmail");
+      this.classList.remove("is-invalid", "is-valid");
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(value)) {
+      showError("receiptEmail", "Please enter a valid email address");
+    } else {
+      showSuccess("receiptEmail");
+    }
+  };
+  receiptEmailEl.addEventListener("input", validateEmail);
+  receiptEmailEl.addEventListener("blur", validateEmail);
 }
 
 // ==========================================
@@ -845,14 +811,14 @@ function addSample() {
           <div class="sample-name-autocomplete"></div>
         </div>
         <div class="col-md-3">
-          <label>Value <span class="text-danger">*</span></label>
+          <label>Volume <span class="text-danger">*</span></label>
           <input type="text" class="form-control sample-value" required>
         </div>
         <div class="col-md-3">
           <label>Unit <span class="text-danger">*</span></label>
           <select class="form-select sample-unit" required>
             <option value="">Select</option>
-            <option value="ml">ml</option>
+            <option value="mL">mL</option>
             <option value="g">g</option>
             <option value="cm²">cm²</option>
             <option value="L">L</option>
@@ -1404,27 +1370,7 @@ function updateGrandTotal() {
   }
 }
 
-function selectPaymentStatus() {
-  document
-    .querySelectorAll(".payment-option")
-    .forEach((o) => o.classList.remove("selected"));
-  this.classList.add("selected");
-  const status = this.dataset.status;
-
-  const paymentRefSection = document.getElementById("paymentReferenceSection");
-  const paymentRefInput = document.getElementById("paymentReference");
-
-  if (paymentRefSection) {
-    paymentRefSection.classList.toggle("d-none", status !== "paid");
-
-    // Clear validation when hiding
-    if (status !== "paid" && paymentRefInput) {
-      paymentRefInput.value = "";
-      paymentRefInput.classList.remove("is-valid", "is-invalid");
-      hideError("paymentReference");
-    }
-  }
-}
+// selectPaymentStatus - Removed (payment auto-set to "Not Paid")
 
 // ==========================================
 // SUBMIT
@@ -1451,25 +1397,16 @@ async function handleSubmit(e) {
   console.log("🔒 Submission lock acquired");
   // ===== END LOCK =====
 
-  const selectedPayment = document.querySelector(".payment-option.selected");
-  if (!selectedPayment) {
-    showToast("Please select payment status", "error");
-    isSubmitting = false;
-    return;
-  }
+  // Payment status validation - Removed (auto-set to "Not Paid")
 
-  if (selectedPayment.dataset.status === "paid") {
-    const paymentRef = document.getElementById("paymentReference").value.trim();
-    if (!paymentRef) {
-      showToast("Payment reference required when status is Paid", "error");
-      showError("paymentReference", "Payment reference is required");
-      isSubmitting = false;
-      return;
-    }
-
-    const paymentRefEl = document.getElementById("paymentReference");
-    if (paymentRefEl.classList.contains("is-invalid")) {
-      showToast("Please fix payment reference error", "error");
+  // Validate receipt email if provided - NEW
+  const receiptEmailEl = document.getElementById("receiptEmail");
+  if (receiptEmailEl && receiptEmailEl.value.trim().length > 0) {
+    const email = receiptEmailEl.value.trim();
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      showToast("Please enter a valid email address", "error");
+      showError("receiptEmail", "Invalid email format");
       isSubmitting = false;
       return;
     }
@@ -1547,17 +1484,14 @@ async function handleSubmit(e) {
   formData.append("test_charges_total", testTotal);
   formData.append("grand_total", testTotal + addCharges);
 
-  const isPaid = selectedPayment.dataset.status === "paid";
-  formData.append("payment_status", isPaid ? "Paid" : "Not Paid");
+  // Payment status always "Not Paid" - NEW
+  formData.append("payment_status", "Not Paid");
+  formData.append("payment_reference", "");
 
-  if (isPaid) {
-    formData.append(
-      "payment_reference",
-      document.getElementById("paymentReference").value.trim()
-    );
-  } else {
-    formData.append("payment_reference", "");
-  }
+  // Add receipt email if provided - NEW
+  const receiptEmail =
+    document.getElementById("receiptEmail")?.value.trim() || "";
+  formData.append("receipt_email", receiptEmail);
 
   try {
     console.log("📤 Sending submission request...");
@@ -1598,93 +1532,100 @@ async function handleSubmit(e) {
  * Initialize city autocomplete functionality
  */
 function initializeCityAutocomplete() {
-    const cityInput = document.getElementById('city');
-    const cityAutocomplete = document.getElementById('cityAutocomplete');
-    
-    if (!cityInput || !cityAutocomplete) {
-        console.warn('City autocomplete elements not found');
-        return;
+  const cityInput = document.getElementById("city");
+  const cityAutocomplete = document.getElementById("cityAutocomplete");
+
+  if (!cityInput || !cityAutocomplete) {
+    console.warn("City autocomplete elements not found");
+    return;
+  }
+
+  cityInput.addEventListener("input", debounce(handleCitySearch, 400));
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#city") && !e.target.closest("#cityAutocomplete")) {
+      closeCityAutocomplete();
     }
+  });
 
-    cityInput.addEventListener('input', debounce(handleCitySearch, 400));
-    
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('#city') && !e.target.closest('#cityAutocomplete')) {
-            closeCityAutocomplete();
-        }
-    });
+  cityInput.addEventListener("keydown", handleCityKeyboardNavigation);
 
-    cityInput.addEventListener('keydown', handleCityKeyboardNavigation);
-    
-    console.log('✓ City autocomplete initialized');
+  console.log("✓ City autocomplete initialized");
 }
 
 /**
  * Handle city search input
  */
 async function handleCitySearch() {
-    const cityInput = document.getElementById('city');
-    const cityAutocomplete = document.getElementById('cityAutocomplete');
-    const query = cityInput.value.trim();
+  const cityInput = document.getElementById("city");
+  const cityAutocomplete = document.getElementById("cityAutocomplete");
+  const query = cityInput.value.trim();
 
-    if (query.length < 2) {
-        closeCityAutocomplete();
-        return;
+  if (query.length < 2) {
+    closeCityAutocomplete();
+    return;
+  }
+
+  cityAutocomplete.innerHTML =
+    '<div class="city-autocomplete-loading">Searching...</div>';
+  cityAutocomplete.classList.add("show");
+
+  try {
+    const response = await fetch(
+      `${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    cityAutocomplete.innerHTML = '<div class="city-autocomplete-loading">Searching...</div>';
-    cityAutocomplete.classList.add('show');
+    const data = await response.json();
 
-    try {
-        const response = await fetch(
-            `${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`
-        );
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.cities && data.cities.length > 0) {
-            displayCityResults(data.cities);
-        } else {
-            cityAutocomplete.innerHTML = `
+    if (data.success && data.cities && data.cities.length > 0) {
+      displayCityResults(data.cities);
+    } else {
+      cityAutocomplete.innerHTML = `
                 <div class="city-autocomplete-empty">
                     No cities found matching "${escapeHtml(query)}"
                 </div>
             `;
-        }
-    } catch (error) {
-        console.error('City search error:', error);
-        cityAutocomplete.innerHTML = `
+    }
+  } catch (error) {
+    console.error("City search error:", error);
+    cityAutocomplete.innerHTML = `
             <div class="city-autocomplete-empty text-danger">
                 Error searching cities
             </div>
         `;
-    }
+  }
 }
 
 /**
  * Display city search results in dropdown
  */
 function displayCityResults(cities) {
-    const cityAutocomplete = document.getElementById('cityAutocomplete');
-    
-    const html = cities.map((city, index) => `
+  const cityAutocomplete = document.getElementById("cityAutocomplete");
+
+  const html = cities
+    .map(
+      (city, index) => `
         <div class="city-autocomplete-item" 
              data-city-id="${city.city_id}" 
              data-city-name="${escapeHtml(city.city_name)}"
              data-index="${index}">
             ${escapeHtml(city.city_name)}
         </div>
-    `).join('');
+    `
+    )
+    .join("");
 
-    cityAutocomplete.innerHTML = html;
-    cityAutocomplete.classList.add('show');
+  cityAutocomplete.innerHTML = html;
+  cityAutocomplete.classList.add("show");
 
-    cityAutocomplete.querySelectorAll('.city-autocomplete-item').forEach(item => {
-        item.addEventListener('click', selectCityFromAutocomplete);
+  cityAutocomplete
+    .querySelectorAll(".city-autocomplete-item")
+    .forEach((item) => {
+      item.addEventListener("click", selectCityFromAutocomplete);
     });
 }
 
@@ -1692,120 +1633,122 @@ function displayCityResults(cities) {
  * Handle city selection from autocomplete
  */
 async function selectCityFromAutocomplete() {
-    const cityId = this.getAttribute('data-city-id');
-    const cityName = this.getAttribute('data-city-name');
-    
-    const cityInput = document.getElementById('city');
-    const selectedCityId = document.getElementById('selectedCityId');
+  const cityId = this.getAttribute("data-city-id");
+  const cityName = this.getAttribute("data-city-name");
 
-    cityInput.value = cityName;
-    
-    if (selectedCityId) {
-        selectedCityId.value = cityId;
-    }
+  const cityInput = document.getElementById("city");
+  const selectedCityId = document.getElementById("selectedCityId");
 
-    closeCityAutocomplete();
+  cityInput.value = cityName;
 
-    try {
-        await trackCityUsage(cityId);
-    } catch (error) {
-        console.warn('Failed to track city usage:', error);
-    }
+  if (selectedCityId) {
+    selectedCityId.value = cityId;
+  }
 
-    if (cityInput.classList.contains('is-invalid')) {
-        cityInput.classList.remove('is-invalid');
-        cityInput.classList.add('is-valid');
-    }
+  closeCityAutocomplete();
 
-    console.log(`✓ City selected: ${cityName} (ID: ${cityId})`);
+  try {
+    await trackCityUsage(cityId);
+  } catch (error) {
+    console.warn("Failed to track city usage:", error);
+  }
+
+  if (cityInput.classList.contains("is-invalid")) {
+    cityInput.classList.remove("is-invalid");
+    cityInput.classList.add("is-valid");
+  }
+
+  console.log(`✓ City selected: ${cityName} (ID: ${cityId})`);
 }
 
 /**
  * Track city usage for analytics
  */
 async function trackCityUsage(cityId) {
-    const formData = new FormData();
-    formData.append('action', 'trackCityUsage');
-    formData.append('city_id', cityId);
+  const formData = new FormData();
+  formData.append("action", "trackCityUsage");
+  formData.append("city_id", cityId);
 
-    try {
-        await fetch(API_BASE, {
-            method: 'POST',
-            body: formData
-        });
-    } catch (error) {
-        console.debug('City usage tracking failed:', error);
-    }
+  try {
+    await fetch(API_BASE, {
+      method: "POST",
+      body: formData,
+    });
+  } catch (error) {
+    console.debug("City usage tracking failed:", error);
+  }
 }
 
 /**
  * Close city autocomplete dropdown
  */
 function closeCityAutocomplete() {
-    const cityAutocomplete = document.getElementById('cityAutocomplete');
-    if (cityAutocomplete) {
-        cityAutocomplete.classList.remove('show');
-        cityAutocomplete.innerHTML = '';
-    }
+  const cityAutocomplete = document.getElementById("cityAutocomplete");
+  if (cityAutocomplete) {
+    cityAutocomplete.classList.remove("show");
+    cityAutocomplete.innerHTML = "";
+  }
 }
 
 /**
  * Handle keyboard navigation in city autocomplete
  */
 function handleCityKeyboardNavigation(e) {
-    const cityAutocomplete = document.getElementById('cityAutocomplete');
-    
-    if (!cityAutocomplete.classList.contains('show')) {
-        return;
-    }
+  const cityAutocomplete = document.getElementById("cityAutocomplete");
 
-    const items = cityAutocomplete.querySelectorAll('.city-autocomplete-item');
-    
-    if (items.length === 0) {
-        return;
-    }
+  if (!cityAutocomplete.classList.contains("show")) {
+    return;
+  }
 
-    let currentIndex = -1;
-    const activeItem = cityAutocomplete.querySelector('.city-autocomplete-item.active');
-    
-    if (activeItem) {
-        currentIndex = parseInt(activeItem.getAttribute('data-index'));
-    }
+  const items = cityAutocomplete.querySelectorAll(".city-autocomplete-item");
 
-    switch(e.key) {
-        case 'ArrowDown':
-            e.preventDefault();
-            currentIndex = (currentIndex + 1) % items.length;
-            highlightCityItem(items, currentIndex);
-            break;
-            
-        case 'ArrowUp':
-            e.preventDefault();
-            currentIndex = (currentIndex - 1 + items.length) % items.length;
-            highlightCityItem(items, currentIndex);
-            break;
-            
-        case 'Enter':
-            e.preventDefault();
-            if (currentIndex >= 0) {
-                items[currentIndex].click();
-            }
-            break;
-            
-        case 'Escape':
-            e.preventDefault();
-            closeCityAutocomplete();
-            break;
-    }
+  if (items.length === 0) {
+    return;
+  }
+
+  let currentIndex = -1;
+  const activeItem = cityAutocomplete.querySelector(
+    ".city-autocomplete-item.active"
+  );
+
+  if (activeItem) {
+    currentIndex = parseInt(activeItem.getAttribute("data-index"));
+  }
+
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      currentIndex = (currentIndex + 1) % items.length;
+      highlightCityItem(items, currentIndex);
+      break;
+
+    case "ArrowUp":
+      e.preventDefault();
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+      highlightCityItem(items, currentIndex);
+      break;
+
+    case "Enter":
+      e.preventDefault();
+      if (currentIndex >= 0) {
+        items[currentIndex].click();
+      }
+      break;
+
+    case "Escape":
+      e.preventDefault();
+      closeCityAutocomplete();
+      break;
+  }
 }
 
 /**
  * Highlight a specific city item in the dropdown
  */
 function highlightCityItem(items, index) {
-    items.forEach(item => item.classList.remove('active'));
-    items[index].classList.add('active');
-    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  items.forEach((item) => item.classList.remove("active"));
+  items[index].classList.add("active");
+  items[index].scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 /**
@@ -1813,31 +1756,35 @@ function highlightCityItem(items, index) {
  * CRITICAL FIX: This ensures city_id is populated when loading client data
  */
 async function loadCityIdForClient(cityName) {
-    if (!cityName || cityName.trim() === '') {
-        return;
+  if (!cityName || cityName.trim() === "") {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(
+        cityName
+      )}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    try {
-        const response = await fetch(
-            `${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(cityName)}`
+    const data = await response.json();
+
+    if (data.success && data.city_id) {
+      const selectedCityId = document.getElementById("selectedCityId");
+      if (selectedCityId) {
+        selectedCityId.value = data.city_id;
+        console.log(
+          `✓ City ID loaded: ${data.city_name} (ID: ${data.city_id})`
         );
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.city_id) {
-            const selectedCityId = document.getElementById('selectedCityId');
-            if (selectedCityId) {
-                selectedCityId.value = data.city_id;
-                console.log(`✓ City ID loaded: ${data.city_name} (ID: ${data.city_id})`);
-            }
-        } else {
-            console.log(`City not found in database: ${cityName}`);
-        }
-    } catch (error) {
-        console.warn('Error loading city ID:', error);
+      }
+    } else {
+      console.log(`City not found in database: ${cityName}`);
     }
+  } catch (error) {
+    console.warn("Error loading city ID:", error);
+  }
 }
