@@ -35,7 +35,7 @@ $menuItems = [
     
     ['id' => 'methods', 'label' => 'Test Methods', 'icon' => 'bi-funnel', 'url' => 'index.php?page=methods'],
     ['id' => 'pricing', 'label' => 'Pricing Management', 'icon' => 'bi-currency-dollar', 'url' => 'index.php?page=pricing'],
-    ['id' => 'samples', 'label' => 'Sample Records', 'icon' => 'bi-search', 'url' => 'index.php?page=samples'],
+    ['id' => 'samples', 'label' => 'Sample Records', 'icon' => 'bi-search', 'url' => 'index.php?page=sample-records-view'],
     
     ['id' => 'reports', 'label' => 'Reports & Analytics', 'icon' => 'bi-graph-up', 'submenu' => [
         ['id' => 'report-daily', 'label' => 'Daily Summary', 'url' => 'index.php?page=report-daily'],
