@@ -108,7 +108,8 @@ class SwabModel
     }
 
     /**
-     * Get parameters dropdown (only swab-enabled parameters WITHOUT existing swab_param records)
+     * ✅ CRITICAL: Get parameters dropdown (only swab-enabled parameters WITHOUT existing swab_param records)
+     * This query is CORRECT and will work properly after removing auto-creation logic from parameter-controller
      */
     public function getParametersDropdown()
     {

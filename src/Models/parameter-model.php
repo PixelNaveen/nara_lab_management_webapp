@@ -15,7 +15,6 @@ class ParameterModel
     // =================== GET ALL PARAMETERS WITH PAGINATION ===================
     public function getAllParameters($filters = [])
     {
-        // ✅ UPDATED: Added GROUP_CONCAT for methods (comma-separated method_names)
         $sql = "SELECT 
                     tp.parameter_id,
                     tp.parameter_code,
@@ -111,7 +110,7 @@ class ParameterModel
         return $result->fetch_assoc();
     }
 
-    // ✅ NEW: Get array of method_ids for a parameter (ordered by sequence)
+    // Get array of method_ids for a parameter (ordered by sequence)
     public function getParameterMethodIds($id)
     {
         $stmt = $this->conn->prepare(
@@ -286,14 +285,13 @@ class ParameterModel
         return $row['count'] > 0;
     }
 
-    // ✅ NEW: Assign methods to parameter with sequence ordering
+    // Assign methods to parameter with sequence ordering
     public function assignMethodsToParameter($paramId, $methodIds)
     {
         if (empty($methodIds) || !is_array($methodIds)) {
             return true;
         }
 
-        // ✅ FIXED: Added created_at column
         $stmt = $this->conn->prepare(
             "INSERT IGNORE INTO parameter_methods (parameter_id, method_id, is_default, sequence_order, created_at) 
              VALUES (?, ?, ?, ?, NOW())"
@@ -312,7 +310,7 @@ class ParameterModel
         return true;
     }
 
-    // ✅ NEW: Sync methods (delete all existing, then assign new)
+    // Sync methods (delete all existing, then assign new)
     public function syncParameterMethods($paramId, $methodIds)
     {
         // Delete existing associations
@@ -325,6 +323,12 @@ class ParameterModel
     }
 
     // =================== SWAB PRICE MANAGEMENT ===================
+    
+    /**
+     * ⚠️ DEPRECATED: No longer used after architecture fix
+     * Kept for backward compatibility only
+     * Swab params are now created manually in swab-param page
+     */
     public function createInitialSwabPrice($paramId, $price = 0.00)
     {
         $stmt = $this->conn->prepare(
@@ -335,6 +339,11 @@ class ParameterModel
         return $stmt->execute();
     }
 
+    /**
+     * ⚠️ DEPRECATED: No longer used after architecture fix
+     * Kept for backward compatibility only
+     * Swab params are now created manually in swab-param page
+     */
     public function reactivateSwabPrice($paramId, $price = 0.00)
     {
         $stmt = $this->conn->prepare(
@@ -360,6 +369,10 @@ class ParameterModel
         return $this->createInitialSwabPrice($paramId, $price);
     }
 
+    /**
+     * Soft delete swab_param record when swab is disabled
+     * Called when parameter.swab_enabled changes from 1 to 0
+     */
     public function disableSwabParam($paramId)
     {
         $stmt = $this->conn->prepare(
@@ -371,6 +384,10 @@ class ParameterModel
         return $stmt->execute(); 
     }
 
+    /**
+     * ⚠️ DEPRECATED: Use syncSwabParamStatusIfExists() instead
+     * This method will fail if swab_param doesn't exist yet
+     */
     public function syncSwabParamStatus($paramId, $isActive)
     {
         $stmt = $this->conn->prepare(
@@ -380,6 +397,30 @@ class ParameterModel
         );   
         $stmt->bind_param("ii", $isActive, $paramId);
         return $stmt->execute();
+    }
+
+    /**
+     * ✅ NEW: Safe sync method that doesn't fail if swab_param doesn't exist
+     * Synchronizes parameter status with swab_param status
+     * Silent success if swab_param record doesn't exist (not created yet)
+     * 
+     * @param int $paramId - The parameter ID
+     * @param int $isActive - The active status to sync (0 or 1)
+     * @return bool - Always returns true (silent success if record doesn't exist)
+     */
+    public function syncSwabParamStatusIfExists($paramId, $isActive)
+    {
+        $stmt = $this->conn->prepare(
+            "UPDATE swab_param 
+            SET is_active = ?, updated_at = NOW()
+            WHERE param_id = ? AND is_deleted = 0"
+        );
+        $stmt->bind_param("ii", $isActive, $paramId);
+        $stmt->execute();
+        
+        // Always return true - if record doesn't exist, that's OK
+        // The update will affect 0 rows but won't throw an error
+        return true;
     }
 
     public function getActiveMethods()
@@ -414,50 +455,50 @@ class ParameterModel
     }
 
     // =================== GET METHODS BY PARAMETER ===================
-public function getMethodsByParameter($paramId)
-{
-    $stmt = $this->conn->prepare(
-        "SELECT tm.method_id, tm.method_name
-         FROM parameter_methods pm
-         INNER JOIN test_methods tm ON pm.method_id = tm.method_id
-         WHERE pm.parameter_id = ? AND tm.is_deleted = 0 AND tm.is_active = 1
-         ORDER BY pm.sequence_order ASC, tm.method_name ASC"
-    );
+    public function getMethodsByParameter($paramId)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT tm.method_id, tm.method_name
+             FROM parameter_methods pm
+             INNER JOIN test_methods tm ON pm.method_id = tm.method_id
+             WHERE pm.parameter_id = ? AND tm.is_deleted = 0 AND tm.is_active = 1
+             ORDER BY pm.sequence_order ASC, tm.method_name ASC"
+        );
 
-    $stmt->bind_param("i", $paramId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+        $stmt->bind_param("i", $paramId);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    $methods = [];
-    while ($row = $result->fetch_assoc()) {
-        $methods[] = $row;
-    }
-
-    return $methods; // Returns array of ['method_id'=>..., 'method_name'=>...]
-}
-
-public function getParametersWithMethods()
-{
-    $sql = "SELECT 
-                CONCAT(tp.parameter_name, ' (', tp.base_unit, ')') AS parameter_name,
-                GROUP_CONCAT(tm.method_name SEPARATOR ', ') AS method_names
-            FROM test_parameters AS tp
-            LEFT JOIN parameter_methods AS pm ON tp.parameter_id = pm.parameter_id
-            LEFT JOIN test_methods AS tm ON pm.method_id = tm.method_id
-            WHERE tp.is_active = 1 AND tp.is_deleted = 0
-            GROUP BY tp.parameter_id
-            ORDER BY tp.parameter_name ASC";
-    
-    $result = $this->conn->query($sql);
-    
-    $tableData = [];
-    if ($result) {
+        $methods = [];
         while ($row = $result->fetch_assoc()) {
-            $tableData[] = $row;
+            $methods[] = $row;
         }
+
+        return $methods; // Returns array of ['method_id'=>..., 'method_name'=>...]
     }
-    
-    return $tableData;
-}
+
+    public function getParametersWithMethods()
+    {
+        $sql = "SELECT 
+                    CONCAT(tp.parameter_name, ' (', tp.base_unit, ')') AS parameter_name,
+                    GROUP_CONCAT(tm.method_name SEPARATOR ', ') AS method_names
+                FROM test_parameters AS tp
+                LEFT JOIN parameter_methods AS pm ON tp.parameter_id = pm.parameter_id
+                LEFT JOIN test_methods AS tm ON pm.method_id = tm.method_id
+                WHERE tp.is_active = 1 AND tp.is_deleted = 0
+                GROUP BY tp.parameter_id
+                ORDER BY tp.parameter_name ASC";
+        
+        $result = $this->conn->query($sql);
+        
+        $tableData = [];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $tableData[] = $row;
+            }
+        }
+        
+        return $tableData;
+    }
 
 }

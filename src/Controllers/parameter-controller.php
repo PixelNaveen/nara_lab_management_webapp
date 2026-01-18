@@ -54,7 +54,7 @@ try {
 
             $parameter = $model->getParameterById($id);
             if ($parameter) {
-                // UPDATED: Fetch method_ids instead of single method_id
+                // Fetch method_ids instead of single method_id
                 $parameter['method_ids'] = $model->getParameterMethodIds($id);
                 echo json_encode(['status' => 'success', 'data' => $parameter]);
             } else {
@@ -71,7 +71,7 @@ try {
             $swabPrice = isset($_POST['swab_price']) && $_POST['swab_price'] !== ''
                 ? floatval($_POST['swab_price']) : 0.00;
             $isActive = isset($_POST['is_active']) ? intval($_POST['is_active']) : 1;
-            // NEW: Handle array of method_ids
+            // Handle array of method_ids
             $methodIds = isset($_POST['method_ids']) && is_array($_POST['method_ids'])
                 ? array_filter(array_map('intval', $_POST['method_ids']))
                 : [];
@@ -85,7 +85,6 @@ try {
 
             if ($deletedRecord) {
                 // Reactivate
-                // UPDATED: Removed $methodId, pass array to sync methods separately
                 $result = $model->reactivateParameter(
                     $deletedRecord['parameter_id'],
                     $category,
@@ -97,18 +96,23 @@ try {
                 if ($result) {
                     $paramId = $deletedRecord['parameter_id'];
 
-                    // NEW: Sync methods on reactivation
+                    // Sync methods on reactivation
                     $model->syncParameterMethods($paramId, $methodIds);
 
-                    // Handle swab price on reactivation
+                    // ✅ FIX: Removed auto-creation of swab_param on reactivation
+                    // User must manually create swab pricing in swab-param page
+
+                    // Prepare response message
+                    $message = 'Parameter reactivated successfully';
                     if ($swabEnabled == 1) {
-                        $model->reactivateSwabPrice($paramId, $swabPrice);
+                        $message .= '. Swab pricing enabled - please set the price in Swab Parameter page.';
                     }
 
                     echo json_encode([
                         'status' => 'success',
-                        'message' => 'Parameter reactivated successfully',
-                        'parameter_id' => $paramId
+                        'message' => $message,
+                        'parameter_id' => $paramId,
+                        'swab_enabled' => $swabEnabled
                     ]);
                 } else {
                     throw new Exception('Failed to reactivate parameter');
@@ -119,23 +123,27 @@ try {
                     throw new Exception('Parameter with this name already exists');
                 }
 
-                // Insert new
-                // UPDATED: Removed $methodId from insertParameter
+                // Insert new parameter
                 $paramId = $model->insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive);
 
                 if ($paramId) {
-                    // NEW: Assign methods
+                    // Assign methods
                     $model->assignMethodsToParameter($paramId, $methodIds);
 
-                    // Create initial swab price if enabled
+                    // ✅ FIX: Removed auto-creation of swab_param on new parameter
+                    // User must manually create swab pricing in swab-param page
+
+                    // Prepare response message
+                    $message = 'Parameter added successfully';
                     if ($swabEnabled == 1) {
-                        $model->createInitialSwabPrice($paramId, $swabPrice);
+                        $message .= '. Swab pricing enabled - please set the price in Swab Parameter page.';
                     }
 
                     echo json_encode([
                         'status' => 'success',
-                        'message' => 'Parameter added successfully',
-                        'parameter_id' => $paramId
+                        'message' => $message,
+                        'parameter_id' => $paramId,
+                        'swab_enabled' => $swabEnabled
                     ]);
                 } else {
                     throw new Exception('Failed to insert parameter');
@@ -143,7 +151,6 @@ try {
             }
             break;
 
-        // ========== UPDATE ==========
         // ========== UPDATE ==========
         case 'update':
             $id = intval($_POST['parameter_id'] ?? 0);
@@ -204,23 +211,33 @@ try {
             }
 
             // Get previous swab status
-            $wasSwabEnabled = $currentParam['swab_enabled'];
+            $wasSwabEnabled = intval($currentParam['swab_enabled']);
 
             // Perform update
             if ($model->updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)) {
                 // Sync methods
                 $model->syncParameterMethods($id, $methodIds);
 
-                // Handle swab changes
+                // Handle swab status changes
                 if ($swabEnabled == 1 && $wasSwabEnabled == 0) {
-                    $model->createInitialSwabPrice($id, 0.00);
+                    // ✅ FIX: Removed auto-creation when enabling swab
+                    // User must manually create swab pricing in swab-param page
+                    
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Parameter updated successfully. Swab pricing enabled - please set the price in Swab Parameter page.',
+                        'swab_enabled_changed' => true
+                    ]);
+                    exit;
+                    
                 } elseif ($swabEnabled == 0 && $wasSwabEnabled == 1) {
+                    // When disabling swab, soft-delete the swab_param record
                     $model->disableSwabParam($id);
                 }
 
-                // Sync swab active status
+                // ✅ FIX: Use safe sync method that doesn't fail if swab_param doesn't exist
                 if ($swabEnabled == 1) {
-                    $model->syncSwabParamStatus($id, $isActive);
+                    $model->syncSwabParamStatusIfExists($id, $isActive);
                 }
 
                 echo json_encode([
@@ -231,7 +248,6 @@ try {
                 throw new Exception('Failed to update parameter');
             }
             break;
-
 
         // ========== DELETE ==========
         case 'delete':
@@ -249,6 +265,7 @@ try {
             }
 
             if ($model->softDeleteParameter($id)) {
+                // Soft-delete associated swab_param if exists
                 $model->disableSwabParam($id);
 
                 echo json_encode([
@@ -270,7 +287,8 @@ try {
             }
 
             if ($model->toggleStatus($id, $isActive)) {
-                $model->syncSwabParamStatus($id, $isActive);
+                // ✅ FIX: Use safe sync method that doesn't fail if swab_param doesn't exist
+                $model->syncSwabParamStatusIfExists($id, $isActive);
 
                 echo json_encode([
                     'status' => 'success',
@@ -288,6 +306,7 @@ try {
                 'data' => $methods
             ]);
             break;
+
         case 'fetchTableView':
             try {
                 $tableData = $model->getParametersWithMethods();
@@ -303,6 +322,7 @@ try {
                 ]);
             }
             break;
+
         default:
             echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
