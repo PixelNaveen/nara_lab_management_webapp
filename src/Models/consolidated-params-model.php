@@ -1,14 +1,12 @@
 <?php
 /**
- * Consolidated Parameters Model
- * Gets ALL base parameters (merges Food/Water/Ice variants)
- * NOT LIMITED TO 13 - returns all parameters dynamically
+ * Consolidated Parameters Model - CORRECTED VERSION
+ * Based on working uni.php approach
  * 
- * CORRECTED: Methods separator is COMMA + SPACE (not /)
+ * KEY FIX: Uses EN-DASH (–) not hyphen or em-dash
+ * Returns 13 consolidated parameters
  * 
- * @package LabManagementSystem
- * @subpackage Models
- * @version 2.0 - Corrected
+ * @version 5.0 - CORRECTED (Based on uni.php)
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
@@ -24,83 +22,90 @@ class ConsolidatedParamsModel
     }
 
     /**
-     * Get ALL consolidated parameters with methods
-     * Returns ALL rows dynamically (not limited to 13)
-     * 
-     * CORRECTED: Methods separated by COMMA + SPACE (not /)
-     * 
-     * @return array Array of [parameter_name, methods]
+     * Get ALL consolidated parameters
+     * CORRECTED: Uses EN-DASH (–) character exactly as uni.php does
+     * Returns 13 unique consolidated parameters
      */
     public function getAllConsolidatedParams()
     {
         try {
-            // UNIVERSAL QUERY - Works with ANY delimiter (–, -, etc.)
-            // Automatically detects and extracts base parameter name
+            // ========================================
+            // EXACT APPROACH FROM uni.php
+            // Uses EN-DASH (–) character
+            // ========================================
             $sql = "SELECT 
+                        -- Show parameter with variants if they exist
                         CASE 
                             WHEN variant_list IS NOT NULL AND variant_list != '' 
                             THEN CONCAT(base_name, ' (', variant_list, ')')
                             ELSE base_name
                         END AS parameter_name,
                         
-                        -- CORRECTED: Methods separated by COMMA + SPACE
+                        -- Methods separated by ', ' (comma-space)
                         GROUP_CONCAT(
                             DISTINCT tm.method_name 
                             ORDER BY tm.method_name 
                             SEPARATOR ', '
                         ) AS methods
-
+                    
                     FROM (
+                        -- Extract base parameter name
                         SELECT 
                             tp.parameter_id,
                             CASE
-                                -- Automatically extracts base parameter name
-                                -- Handles: 'Food – Coliforms' → 'Coliforms'
-                                --          'Water and Ice – E. coli' → 'E. coli'
-                                --          'Soil – ABC' → 'ABC' (future-proof)
+                                -- ✅ CRITICAL: Using EN-DASH (–) exactly as uni.php
                                 WHEN LOCATE('–', tp.parameter_name) > 0 
-                                THEN TRIM(SUBSTRING(tp.parameter_name, LOCATE('–', tp.parameter_name) + 3))
+                                THEN TRIM(SUBSTRING(tp.parameter_name, LOCATE('–', tp.parameter_name) + 1))
+                                
+                                -- Otherwise use full name
                                 ELSE tp.parameter_name
                             END AS base_name
+                            
                         FROM test_parameters tp
-                        WHERE tp.is_active = 1 AND tp.is_deleted = 0
+                        WHERE tp.is_active = 1 
+                          AND tp.is_deleted = 0
                     ) AS base_params
-
+                    
                     LEFT JOIN parameter_methods pm ON base_params.parameter_id = pm.parameter_id
                     
                     LEFT JOIN test_methods tm ON pm.method_id = tm.method_id 
                         AND tm.is_active = 1 
                         AND tm.is_deleted = 0
                     
+                    -- Get variants for each base parameter
                     LEFT JOIN (
-                        -- Get variants for each base parameter
                         SELECT 
                             CASE
-                                WHEN LOCATE('–', tp3.parameter_name) > 0 
-                                THEN TRIM(SUBSTRING(tp3.parameter_name, LOCATE('–', tp3.parameter_name) + 3))
-                                ELSE tp3.parameter_name
+                                -- ✅ Same EN-DASH extraction for variants
+                                WHEN LOCATE('–', tp_var.parameter_name) > 0 
+                                THEN TRIM(SUBSTRING(tp_var.parameter_name, LOCATE('–', tp_var.parameter_name) + 1))
+                                ELSE tp_var.parameter_name
                             END AS base_key,
                             GROUP_CONCAT(
                                 DISTINCT pv.variant_name 
                                 ORDER BY pv.variant_name 
                                 SEPARATOR ', '
                             ) AS variant_list
-                        FROM test_parameters tp3
-                        LEFT JOIN parameter_variants pv ON tp3.parameter_id = pv.parameter_id 
+                        FROM test_parameters tp_var
+                        LEFT JOIN parameter_variants pv ON tp_var.parameter_id = pv.parameter_id 
                             AND pv.is_active = 1 
                             AND pv.is_deleted = 0
-                        WHERE tp3.is_active = 1 
-                          AND tp3.is_deleted = 0
+                        WHERE tp_var.is_active = 1 
+                          AND tp_var.is_deleted = 0
                         GROUP BY base_key
                     ) AS variants ON base_params.base_name = variants.base_key
-
-                    GROUP BY base_name, variant_list, base_params.parameter_id
-
-                    ORDER BY MIN(base_params.parameter_id) ASC";
+                    
+                    GROUP BY base_name, variant_list
+                    
+                    ORDER BY base_name ASC";
             
             $result = $this->conn->query($sql);
+            
+            if (!$result) {
+                throw new Exception("Query failed: " . $this->conn->error);
+            }
+            
             $params = [];
-
             while ($row = $result->fetch_assoc()) {
                 $params[] = [
                     'parameter_name' => $row['parameter_name'] ?? '',
@@ -118,15 +123,12 @@ class ConsolidatedParamsModel
 
     /**
      * Get selected parameters for a sample (for highlighting in AIF)
-     * Returns array of BASE parameter names (without Food/Water prefix)
-     * 
-     * @param int $sampleId Sample ID
-     * @return array Array of selected parameter base names
+     * Returns base parameter names
      */
     public function getSelectedParamsForSample($sampleId)
     {
         try {
-            $sql = "SELECT DISTINCT tp.parameter_id, tp.parameter_name
+            $sql = "SELECT DISTINCT tp.parameter_name
                     FROM sample_items si
                     INNER JOIN sample_item_parameters sip ON si.sample_item_id = sip.sample_item_id
                     INNER JOIN test_parameters tp ON sip.parameter_id = tp.parameter_id
@@ -141,12 +143,14 @@ class ConsolidatedParamsModel
 
             $selected = [];
             while ($row = $result->fetch_assoc()) {
-                // Extract base name for matching
-                $baseName = $row['parameter_name'];
+                $paramName = $row['parameter_name'];
                 
-                // Remove prefix if exists (Food, Water and Ice, etc.)
-                if (strpos($baseName, '–') !== false) {
-                    $baseName = trim(substr($baseName, strpos($baseName, '–') + strlen('–')));
+                // Extract base name using same EN-DASH approach
+                if (strpos($paramName, '–') !== false) {
+                    $position = strpos($paramName, '–');
+                    $baseName = trim(substr($paramName, $position + 1));
+                } else {
+                    $baseName = $paramName;
                 }
                 
                 $selected[] = $baseName;
