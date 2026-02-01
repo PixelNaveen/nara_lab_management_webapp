@@ -1,15 +1,17 @@
 <?php
 /**
- * Forms Carousel Modal - COMPLETELY FIXED VERSION 4.0
+ * Forms Carousel Modal - PROFESSIONAL VERSION 5.0
  * 
- * FIXES:
- * - Proper @page size for print
- * - Each form prints as 1 page
- * - Correct page breaks
- * - No stuck carousel after print
- * - A4 sizing enforced
+ * CHANGES:
+ * - Removed 2-up printing (always 1 form = 1 page)
+ * - Removed form selection checkboxes
+ * - Removed download button
+ * - Professional blue theme (manage-param.css colors)
+ * - Smaller carousel buttons
+ * - Modern clean UI
+ * - Simplified print (all forms, user selects in print dialog)
  * 
- * @version 4.0 - ALL ISSUES FIXED
+ * @version 5.0 - PROFESSIONAL REDESIGN
  */
 
 if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
@@ -22,118 +24,133 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample Forms - <?= $sampleId ?></title>
-    
+    <title>Sample Forms </title> 
+    <!-- - <?= $sampleCode ?> -->
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- html2pdf library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* ===================================
+           CSS VARIABLES (manage-param.css)
+           =================================== */
+        :root {
+            --primary-blue: #1e3a8a;
+            --primary-blue-dark: #1e40af;
+            --primary-blue-light: #3b82f6;
+            --success-green: #16a34a;
+            --light-gray: #f8f9fa;
+            --border-color: #e2e8f0;
+            --text-dark: #1e293b;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
+        html {
+            background: #ffffff;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Poppins', sans-serif;
+            background: #ffffff;
             min-height: 100vh;
-            padding: 15px;
             overflow-y: auto;
         }
         
-        /* Modal Container */
+        /* ===================================
+           MODAL CONTAINER
+           =================================== */
         .modal-container {
-            max-width: 1400px;
             width: 100%;
+            height: 100vh;
             margin: 0 auto;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: visible;
-        }
+            display: flex;
+            flex-direction: column;
+border-radius: 8px 8px 0 0;        }
         
-        /* Header */
+        /* ===================================
+           HEADER (Professional Blue)
+           =================================== */
         .modal-header-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
             color: white;
-            padding: 20px 30px;
+            padding: 18px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 16px 16px 0 0;
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2);
+            flex-shrink: 0;
+            border-radius: 8px 8px 0 0;
         }
         
         .modal-header-custom h2 {
             margin: 0;
-            font-size: 22px;
+            font-size: 1.2rem;
             font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .btn-print-all {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-print-all:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-1px);
         }
         
         .btn-close-modal {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.15);
             color: white;
-            border: 2px solid white;
-            padding: 8px 20px;
-            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 6px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.3s;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
         }
         
         .btn-close-modal:hover {
             background: white;
-            color: #667eea;
+            color: var(--primary-blue);
+            border-color: white;
+            transform: translateY(-1px);
         }
         
-        /* Form Selection */
-        .form-selection {
-            display: flex;
-            gap: 15px;
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .form-selection label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 12px 24px;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            transition: all 0.3s;
-            font-weight: 500;
-            font-size: 15px;
-        }
-        
-        .form-selection label:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .form-selection input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #667eea;
-        }
-        
-        /* Carousel Container */
+        /* ===================================
+           CAROUSEL CONTAINER
+           =================================== */
         .carousel-container {
+            flex: 1;
             padding: 40px 20px;
             background: #ffffff;
-            min-height: 900px;
-            max-height: 1200px;
             position: relative;
             display: flex;
             align-items: flex-start;
@@ -149,152 +166,140 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
         }
         
         .carousel-item {
-            padding: 20px 60px;
+            padding: 20px 80px;
             min-height: 850px;
         }
         
-        /* Form containers */
+        /* ===================================
+           FORM CONTAINERS
+           =================================== */
         .carousel-item .form-container {
             width: 210mm;
             margin: 0 auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             background: white;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
             height: auto !important;
             min-height: auto !important;
         }
         
-        /* Carousel Controls */
+        /* ===================================
+           CAROUSEL CONTROLS (Smaller Blue)
+           =================================== */
         .carousel-control-prev,
         .carousel-control-next {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            width: 45px;  /* ✅ Reduced from 70px */
+            height: 45px; /* ✅ Reduced from 70px */
+            background: var(--primary-blue) !important;
             border-radius: 50%;
-            opacity: 1 !important;
-            transition: all 0.3s;
+            opacity: 0.9 !important;
+            transition: all 0.2s ease-in-out;
             top: 50%;
             transform: translateY(-50%);
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25);
         }
         
         .carousel-control-prev {
-            left: 15px;
+            left: 20px;
         }
         
         .carousel-control-next {
-            right: 15px;
+            right: 20px;
         }
         
         .carousel-control-prev:hover,
         .carousel-control-next:hover {
-            transform: translateY(-50%) scale(1.15);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            background: var(--primary-blue-dark) !important;
+            opacity: 1 !important;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
         }
         
         .carousel-control-prev-icon,
         .carousel-control-next-icon {
-            width: 35px;
-            height: 35px;
+            width: 22px;  /* ✅ Reduced from 35px */
+            height: 22px; /* ✅ Reduced from 35px */
         }
         
-        /* Indicators */
+        /* ===================================
+           CAROUSEL INDICATORS (Blue)
+           =================================== */
         .carousel-indicators {
             bottom: 20px;
             margin-bottom: 0;
             z-index: 15;
+            
         }
         
         .carousel-indicators [data-bs-target] {
-            width: 14px;
-            height: 14px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background-color: #ccc;
+            background-color: #cbd5e1;
             border: none;
-            margin: 0 8px;
-            transition: all 0.4s;
-            opacity: 1;
+            margin: 0 5px;
+            transition: all 0.3s ease-in-out;
+            opacity: 0.6;
+        }
+        
+        .carousel-indicators [data-bs-target]:hover {
+            opacity: 0.9;
+            transform: scale(1.2);
         }
         
         .carousel-indicators .active {
-            width: 50px;
-            border-radius: 7px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 32px;
+            border-radius: 5px;
+            background: var(--primary-blue);
+            opacity: 1;
         }
         
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            padding: 30px;
-            background: #f8f9fa;
-            border-top: 2px solid #e0e0e0;
-            border-radius: 0 0 16px 16px;
-        }
-        
-        .action-buttons button {
-            padding: 16px 40px;
-            font-size: 17px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-width: 250px;
-        }
-        
-        .btn-print {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .btn-print:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-download {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-        }
-        
-        .btn-download:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(17, 153, 142, 0.4);
-        }
-        
-        /* Responsive */
+        /* ===================================
+           RESPONSIVE DESIGN
+           =================================== */
         @media (max-width: 768px) {
             .carousel-item {
                 padding: 20px 10px;
             }
             
-            .form-selection {
-                flex-direction: column;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .action-buttons button {
-                width: 100%;
-                min-width: auto;
+            .carousel-control-prev,
+            .carousel-control-next {
+                width: 40px;
+                height: 40px;
             }
             
             .carousel-control-prev {
-                left: 5px;
+                left: 10px;
             }
             
             .carousel-control-next {
-                right: 5px;
+                right: 10px;
+            }
+            
+            .modal-header-custom {
+                padding: 15px 20px;
+            }
+            
+            .modal-header-custom h2 {
+                font-size: 1rem;
+            }
+            
+            .header-actions {
+                gap: 8px;
+            }
+            
+            .btn-print-all,
+            .btn-close-modal {
+                padding: 6px 12px;
+                font-size: 0.85rem;
             }
         }
         
-        /* ====================================
-           CRITICAL PRINT STYLES - ALL FIXES
-           ==================================== */
+        /* ===================================
+           PRINT STYLES
+           =================================== */
         @media print {
-            /* Define A4 page size */
             @page {
                 size: A4 portrait;
                 margin: 10mm;
@@ -305,19 +310,18 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
                 print-color-adjust: exact !important;
             }
             
-            body {
+            html, body {
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                height: auto !important;
             }
             
-            /* Hide all UI elements */
+            /* Hide UI elements */
             .modal-header-custom,
-            .form-selection,
             .carousel-control-prev,
             .carousel-control-next,
-            .carousel-indicators,
-            .action-buttons {
+            .carousel-indicators {
                 display: none !important;
                 visibility: hidden !important;
             }
@@ -328,6 +332,7 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
                 max-width: none !important;
                 width: 100% !important;
                 background: white !important;
+                height: auto !important;
             }
             
             .carousel-container {
@@ -344,7 +349,7 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
                 width: 100% !important;
             }
             
-            /* CRITICAL: Each carousel-item = 1 page */
+            /* Each form = 1 page */
             .carousel-item {
                 display: block !important;
                 page-break-after: always !important;
@@ -364,7 +369,7 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
                 page-break-after: auto !important;
             }
             
-            /* Ensure form containers fit A4 perfectly */
+            /* Form containers fit A4 */
             .carousel-item .form-container {
                 width: 210mm !important;
                 height: auto !important;
@@ -373,6 +378,7 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
                 margin: 0 !important;
                 padding: 6mm !important;
                 box-shadow: none !important;
+                border: none !important;
                 page-break-inside: avoid !important;
                 background: white !important;
             }
@@ -388,34 +394,26 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
     <div class="modal-container">
         <!-- Header -->
         <div class="modal-header-custom">
-            <h2>📋 Sample Forms - Sample ID: <?= $sampleId ?></h2>
-            <button class="btn-close-modal" onclick="window.close()">✕ Close</button>
+            <h2>📋 Sample Forms</h2>
+             <!-- - Sample ID: <?= $sampleCode ?> -->
+            <div class="header-actions">
+                <button class="btn-print-all" onclick="window.print()">
+                    🖨️ Print
+                </button>
+                <button class="btn-close-modal" onclick="window.close()">
+                    ✕ Close
+                </button>
+            </div>
         </div>
         
-        <!-- Form Selection Checkboxes -->
-        <div class="form-selection">
-            <label>
-                <input type="checkbox" id="selectSAF" checked>
-                <span>📄 Sample Acceptance Form</span>
-            </label>
-            <label>
-                <input type="checkbox" id="selectSAcF" checked>
-                <span>📋 Sample Acknowledgement Form</span>
-            </label>
-            <label>
-                <input type="checkbox" id="selectAIF" checked>
-                <span>🔬 Analyst Information Form</span>
-            </label>
-        </div>
-        
-        <!-- Bootstrap Carousel -->
+        <!-- Carousel -->
         <div class="carousel-container">
             <div id="formsCarousel" class="carousel slide" data-bs-ride="false">
                 <!-- Indicators -->
                 <div class="carousel-indicators">
-                    <button type="button" data-bs-target="#formsCarousel" data-bs-slide-to="0" class="active" aria-current="true"></button>
-                    <button type="button" data-bs-target="#formsCarousel" data-bs-slide-to="1"></button>
-                    <button type="button" data-bs-target="#formsCarousel" data-bs-slide-to="2"></button>
+                    <button type="button" data-bs-target="#formsCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="SAF"></button>
+                    <button type="button" data-bs-target="#formsCarousel" data-bs-slide-to="1" aria-label="SAcF"></button>
+                    <button type="button" data-bs-target="#formsCarousel" data-bs-slide-to="2" aria-label="AIF"></button>
                 </div>
                 
                 <!-- Slides -->
@@ -456,22 +454,11 @@ if (!isset($safData) || !isset($ackData) || !isset($analystData)) {
                 </button>
             </div>
         </div>
-        
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button class="btn-print" onclick="printSelected()">
-                🖨️ Print Selected Forms
-            </button>
-            <button class="btn-download" onclick="downloadSelectedPDF(<?= $sampleId ?>)">
-                📥 Download Selected as PDF
-            </button>
-        </div>
     </div>
     
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Forms Carousel JS -->
-    <script src="/public/assets/js/forms-carousel.js"></script>
+  
 </body>
 </html>
