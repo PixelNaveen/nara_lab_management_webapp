@@ -184,11 +184,11 @@ $pageHeight = $isCompact ? '148mm' : '297mm';
         
         /* ===== PARAMETER TABLE COLUMNS ===== */
         .test-col {
-            width: 58%;
+            width: 50%;
         }
         
         .standard-col {
-            width: 42%;
+            width: 50%;
             text-align: left;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -345,7 +345,7 @@ $pageHeight = $isCompact ? '148mm' : '297mm';
                     <strong>Total:</strong> Rs. <?= number_format($data['total_charges'], 2) ?>
                 </td>
                 <td class="content-cell">
-                    <strong>Receipt no:</strong> <?= htmlspecialchars($data['receipt_no']) ?>
+                    <strong>Receipt No:</strong> <?= htmlspecialchars($data['receipt_no']) ?>
                 </td>
             </tr>
             

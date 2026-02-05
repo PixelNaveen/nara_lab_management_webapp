@@ -59,8 +59,8 @@ function generateFormNumber($conn, $sampleCount)
             $updateStmt->execute();
         }
 
-        $baseNumber = sprintf("%02d/%04d", $yearShort, $sequenceNumber);
-        $fullFormNumber = sprintf("%s/%02d", $baseNumber, $sampleCount);
+        $baseNumber = sprintf("%02d/%03d", $yearShort, $sequenceNumber);
+        $fullFormNumber = sprintf("%s/%03d", $baseNumber, $sampleCount);
 
         return [
             'success' => true,
@@ -79,9 +79,9 @@ function generateFormNumber($conn, $sampleCount)
     }
 }
 
-function generateACReference($formNumber)
+function generateQCReference($formNumber)
 {
-    return 'AC/' . $formNumber;
+    return 'QC/' . $formNumber;
 }
 
 function getDefaultMethod($conn, $parameterId)

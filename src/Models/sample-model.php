@@ -515,7 +515,7 @@ class SampleModel
 
             $formNumber = $formGen['form_number'];
             $reportRef = $formGen['base_number'];
-            $acReference = generateACReference($formNumber);
+            $acReference = generateQCReference($formNumber);
 
             $sampleId = $this->insertSample($data, $formNumber, $reportRef);
 

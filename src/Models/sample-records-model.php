@@ -100,7 +100,8 @@ class SampleStatusModel
         }
 
         // Sorting by most recent first
-        $sql .= " ORDER BY s.received_date DESC, s.sample_id DESC LIMIT 500";
+        $sql .= " ORDER BY s.sample_id DESC LIMIT 500";
+        // $sql .= " ORDER BY s.received_date DESC, s.sample_id DESC LIMIT 500";
 
         $stmt = $this->conn->prepare($sql);
 

@@ -87,7 +87,7 @@ class AcknowledgementModel
             return [
                 'sample_id' => $row['sample_id'],
                 'form_number' => $row['form_number'],
-                'report_ref' => $row['report_ref'],
+                'report_ref' => $this->transformReportRef($row['report_ref']),
                 'client_name' => $row['client_name'],
                 'received_by' => $row['received_by'] ?? '',
                 'received_date' => $row['received_date'] ? date('d/m/Y', strtotime($row['received_date'])) : '',
@@ -181,5 +181,29 @@ class AcknowledgementModel
         }
 
         return $test;
+    }
+
+    /**
+     * Transform report reference from AC to QC format
+     * Ensures backward compatibility with existing AC/ records
+     */
+    private function transformReportRef($reportRef)
+    {
+        if (empty($reportRef)) {
+            return '';
+        }
+        
+        // If already QC format, return as-is
+        if (strpos($reportRef, 'QC/') === 0) {
+            return $reportRef;
+        }
+        
+        // If AC format, convert to QC
+        if (strpos($reportRef, 'AC/') === 0) {
+            return str_replace('AC/', 'QC/', $reportRef);
+        }
+        
+        // If no prefix, add QC
+        return 'QC/' . $reportRef;
     }
 }

@@ -485,6 +485,9 @@ async function createNewClient() {
       document.getElementById("originalContactPerson").value = document
         .getElementById("contactPerson")
         .value.trim();
+      document.getElementById("originalCity").value = document
+        .getElementById("city")
+        .value.trim();
 
       showToast("New client created successfully", "success");
       return true;

@@ -5,8 +5,8 @@
  * Version: 3.0 - ULTRA-FINAL (Database-Matched)
  * 
  * CORRECTED TO MATCH ACTUAL DATABASE:
- * - form_number format: YY/NNNN/SS (e.g., "25/0001/01")
- * - Base extraction: "25/0001" (4-digit sequence)
+ * - form_number format: YY/NNN/SSS (e.g., "25/0001/01")
+ * - Base extraction: "25/001" (3-digit sequence)
  * - Sample code generation: "25/0001/001", "25/0001/002", "25/0001/003" (3-digit)
  * 
  * DATABASE SCHEMA VERIFIED:
@@ -151,7 +151,7 @@ class SAFModel
                     $sequenceNumber = (int)$row['sequence_number'];
 
                     // Generate sample code from form_number + sequence
-                    // CORRECTED: Extracts base from "25/0001/01" → "25/0001"
+                    // CORRECTED: Extracts base from "25/0001/01" → "25/001"
                     // Then adds 3-digit sequence: "25/0001/001", "25/0001/002", etc.
                     $sampleCode = $this->generateSampleCode($row['form_number'], $sequenceNumber);
 
@@ -309,9 +309,9 @@ class SAFModel
             return ''; // Invalid format, return empty
         }
 
-        // Validate year part (2 digits)
-        if (strlen($parts[0]) !== 2 || !is_numeric($parts[0])) {
-            logError("Invalid year in form_number: $formNumber (expected 2 digits)", 'SAFModel::generateSampleCode');
+        // Validate year part (2-3 digits)
+        if (strlen($parts[0]) < 2 || strlen($parts[0]) > 3 || !is_numeric($parts[0])) {
+            logError("Invalid year in form_number: $formNumber (expected 2-3 digits)", 'SAFModel::generateSampleCode');
         }
 
         // Validate sequence part (4 digits as per database format)
@@ -320,8 +320,8 @@ class SAFModel
         }
 
         // Validate count part (2 digits as per database format)
-        if (strlen($parts[2]) !== 2 || !is_numeric($parts[2])) {
-            logError("Invalid count in form_number: $formNumber (expected 2 digits)", 'SAFModel::generateSampleCode');
+        if ((strlen($parts[2]) < 2 || strlen($parts[2]) > 3) || !is_numeric($parts[2])) {
+            logError("Invalid count in form_number: $formNumber (expected 2-3 digits)", 'SAFModel::generateSampleCode');
         }
 
         // Extract base: "25/0001" (year + sequence)

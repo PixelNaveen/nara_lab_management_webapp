@@ -298,7 +298,7 @@ if (!isset($data)) {
             <tr>
                 <td class="left-label">
                     <strong>Analysis to be started on:</strong><br>
-                    Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; by: _______________
+                    Date: <br/> By: _______________
                 </td>
                 <td class="right-content"></td>
             </tr>
@@ -325,10 +325,10 @@ if (!isset($data)) {
             <tr>
                 <td style="width: 38%;"><strong>Title: Analyst Information Form</strong></td>
                 <td style="width: 30%;"><strong>Doc No:</strong> QCm/AIF/01</td>
-                <td style="width: 32%;"><strong>Revision No:</strong> 06</td>
+                <td style="width: 32%;"><strong>Revision No:</strong> 07</td>
             </tr>
             <tr>
-                <td><strong>Date of Revision:</strong> 15/12/2020</td>
+                <td><strong>Date of Revision:</strong> 01/01/2026</td>
                 <td><strong>Reviewed by:</strong> DQM</td>
                 <td><strong>Approved by:</strong> QM &nbsp;&nbsp; <strong>Page:</strong> 1 of 1</td>
             </tr>

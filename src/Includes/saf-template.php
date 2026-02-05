@@ -80,7 +80,7 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                     <tr class="header-row">
                         <td style="width: 35%;">Received by: <?= htmlspecialchars($data['acceptance']['received_by']) ?></td>
                         <td style="width: 25%;">Date: <?= htmlspecialchars($data['acceptance']['date']) ?></td>
-                        <td style="width: 40%;">Time arrived at lab:</td>
+                        <td style="width: 40%;">Time arrived at the lab:</td>
                     </tr>
                     <tr class="header-row">
                         <td colspan="3">Client / address: <?= htmlspecialchars($data['client']['full_address']) ?></td>
@@ -111,7 +111,7 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
 
                     <!-- Payment Row -->
                     <tr class="payment-row">
-                        <td colspan="3" style="width: 60%;">
+                        <td colspan="2" style="width: 60%;">
                             Payment:
                             Test Charge: Rs.
                             <?= number_format($data['acknowledgement']['test_charges'], 2) ?>
@@ -119,12 +119,12 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                                 ? ' + ' . number_format($data['acknowledgement']['additional_charges'], 2)
                                 : '' ?>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            Total charge: Rs. <?= number_format($data['acknowledgement']['total_charges'], 2) ?>
+                            <br/>Total charge: Rs. <?= number_format($data['acknowledgement']['total_charges'], 2) ?>
                         </td>
                         <td colspan="2" style="width: 28%;">
                             Tentative date of issuing: <?= htmlspecialchars($data['acceptance']['tentative_date']) ?>
                         </td>
-                        <td style="width: 12%;">
+                        <td style="width: 12%;"colspan="3">
                             Test report reference number: <?= htmlspecialchars($data['acceptance']['report_ref']) ?>
                         </td>
                     </tr>
@@ -154,10 +154,10 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                     <tr>
                         <td colspan="2" style="width: 44%;"><strong>Title:</strong> Sample Acceptance Form</td>
                         <td style="width: 28%;"><strong>Doc No:</strong> QCm/SAF/01</td>
-                        <td style="width: 28%;"><strong>Revision No:</strong> 09</td>
+                        <td style="width: 28%;"><strong>Revision No:</strong> 10</td>
                     </tr>
                     <tr>
-                        <td style="width: 22%;"><strong>Date of Revision:</strong> 10/09/2014</td>
+                        <td style="width: 22%;"><strong>Date of Revision:</strong> 01/01/2026</td>
                         <td style="width: 22%;"><strong>Reviewed by:</strong> DQM</td>
                         <td style="width: 28%;"><strong>Approved by:</strong> QM</td>
                         <td style="width: 28%;"><strong>Page:</strong> <?= $currentPage ?> of <?= $totalPages ?></td>
