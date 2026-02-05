@@ -39,3 +39,6 @@
 [2026-02-03 05:41:39] [TotalValidation] Total mismatch - Frontend: Rs. 8750, Backend: Rs. 6375, Diff: Rs. 2375, Combos: 1
 [2026-02-03 05:59:49] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Water and Ice – Coliforms + Water and Ice – E. coli + Water and Ice – Faecal coliforms) | Individual: Rs. 7500 | Combo: Rs. 5125 | Savings: Rs. 2375 (31.7%)
 [2026-02-03 05:59:49] [TotalValidation] Total mismatch - Frontend: Rs. 7500, Backend: Rs. 5125, Diff: Rs. 2375, Combos: 1
+[2026-02-05 06:42:17] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Water and Ice – Coliforms + Water and Ice – E. coli + Water and Ice – Faecal coliforms) | Individual: Rs. 6250 | Combo: Rs. 3875 | Savings: Rs. 2375 (38%)
+[2026-02-05 06:42:17] [TotalValidation] Total mismatch - Frontend: Rs. 6250, Backend: Rs. 3875, Diff: Rs. 2375, Combos: 1
+[2026-02-05 06:42:23] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/008/001 (expected 4 digits)

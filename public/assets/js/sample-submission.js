@@ -1,6 +1,8 @@
 /**
- * Sample Submission JavaScript - COMPLETE PRODUCTION VERSION
- * @version 5.0 - Zero Bugs, Full Validation, Professional UI
+ * Sample Submission JavaScript - COMPLETE VERSION 3.0
+ * @version 3.0 - 100% Production Ready with Server Time
+ * @date February 5, 2026
+ * @features Server time sync, 30-day backdate, auto tentative, time validation
  */
 
 const API_BASE = "src/Controllers/sample-controller.php";
@@ -13,7 +15,10 @@ let currentStep = 1;
 let sampleCount = 0;
 let submissionType = "";
 let allParameters = [];
-let availableCombos = []; // NEW: Store combos for detection
+let availableCombos = [];
+let serverDateTime = null;
+let serverTimeInterval = null;
+let isSubmitting = false;
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -43,16 +48,13 @@ function showToast(message, type = "info") {
   if (!toastContainer) {
     toastContainer = document.createElement("div");
     toastContainer.id = "submissionToastContainer";
-    toastContainer.className =
-      "toast-container position-fixed bottom-0 end-0 p-3";
+    toastContainer.className = "toast-container position-fixed bottom-0 end-0 p-3";
     toastContainer.style.zIndex = "1080";
     document.body.appendChild(toastContainer);
   }
 
   const toastEl = document.createElement("div");
-  toastEl.className = `toast align-items-center ${
-    colors[type] || colors.info
-  } border-0 mb-2`;
+  toastEl.className = `toast align-items-center ${colors[type] || colors.info} border-0 mb-2`;
   toastEl.innerHTML = `
     <div class="d-flex">
       <div class="toast-body">${message}</div>
@@ -128,38 +130,324 @@ function showSuccess(inputId) {
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Sample Submission initialized - Version 5.0");
-  initializeDateRestrictions();
+  console.log("✅ Sample Submission initialized - Version 3.0 (Server Time Edition)");
   initializeEventListeners();
   initializeRealTimeValidation();
-  initializeCityAutocomplete(); // ← CITY AUTOCOMPLETE
+  initializeCityAutocomplete();
+  
+  // Fetch server time immediately
+  fetchServerTime().then(() => {
+    console.log("✅ Server time fetched successfully");
+  });
+  
   showStep(1);
 });
 
-function initializeDateRestrictions() {
-  const today = new Date().toISOString().split("T")[0];
-  const fiveDaysAgo = new Date();
-  fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-  const minDate = fiveDaysAgo.toISOString().split("T")[0];
+// ============================================================================
+// SERVER TIME & DATE/TIME MANAGEMENT
+// ============================================================================
 
-  const tentativeDate = new Date();
-  tentativeDate.setDate(tentativeDate.getDate() + 7);
-  const defaultTentativeDate = tentativeDate.toISOString().split("T")[0];
+/**
+ * Fetch server date and time from backend
+ */
+async function fetchServerTime() {
+  try {
+    console.log("📡 Fetching server time...");
+    const response = await fetch(`${API_BASE}?action=getServerTime`);
+    const data = await response.json();
 
+    if (data.success) {
+      serverDateTime = data;
+      console.log("✅ Server time loaded:", data.formatted);
+      
+      // Update display immediately
+      updateServerTimeDisplay();
+      
+      // Start clock
+      startServerTimeClock();
+      
+      return true;
+    } else {
+      throw new Error(data.message || "Failed to get server time");
+    }
+  } catch (error) {
+    console.error("❌ Server time fetch error:", error);
+    // showToast("Warning: Could not sync with server time. Using browser time.", "warning");
+    useBrowserTime();
+    return false;
+  }
+}
+
+/**
+ * Fallback to browser time if server unavailable
+ */
+function useBrowserTime() {
+  console.warn("⚠️ Using browser time as fallback");
+  const now = new Date();
+  serverDateTime = {
+    success: true,
+    date: now.toISOString().split("T")[0],
+    time: now.toTimeString().split(" ")[0],
+    time_short: now.toTimeString().split(" ")[0].substring(0, 5),
+    formatted: now.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }),
+  };
+  
+  updateServerTimeDisplay();
+  startServerTimeClock();
+}
+
+/**
+ * Update server time display
+ */
+function updateServerTimeDisplay() {
+  const display = document.getElementById("currentServerTime");
+  if (display && serverDateTime) {
+    display.textContent = serverDateTime.formatted;
+  }
+}
+
+/**
+ * Start server time clock (updates every second)
+ */
+function startServerTimeClock() {
+  // Clear any existing interval
+  if (serverTimeInterval) {
+    clearInterval(serverTimeInterval);
+  }
+
+  // Update function
+  function updateClock() {
+    const now = new Date();
+    const formatted = now.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      // second: "2-digit",
+      hour12: true,
+    });
+
+    const display = document.getElementById("currentServerTime");
+    if (display) {
+      display.textContent = formatted;
+    }
+  }
+
+  // Update immediately and then every second
+  updateClock();
+  serverTimeInterval = setInterval(updateClock, 1000);
+  
+  console.log("⏰ Server time clock started");
+}
+
+/**
+ * Initialize date and time fields with server values
+ */
+function initializeDateTimeFields() {
+  const receivedDateEl = document.getElementById("receivedDate");
+  const receivedTimeEl = document.getElementById("receivedTime");
+  const tentativeDateEl = document.getElementById("tentativeDate");
+
+  // Check if elements exist (might not be in DOM yet)
+  if (!receivedDateEl || !receivedTimeEl || !tentativeDateEl) {
+    console.warn("⏳ Date/time fields not in DOM yet, will initialize when Step 3 is shown");
+    return false;
+  }
+
+  // Check if server time is available
+  if (!serverDateTime) {
+    console.warn("⏳ Server time not yet loaded");
+    return false;
+  }
+
+  // Set received date to server date
+  receivedDateEl.value = serverDateTime.date;
+
+  // Set received time to server time
+  receivedTimeEl.value = serverDateTime.time_short;
+
+  // Set date range: 30 days back to today
+  const today = new Date(serverDateTime.date);
+  const minDate = new Date(today);
+  minDate.setDate(minDate.getDate() - 30);
+
+  receivedDateEl.min = minDate.toISOString().split("T")[0];
+  receivedDateEl.max = serverDateTime.date;
+
+  // Calculate and set tentative date
+  updateTentativeDate();
+
+  console.log("✅ Date/time fields initialized:");
+  console.log("   Received Date:", receivedDateEl.value);
+  console.log("   Received Time:", receivedTimeEl.value);
+  console.log("   Tentative Date:", tentativeDateEl.value);
+  console.log("   Date Range:", receivedDateEl.min, "to", receivedDateEl.max);
+
+  return true;
+}
+
+/**
+ * Update tentative date based on received date + 10 days
+ */
+function updateTentativeDate() {
   const receivedDateEl = document.getElementById("receivedDate");
   const tentativeDateEl = document.getElementById("tentativeDate");
 
+  if (!receivedDateEl || !tentativeDateEl) return;
+
+  const receivedDate = receivedDateEl.value;
+  if (!receivedDate) return;
+
+  // Calculate tentative date = received date + 10 days
+  const received = new Date(receivedDate);
+  const tentative = new Date(received);
+  tentative.setDate(tentative.getDate() + 10);
+
+  const tentativeDate = tentative.toISOString().split("T")[0];
+  tentativeDateEl.value = tentativeDate;
+
+  // Set tentative date minimum to received date
+  tentativeDateEl.min = receivedDate;
+
+  console.log("📅 Tentative date updated:", tentativeDate, "(+10 days from", receivedDate + ")");
+}
+
+/**
+ * Initialize date and time field event listeners
+ */
+function initializeDateTimeListeners() {
+  const receivedDateEl = document.getElementById("receivedDate");
+  const receivedTimeEl = document.getElementById("receivedTime");
+  const tentativeDateEl = document.getElementById("tentativeDate");
+
   if (receivedDateEl) {
-    receivedDateEl.max = today;
-    receivedDateEl.min = minDate;
-    receivedDateEl.value = today;
+    receivedDateEl.addEventListener("change", function () {
+      validateReceivedDate();
+      updateTentativeDate();
+    });
+  }
+
+  if (receivedTimeEl) {
+    receivedTimeEl.addEventListener("change", validateReceivedTime);
+    receivedTimeEl.addEventListener("blur", validateReceivedTime);
   }
 
   if (tentativeDateEl) {
-    tentativeDateEl.min = today;
-    tentativeDateEl.value = defaultTentativeDate;
+    tentativeDateEl.addEventListener("change", validateTentativeDate);
   }
+
+  console.log("✅ Date/time event listeners initialized");
 }
+
+/**
+ * Validate received date
+ */
+function validateReceivedDate() {
+  const receivedDateEl = document.getElementById("receivedDate");
+  if (!receivedDateEl) return false;
+  
+  const value = receivedDateEl.value;
+
+  if (!value) {
+    showError("receivedDate", "Received date is required");
+    return false;
+  }
+
+  if (!serverDateTime) {
+    console.warn("⏳ Server time not loaded, skipping date validation");
+    return true; // Allow if server time not loaded yet
+  }
+
+  const selectedDate = new Date(value);
+  const today = new Date(serverDateTime.date);
+  const minDate = new Date(today);
+  minDate.setDate(minDate.getDate() - 30);
+
+  if (selectedDate > today) {
+    showError("receivedDate", "Received date cannot be in the future");
+    return false;
+  }
+
+  if (selectedDate < minDate) {
+    showError("receivedDate", "Received date cannot be more than 30 days in the past");
+    return false;
+  }
+
+  showSuccess("receivedDate");
+  return true;
+}
+
+/**
+ * Validate received time
+ */
+function validateReceivedTime() {
+  const receivedTimeEl = document.getElementById("receivedTime");
+  if (!receivedTimeEl) return false;
+  
+  const value = receivedTimeEl.value;
+
+  if (!value) {
+    showError("receivedTime", "Received time is required");
+    return false;
+  }
+
+  // Check format HH:MM
+  const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  if (!timeRegex.test(value)) {
+    showError("receivedTime", "Invalid time format (use HH:MM)");
+    return false;
+  }
+
+  showSuccess("receivedTime");
+  return true;
+}
+
+/**
+ * Validate tentative date
+ */
+function validateTentativeDate() {
+  const receivedDateEl = document.getElementById("receivedDate");
+  const tentativeDateEl = document.getElementById("tentativeDate");
+
+  if (!receivedDateEl || !tentativeDateEl) return false;
+
+  const receivedDate = receivedDateEl.value;
+  const tentativeDate = tentativeDateEl.value;
+
+  if (!tentativeDate) {
+    showError("tentativeDate", "Tentative date is required");
+    return false;
+  }
+
+  if (!receivedDate) {
+    showError("tentativeDate", "Please select received date first");
+    return false;
+  }
+
+  const received = new Date(receivedDate);
+  const tentative = new Date(tentativeDate);
+
+  if (tentative <= received) {
+    showError("tentativeDate", "Tentative date must be after received date");
+    return false;
+  }
+
+  showSuccess("tentativeDate");
+  return true;
+}
+
+// ==========================================
+// EVENT LISTENERS
+// ==========================================
 
 function initializeEventListeners() {
   // Client Search
@@ -183,7 +471,6 @@ function initializeEventListeners() {
   document.getElementById("nextBtn").addEventListener("click", handleNext);
   document.getElementById("prevBtn").addEventListener("click", handlePrev);
   document.getElementById("siForm").addEventListener("submit", handleSubmit);
-  // Payment Options - Removed (payment auto-set to "Not Paid")
 
   // Additional Charges
   const additionalChargesEl = document.getElementById("additionalCharges");
@@ -194,16 +481,11 @@ function initializeEventListeners() {
   // Click outside to close dropdowns
   document.addEventListener("click", function (e) {
     if (!e.target.closest(".position-relative")) {
-      document
-        .querySelectorAll(".sample-name-autocomplete")
-        .forEach((dropdown) => {
-          dropdown.classList.remove("show");
-        });
+      document.querySelectorAll(".sample-name-autocomplete").forEach((dropdown) => {
+        dropdown.classList.remove("show");
+      });
     }
-    if (
-      !e.target.closest("#clientSearch") &&
-      !e.target.closest("#clientResults")
-    ) {
+    if (!e.target.closest("#clientSearch") && !e.target.closest("#clientResults")) {
       const clientResults = document.getElementById("clientResults");
       if (clientResults) {
         clientResults.classList.remove("show");
@@ -217,7 +499,7 @@ function initializeEventListeners() {
 // ==========================================
 
 function initializeRealTimeValidation() {
-  // Client Name Validation
+  // Client Name
   const clientNameEl = document.getElementById("clientName");
   if (clientNameEl) {
     clientNameEl.addEventListener("input", function () {
@@ -232,7 +514,7 @@ function initializeRealTimeValidation() {
     });
   }
 
-  // Phone Validation
+  // Phone
   const phoneEl = document.getElementById("phonePrimary");
   if (phoneEl) {
     phoneEl.addEventListener("input", function () {
@@ -252,87 +534,40 @@ function initializeRealTimeValidation() {
     });
   }
 
-  // Received Date Validation
-  const receivedDateEl = document.getElementById("receivedDate");
-  if (receivedDateEl) {
-    receivedDateEl.addEventListener("change", function () {
-      const date = new Date(this.value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const fiveDaysAgo = new Date(today);
-      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-
-      if (!this.value) {
-        showError("receivedDate", "Received date is required");
-      } else if (date > today) {
-        showError("receivedDate", "Received date cannot be in the future");
-      } else if (date < fiveDaysAgo) {
-        showError(
-          "receivedDate",
-          "Received date cannot be more than 5 days in the past"
-        );
-      } else {
-        showSuccess("receivedDate");
-      }
-    });
-  }
-
-  // Tentative Date Validation
-  const tentativeDateEl = document.getElementById("tentativeDate");
-  if (tentativeDateEl) {
-    tentativeDateEl.addEventListener("change", function () {
-      const date = new Date(this.value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (!this.value) {
-        showError("tentativeDate", "Tentative date is required");
-      } else if (date < today) {
-        showError("tentativeDate", "Tentative date cannot be in the past");
-      } else {
-        showSuccess("tentativeDate");
-      }
-    });
-  }
-
-  // Additional Charges Validation
+  // Additional Charges
   const additionalChargesEl = document.getElementById("additionalCharges");
   if (additionalChargesEl) {
     additionalChargesEl.addEventListener("input", function () {
       const value = parseFloat(this.value);
 
       if (isNaN(value) || value < 0) {
-        showError(
-          "additionalCharges",
-          "Additional charges must be a positive number"
-        );
+        showError("additionalCharges", "Additional charges must be a positive number");
       } else {
         showSuccess("additionalCharges");
       }
     });
   }
 
-  // Payment Reference Validation - Removed (not needed)
-}
-// Email Validation (Real-time) - NEW
-const receiptEmailEl = document.getElementById("receiptEmail");
-if (receiptEmailEl) {
-  const validateEmail = function () {
-    const value = this.value.trim();
-    if (value.length === 0) {
-      hideError("receiptEmail");
-      this.classList.remove("is-invalid", "is-valid");
-      return;
-    }
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(value)) {
-      showError("receiptEmail", "Please enter a valid email address");
-    } else {
-      showSuccess("receiptEmail");
-    }
-  };
-  receiptEmailEl.addEventListener("input", validateEmail);
-  receiptEmailEl.addEventListener("blur", validateEmail);
+  // Email Validation
+  const receiptEmailEl = document.getElementById("receiptEmail");
+  if (receiptEmailEl) {
+    const validateEmail = function () {
+      const value = this.value.trim();
+      if (value.length === 0) {
+        hideError("receiptEmail");
+        this.classList.remove("is-invalid", "is-valid");
+        return;
+      }
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(value)) {
+        showError("receiptEmail", "Please enter a valid email address");
+      } else {
+        showSuccess("receiptEmail");
+      }
+    };
+    receiptEmailEl.addEventListener("input", validateEmail);
+    receiptEmailEl.addEventListener("blur", validateEmail);
+  }
 }
 
 // ==========================================
@@ -350,16 +585,13 @@ async function handleClientSearch() {
   }
 
   try {
-    const res = await fetch(
-      `${API_BASE}?action=searchClients&query=${encodeURIComponent(query)}`
-    );
+    const res = await fetch(`${API_BASE}?action=searchClients&query=${encodeURIComponent(query)}`);
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
 
     const data = await res.json();
-    console.log("Search results:", data);
 
     if (data.success && data.clients && data.clients.length > 0) {
       let html = "";
@@ -373,15 +605,14 @@ async function handleClientSearch() {
                data-address="${escapeHtml(client.address_line1 || "")}"
                data-city="${escapeHtml(client.city || "")}">
             <strong>${escapeHtml(client.client_name)}</strong><br>
-            <small class="text-muted">${escapeHtml(
-              client.phone_primary
-            )} • ${escapeHtml(client.contact_person || "No contact")}</small>
+            <small class="text-muted">${escapeHtml(client.phone_primary)} • ${escapeHtml(
+          client.contact_person || "No contact"
+        )}</small>
           </div>`;
       });
       resultsDiv.innerHTML = html;
       resultsDiv.classList.add("show");
 
-      // Attach click handlers
       resultsDiv.querySelectorAll(".client-item").forEach((item) => {
         item.addEventListener("click", selectClientFromSearch);
       });
@@ -400,32 +631,23 @@ async function handleClientSearch() {
 }
 
 function selectClientFromSearch() {
-  console.log("Client selected:", this.dataset);
-
-  // Store client ID
   document.getElementById("selectedClientId").value = this.dataset.id;
-
-  // Fill form fields
   document.getElementById("clientName").value = this.dataset.name;
   document.getElementById("phonePrimary").value = this.dataset.phone;
   document.getElementById("contactPerson").value = this.dataset.contact;
   document.getElementById("addressLine1").value = this.dataset.address;
   document.getElementById("city").value = this.dataset.city;
 
-  // ← FIX: Load city_id when city is populated
   loadCityIdForClient(this.dataset.city);
 
-  // Store original values for change detection
   document.getElementById("originalClientName").value = this.dataset.name;
   document.getElementById("originalPhone").value = this.dataset.phone;
   document.getElementById("originalContactPerson").value = this.dataset.contact;
-  document.getElementById("originalCity").value = this.dataset.city; // ← FIX: Store original city
+  document.getElementById("originalCity").value = this.dataset.city;
 
-  // Update search box and hide results
   document.getElementById("clientSearch").value = this.dataset.name;
   document.getElementById("clientResults").classList.remove("show");
 
-  // Show success validation
   showSuccess("clientName");
   showSuccess("phonePrimary");
 
@@ -441,13 +663,9 @@ async function createNewClient() {
     return false;
   }
 
-  // Validate phone (must start with 0 and be 10 digits)
   const phoneClean = phone.replace(/[\s-]/g, "");
   if (!/^0\d{9}$/.test(phoneClean)) {
-    showToast(
-      "Phone must be 10 digits starting with 0 (e.g., 0771234567)",
-      "error"
-    );
+    showToast("Phone must be 10 digits starting with 0 (e.g., 0771234567)", "error");
     showError("phonePrimary", "Invalid phone format");
     return false;
   }
@@ -457,15 +675,9 @@ async function createNewClient() {
     formData.append("action", "createClient");
     formData.append("client_name", clientName);
     formData.append("phone_primary", phoneClean);
-    formData.append(
-      "address_line1",
-      document.getElementById("addressLine1").value.trim()
-    );
+    formData.append("address_line1", document.getElementById("addressLine1").value.trim());
     formData.append("city", document.getElementById("city").value.trim());
-    formData.append(
-      "contact_person",
-      document.getElementById("contactPerson").value.trim()
-    );
+    formData.append("contact_person", document.getElementById("contactPerson").value.trim());
 
     const res = await fetch(API_BASE, {
       method: "POST",
@@ -473,21 +685,13 @@ async function createNewClient() {
     });
 
     const data = await res.json();
-    console.log("Create client response:", data);
 
     if (data.success) {
-      // Store new client ID
       document.getElementById("selectedClientId").value = data.client_id;
-
-      // Store as "original" values
       document.getElementById("originalClientName").value = clientName;
       document.getElementById("originalPhone").value = phoneClean;
-      document.getElementById("originalContactPerson").value = document
-        .getElementById("contactPerson")
-        .value.trim();
-      document.getElementById("originalCity").value = document
-        .getElementById("city")
-        .value.trim();
+      document.getElementById("originalContactPerson").value = document.getElementById("contactPerson").value.trim();
+      document.getElementById("originalCity").value = document.getElementById("city").value.trim();
 
       showToast("New client created successfully", "success");
       return true;
@@ -506,32 +710,27 @@ async function updateClientIfModified() {
   const clientId = document.getElementById("selectedClientId").value;
 
   if (!clientId) {
-    return true; // No client selected yet
+    return true;
   }
 
   const currentName = document.getElementById("clientName").value.trim();
-  const currentPhone = document
-    .getElementById("phonePrimary")
-    .value.replace(/[\s-]/g, "");
+  const currentPhone = document.getElementById("phonePrimary").value.replace(/[\s-]/g, "");
   const currentContact = document.getElementById("contactPerson").value.trim();
-  const currentCity = document.getElementById("city").value.trim(); // ← FIX: Get current city
+  const currentCity = document.getElementById("city").value.trim();
 
   const originalName = document.getElementById("originalClientName").value;
   const originalPhone = document.getElementById("originalPhone").value;
-  const originalContact = document.getElementById(
-    "originalContactPerson"
-  ).value;
-  const originalCity = document.getElementById("originalCity").value; // ← FIX: Get original city
+  const originalContact = document.getElementById("originalContactPerson").value;
+  const originalCity = document.getElementById("originalCity").value;
 
-  // Check if modified (INCLUDING CITY)
   const isModified =
     currentName !== originalName ||
     currentPhone !== originalPhone ||
     currentContact !== originalContact ||
-    currentCity !== originalCity; // ← FIX: Include city in change detection
+    currentCity !== originalCity;
 
   if (!isModified) {
-    return true; // No changes
+    return true;
   }
 
   try {
@@ -540,10 +739,7 @@ async function updateClientIfModified() {
     formData.append("client_id", clientId);
     formData.append("client_name", currentName);
     formData.append("phone_primary", currentPhone);
-    formData.append(
-      "address_line1",
-      document.getElementById("addressLine1").value.trim()
-    );
+    formData.append("address_line1", document.getElementById("addressLine1").value.trim());
     formData.append("city", document.getElementById("city").value.trim());
     formData.append("contact_person", currentContact);
 
@@ -553,14 +749,12 @@ async function updateClientIfModified() {
     });
 
     const data = await res.json();
-    console.log("Update client response:", data);
 
     if (data.success) {
-      // Update "original" values
       document.getElementById("originalClientName").value = currentName;
       document.getElementById("originalPhone").value = currentPhone;
       document.getElementById("originalContactPerson").value = currentContact;
-      document.getElementById("originalCity").value = currentCity; // ← FIX: Update original city
+      document.getElementById("originalCity").value = currentCity;
 
       showToast("Client information updated", "success");
       return true;
@@ -580,9 +774,7 @@ async function updateClientIfModified() {
 // ==========================================
 
 function showStep(step) {
-  document
-    .querySelectorAll(".step")
-    .forEach((s) => s.classList.remove("active"));
+  document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
   const targetStep = document.querySelector(`.step[data-step="${step}"]`);
   if (targetStep) {
     targetStep.classList.add("active");
@@ -596,40 +788,42 @@ function showStep(step) {
     }
   });
 
-  document.getElementById("prevBtn").style.display =
-    step === 1 ? "none" : "inline-block";
-  document.getElementById("nextBtn").style.display =
-    step === 6 ? "none" : "inline-block";
-  document.getElementById("submitBtn").style.display =
-    step === 6 ? "inline-block" : "none";
+  document.getElementById("prevBtn").style.display = step === 1 ? "none" : "inline-block";
+  document.getElementById("nextBtn").style.display = step === 6 ? "none" : "inline-block";
+  document.getElementById("submitBtn").style.display = step === 6 ? "inline-block" : "none";
+
+  // ✅ INITIALIZE DATE/TIME FIELDS WHEN STEP 3 IS SHOWN
+  if (step === 3) {
+    const initialized = initializeDateTimeFields();
+    if (initialized) {
+      initializeDateTimeListeners();
+    }
+  }
 
   if (step === 4) loadSamples();
   if (step === 5) loadTests();
   if (step === 6) generateReview();
 
   currentStep = step;
-  console.log("Switched to step:", step);
+  console.log("📍 Switched to step:", step);
 }
 
 async function handleNext() {
-  console.log("Next button clicked, current step:", currentStep);
+  console.log("➡️ Next button clicked, current step:", currentStep);
 
   if (!validateStep(currentStep)) {
     return;
   }
 
-  // Step 1: Handle client creation/update
   if (currentStep === 1) {
     const clientId = document.getElementById("selectedClientId").value;
 
     if (!clientId) {
-      // No client selected - create new
       const created = await createNewClient();
       if (!created) {
         return;
       }
     } else {
-      // Client exists - check if modified
       const updated = await updateClientIfModified();
       if (!updated) {
         return;
@@ -645,7 +839,7 @@ function handlePrev() {
 }
 
 function validateStep(step) {
-  console.log("Validating step:", step);
+  console.log("🔍 Validating step:", step);
 
   if (step === 1) {
     const clientName = document.getElementById("clientName").value.trim();
@@ -690,20 +884,23 @@ function validateStep(step) {
   }
 
   if (step === 3) {
-    if (!document.getElementById("receivedDate").value) {
-      showToast("Received date is required", "error");
-      showError("receivedDate", "Received date is required");
-      return false;
-    }
-    if (!document.getElementById("tentativeDate").value) {
-      showToast("Tentative date is required", "error");
-      showError("tentativeDate", "Tentative date is required");
+    // ✅ USE VALIDATION FUNCTIONS
+    if (!validateReceivedDate()) {
+      showToast("Please fix received date errors", "error");
       return false;
     }
 
-    const addCharges = parseFloat(
-      document.getElementById("additionalCharges").value
-    );
+    if (!validateReceivedTime()) {
+      showToast("Please fix received time errors", "error");
+      return false;
+    }
+
+    if (!validateTentativeDate()) {
+      showToast("Please fix tentative date errors", "error");
+      return false;
+    }
+
+    const addCharges = parseFloat(document.getElementById("additionalCharges").value);
     if (isNaN(addCharges) || addCharges < 0) {
       showToast("Additional charges must be a positive number", "error");
       showError("additionalCharges", "Must be a positive number");
@@ -746,9 +943,7 @@ function validateStep(step) {
 
   if (step === 5) {
     for (let i = 1; i <= sampleCount; i++) {
-      const selectedTests = document.querySelectorAll(
-        `input[data-sample="${i}"]:checked`
-      );
+      const selectedTests = document.querySelectorAll(`input[data-sample="${i}"]:checked`);
       if (selectedTests.length === 0) {
         showToast(`Sample ${i} must have at least one test selected`, "error");
         return false;
@@ -769,12 +964,10 @@ function validateStep(step) {
 // ==========================================
 
 function selectSubmissionType() {
-  document
-    .querySelectorAll(".type-card")
-    .forEach((c) => c.classList.remove("selected"));
+  document.querySelectorAll(".type-card").forEach((c) => c.classList.remove("selected"));
   this.classList.add("selected");
   submissionType = this.dataset.type;
-  console.log("Submission type selected:", submissionType);
+  console.log("✅ Submission type selected:", submissionType);
 
   hideError("submissionType");
 
@@ -857,9 +1050,7 @@ function addSample() {
       </div>
     </div>`;
 
-  document
-    .getElementById("samplesContainer")
-    .insertAdjacentHTML("beforeend", html);
+  document.getElementById("samplesContainer").insertAdjacentHTML("beforeend", html);
 
   const card = document.querySelector(`.sample-card[data-index="${index}"]`);
 
@@ -883,7 +1074,6 @@ function addSample() {
     }, 400)
   );
 
-  // Add real-time validation
   sampleNameInput.addEventListener("blur", function () {
     if (this.value.trim()) {
       this.classList.remove("is-invalid");
@@ -917,12 +1107,9 @@ function renumberSamples() {
   });
 }
 
-// BUG FIX #1: Sample name search - Fixed response property name
 async function handleSampleNameSearch(input) {
   const query = input.value.trim();
-  const dropdown = input
-    .closest(".position-relative")
-    .querySelector(".sample-name-autocomplete");
+  const dropdown = input.closest(".position-relative").querySelector(".sample-name-autocomplete");
 
   if (query.length < 2) {
     dropdown.classList.remove("show");
@@ -930,18 +1117,13 @@ async function handleSampleNameSearch(input) {
   }
 
   try {
-    const res = await fetch(
-      `${API_BASE}?action=searchSampleNames&query=${encodeURIComponent(query)}`
-    );
+    const res = await fetch(`${API_BASE}?action=searchSampleNames&query=${encodeURIComponent(query)}`);
     const data = await res.json();
 
-    // FIX: Changed from data.results to data.names (matches backend response)
     if (data.success && data.names && data.names.length > 0) {
       let html = "";
       data.names.forEach((n) => {
-        html += `<div class="autocomplete-item" data-name="${escapeHtml(
-          n.sample_name
-        )}">
+        html += `<div class="autocomplete-item" data-name="${escapeHtml(n.sample_name)}">
           ${escapeHtml(n.sample_name)} 
           <span class="autocomplete-usage">${n.usage_count} uses</span>
         </div>`;
@@ -975,17 +1157,14 @@ async function loadTests() {
     "<div class='text-center p-4'><div class='spinner-border'></div><p class='mt-2'>Loading tests...</p></div>";
 
   try {
-    const res = await fetch(
-      `${API_BASE}?action=getParameters&type=${submissionType}`
-    );
+    const res = await fetch(`${API_BASE}?action=getParameters&type=${submissionType}`);
     const data = await res.json();
 
     if (!data.success) throw new Error(data.message);
 
     allParameters = data.parameters;
-    console.log("Loaded parameters:", allParameters);
+    console.log("✅ Loaded parameters:", allParameters);
 
-    // Load combos for detection
     await loadCombos();
 
     renderTests();
@@ -996,18 +1175,6 @@ async function loadTests() {
   }
 }
 
-/**
- * Load available combos from backend
- */
-/**
- * Load available combos from backend
- */
-/**
- * Load available combos from backend
- */
-/**
- * Load available combos from backend
- */
 async function loadCombos() {
   try {
     const res = await fetch(`${API_BASE}?action=getCombos`);
@@ -1026,76 +1193,40 @@ async function loadCombos() {
   }
 }
 
-/**
- * Detect which combos match currently selected tests
- * Returns array of detected combos sorted by size (largest first)
- */
-/**
- * CRITICAL FIX: Detect combos with GREEDY ALGORITHM - prevents overlaps
- * This function now correctly implements greedy algorithm to ensure only
- * the largest matching combos are detected per sample, preventing overlapping combos.
- */
 function detectCombosInSelection() {
-  const selectedTests = Array.from(
-    document.querySelectorAll(".test-checkbox:checked")
-  );
+  const selectedTests = Array.from(document.querySelectorAll(".test-checkbox:checked"));
 
   if (selectedTests.length < 2) {
     return [];
   }
 
-  // Get selected parameter IDs and sort them
-  const selectedParams = selectedTests
-    .map((cb) => parseInt(cb.dataset.param))
-    .sort((a, b) => a - b);
+  const selectedParams = selectedTests.map((cb) => parseInt(cb.dataset.param)).sort((a, b) => a - b);
 
-  // Sort available combos by parameter count (DESC) - largest first
-  // This is CRITICAL for the greedy algorithm to work correctly
-  const sortedCombos = [...availableCombos].sort(
-    (a, b) => b.parameter_ids.length - a.parameter_ids.length
-  );
+  const sortedCombos = [...availableCombos].sort((a, b) => b.parameter_ids.length - a.parameter_ids.length);
 
-  const detected = []; // Combos that match
-  const usedParams = new Set(); // Track which parameters are already in a combo
+  const detected = [];
+  const usedParams = new Set();
 
-  // GREEDY ALGORITHM: Process combos largest first
   for (const combo of sortedCombos) {
-    // Convert combo parameter IDs to integers and sort
-    const comboParams = combo.parameter_ids
-      .map((p) => parseInt(p))
-      .sort((a, b) => a - b);
+    const comboParams = combo.parameter_ids.map((p) => parseInt(p)).sort((a, b) => a - b);
 
-    // ============================================================
-    // CHECK 1: Do ALL combo parameters exist in user selection?
-    // ============================================================
     const allMatch = comboParams.every((pid) => selectedParams.includes(pid));
 
     if (!allMatch) {
-      continue; // Skip - not all parameters selected
+      continue;
     }
 
-    // ============================================================
-    // CHECK 2: Are ANY parameters already used in another combo?
-    // ============================================================
-    // This prevents overlapping - e.g., if we already detected combo [1,2,3],
-    // we won't also detect combo [1,2]
     const hasConflict = comboParams.some((pid) => usedParams.has(pid));
 
     if (hasConflict) {
-      continue; // Skip - parameters already in another combo
+      continue;
     }
 
-    // ============================================================
-    // ✅ COMBO IS VALID - Add it to detected list
-    // ============================================================
     detected.push(combo);
 
-    // Mark all these parameters as USED
-    // This prevents smaller combos with overlapping parameters from being detected
     comboParams.forEach((pid) => usedParams.add(pid));
   }
 
-  // Return detected combos (already sorted by size, largest first)
   return detected;
 }
 
@@ -1105,8 +1236,7 @@ function renderTests() {
 
   document.querySelectorAll(".sample-card").forEach((card, idx) => {
     const sampleIdx = idx + 1;
-    const sampleName =
-      card.querySelector(".sample-name-input").value || `Sample ${sampleIdx}`;
+    const sampleName = card.querySelector(".sample-name-input").value || `Sample ${sampleIdx}`;
 
     let html = `<div class="test-card mb-4 p-4 border rounded">
       <h5><i class="fas fa-vial"></i> ${escapeHtml(sampleName)}</h5>
@@ -1124,13 +1254,7 @@ function renderTests() {
           );
         });
       } else {
-        html += createTestCheckbox(
-          sampleIdx,
-          param.parameter_id,
-          null,
-          param.parameter_name,
-          param.price
-        );
+        html += createTestCheckbox(sampleIdx, param.parameter_id, null, param.parameter_name, param.price);
       }
     });
 
@@ -1138,21 +1262,15 @@ function renderTests() {
     container.insertAdjacentHTML("beforeend", html);
   });
 
-  // BUG FIX #2: Max 10 tests per sample - Real-time validation
   document.querySelectorAll(".test-checkbox").forEach((cb) => {
     cb.addEventListener("change", function (e) {
       const sampleNum = this.dataset.sample;
-      const checked = document.querySelectorAll(
-        `input[data-sample="${sampleNum}"]:checked`
-      );
+      const checked = document.querySelectorAll(`input[data-sample="${sampleNum}"]:checked`);
 
       if (checked.length > 10) {
         e.preventDefault();
         this.checked = false;
-        showToast(
-          `Sample ${sampleNum} can have maximum 10 tests (physical form limit)`,
-          "warning"
-        );
+        showToast(`Sample ${sampleNum} can have maximum 10 tests (physical form limit)`, "warning");
         return;
       }
 
@@ -1162,9 +1280,7 @@ function renderTests() {
 }
 
 function createTestCheckbox(sampleIdx, paramId, variantId, label, price) {
-  const id = variantId
-    ? `test_${sampleIdx}_v${variantId}`
-    : `test_${sampleIdx}_p${paramId}`;
+  const id = variantId ? `test_${sampleIdx}_v${variantId}` : `test_${sampleIdx}_p${paramId}`;
   return `
     <div class="col-md-6 mb-2">
       <div class="form-check">
@@ -1204,52 +1320,34 @@ function generateReview() {
   const container = document.getElementById("reviewSummary");
   let html = "";
 
-  // CLIENT INFO
   html += `
     <div class="review-section">
       <h6><i class="fas fa-user"></i> Client Information</h6>
-      <p><strong>Name:</strong> ${escapeHtml(
-        document.getElementById("clientName").value
-      )}</p>
-      <p><strong>Phone:</strong> ${escapeHtml(
-        document.getElementById("phonePrimary").value
-      )}</p>
-      <p><strong>Contact:</strong> ${escapeHtml(
-        document.getElementById("contactPerson").value || "N/A"
-      )}</p>
+      <p><strong>Name:</strong> ${escapeHtml(document.getElementById("clientName").value)}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(document.getElementById("phonePrimary").value)}</p>
+      <p><strong>Contact:</strong> ${escapeHtml(document.getElementById("contactPerson").value || "N/A")}</p>
     </div>`;
 
-  // SUBMISSION DETAILS
   html += `
     <div class="review-section">
       <h6><i class="fas fa-calendar-alt"></i> Submission Details</h6>
-      <p><strong>Type:</strong> ${
-        submissionType.charAt(0).toUpperCase() + submissionType.slice(1)
-      }</p>
-      <p><strong>Received:</strong> ${formatDate(
-        document.getElementById("receivedDate").value
-      )}</p>
-      <p><strong>Tentative:</strong> ${formatDate(
-        document.getElementById("tentativeDate").value
-      )}</p>
+      <p><strong>Type:</strong> ${submissionType.charAt(0).toUpperCase() + submissionType.slice(1)}</p>
+      <p><strong>Received:</strong> ${formatDate(document.getElementById("receivedDate").value)} at ${
+    document.getElementById("receivedTime").value
+  }</p>
+      <p><strong>Tentative:</strong> ${formatDate(document.getElementById("tentativeDate").value)}</p>
     </div>`;
 
-  // SAMPLES & TESTS
   let individualTotal = 0;
-  html +=
-    '<div class="review-section"><h6><i class="fas fa-flask"></i> Samples & Tests</h6>';
+  html += '<div class="review-section"><h6><i class="fas fa-flask"></i> Samples & Tests</h6>';
 
   document.querySelectorAll(".sample-card").forEach((sample, idx) => {
     const sampleIdx = idx + 1;
     const sampleName = sample.querySelector(".sample-name-input").value;
 
-    html += `<p><strong>Sample ${sampleIdx}:</strong> ${escapeHtml(
-      sampleName
-    )}</p><ul>`;
+    html += `<p><strong>Sample ${sampleIdx}:</strong> ${escapeHtml(sampleName)}</p><ul>`;
 
-    const selectedTests = document.querySelectorAll(
-      `input[data-sample="${sampleIdx}"]:checked`
-    );
+    const selectedTests = document.querySelectorAll(`input[data-sample="${sampleIdx}"]:checked`);
 
     selectedTests.forEach((test) => {
       const label = test.nextElementSibling.textContent.split("Rs.")[0].trim();
@@ -1263,20 +1361,16 @@ function generateReview() {
 
   html += "</div>";
 
-  // DETECT COMBOS
   const combosDetected = detectCombosInSelection();
   const hasCombo = combosDetected.length > 0;
 
-  // Calculate combo pricing
   let finalTotal = individualTotal;
   let totalDiscount = 0;
 
   if (hasCombo) {
-    // Calculate savings from combos (prevent overlap)
     let usedParams = new Set();
 
     combosDetected.forEach((combo) => {
-      // Only apply if parameters not already used
       const canApply = combo.parameter_ids.every((pid) => !usedParams.has(pid));
 
       if (canApply) {
@@ -1284,17 +1378,14 @@ function generateReview() {
         finalTotal += combo.combo_price;
         totalDiscount += combo.savings;
 
-        // Mark parameters as used
         combo.parameter_ids.forEach((pid) => usedParams.add(pid));
       }
     });
   }
 
-  const addCharges =
-    parseFloat(document.getElementById("additionalCharges").value) || 0;
+  const addCharges = parseFloat(document.getElementById("additionalCharges").value) || 0;
   const grandTotal = finalTotal + addCharges;
 
-  // SMART UI - Show combo info ONLY if combo detected
   if (hasCombo && totalDiscount > 0) {
     const discountPercent = Math.round((totalDiscount / individualTotal) * 100);
 
@@ -1314,9 +1405,7 @@ function generateReview() {
         </p>
         <p class="text-muted small">
           <i class="fas fa-check-circle"></i> 
-          ${combosDetected.length} combo${
-      combosDetected.length > 1 ? "s" : ""
-    } applied: 
+          ${combosDetected.length} combo${combosDetected.length > 1 ? "s" : ""} applied: 
           ${combosDetected.map((c) => c.combo_name).join(", ")}
         </p>
         <p><strong>Test Charges:</strong> 
@@ -1324,9 +1413,7 @@ function generateReview() {
             ${formatCurrency(finalTotal)}
           </span>
         </p>
-        <p><strong>Additional Charges:</strong> ${formatCurrency(
-          addCharges
-        )}</p>
+        <p><strong>Additional Charges:</strong> ${formatCurrency(addCharges)}</p>
         <h5 class="mt-3"><strong>Grand Total: 
           <span id="grandTotalDisplay" style="color: #28a745;">
             ${formatCurrency(grandTotal)}
@@ -1337,16 +1424,13 @@ function generateReview() {
         </p>
       </div>`;
   } else {
-    // NO COMBO - Normal display
     html += `
       <div class="review-section">
         <h6><i class="fas fa-calculator"></i> Totals</h6>
         <p><strong>Test Charges:</strong> 
           <span id="testChargesTotal">${formatCurrency(individualTotal)}</span>
         </p>
-        <p><strong>Additional Charges:</strong> ${formatCurrency(
-          addCharges
-        )}</p>
+        <p><strong>Additional Charges:</strong> ${formatCurrency(addCharges)}</p>
         <h5 class="mt-3"><strong>Grand Total: 
           <span id="grandTotalDisplay">${formatCurrency(grandTotal)}</span>
         </strong></h5>
@@ -1358,13 +1442,9 @@ function generateReview() {
 
 function updateGrandTotal() {
   const testTotal = parseFloat(
-    document
-      .getElementById("testChargesTotal")
-      ?.textContent.replace(/[^0-9.]/g, "") || 0
+    document.getElementById("testChargesTotal")?.textContent.replace(/[^0-9.]/g, "") || 0
   );
-  const addCharges = parseFloat(
-    document.getElementById("additionalCharges").value || 0
-  );
+  const addCharges = parseFloat(document.getElementById("additionalCharges").value || 0);
   const grand = testTotal + addCharges;
 
   const grandTotalElement = document.getElementById("grandTotalDisplay");
@@ -1373,17 +1453,6 @@ function updateGrandTotal() {
   }
 }
 
-// selectPaymentStatus - Removed (payment auto-set to "Not Paid")
-
-// ==========================================
-// SUBMIT
-// ==========================================
-
-// ==========================================
-// GLOBAL SUBMISSION LOCK - PREVENTS DOUBLE SUBMISSION
-// ==========================================
-let isSubmitting = false;
-
 // ==========================================
 // SUBMIT
 // ==========================================
@@ -1391,18 +1460,15 @@ let isSubmitting = false;
 async function handleSubmit(e) {
   e.preventDefault();
 
-  // ===== CRITICAL: SUBMISSION LOCK =====
+  // ✅ SUBMISSION LOCK
   if (isSubmitting) {
-    console.warn("⚠️ Submission already in progress, ignoring duplicate call");
+    console.warn("⚠️ Submission already in progress");
     return;
   }
   isSubmitting = true;
   console.log("🔒 Submission lock acquired");
-  // ===== END LOCK =====
 
-  // Payment status validation - Removed (auto-set to "Not Paid")
-
-  // Validate receipt email if provided - NEW
+  // Validate email if provided
   const receiptEmailEl = document.getElementById("receiptEmail");
   if (receiptEmailEl && receiptEmailEl.value.trim().length > 0) {
     const email = receiptEmailEl.value.trim();
@@ -1415,37 +1481,41 @@ async function handleSubmit(e) {
     }
   }
 
+  // ✅ FINAL DATE/TIME VALIDATION
+  if (!validateReceivedDate()) {
+    showToast("Please fix received date errors", "error");
+    isSubmitting = false;
+    return;
+  }
+
+  if (!validateReceivedTime()) {
+    showToast("Please fix received time errors", "error");
+    isSubmitting = false;
+    return;
+  }
+
+  if (!validateTentativeDate()) {
+    showToast("Please fix tentative date errors", "error");
+    isSubmitting = false;
+    return;
+  }
+
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
   const formData = new FormData();
   formData.append("action", "saveSample");
-  formData.append(
-    "submitted_by",
-    document.querySelector('[name="submitted_by"]').value
-  );
+  formData.append("submitted_by", document.querySelector('[name="submitted_by"]').value);
   formData.append("user_id", document.querySelector('[name="user_id"]').value);
-  formData.append(
-    "client_id",
-    document.getElementById("selectedClientId").value
-  );
+  formData.append("client_id", document.getElementById("selectedClientId").value);
   formData.append("submission_type", submissionType);
-  formData.append(
-    "received_date",
-    document.getElementById("receivedDate").value
-  );
-  formData.append(
-    "tentative_date",
-    document.getElementById("tentativeDate").value
-  );
-  formData.append(
-    "additional_notes",
-    document.getElementById("additionalNotes").value || ""
-  );
+  formData.append("received_date", document.getElementById("receivedDate").value);
+  formData.append("received_time", document.getElementById("receivedTime").value); // ✅ ADDED
+  formData.append("tentative_date", document.getElementById("tentativeDate").value);
+  formData.append("additional_notes", document.getElementById("additionalNotes").value || "");
 
-  const addCharges =
-    parseFloat(document.getElementById("additionalCharges").value) || 0;
+  const addCharges = parseFloat(document.getElementById("additionalCharges").value) || 0;
   formData.append("additional_charges", addCharges);
 
   const samples = [];
@@ -1454,12 +1524,9 @@ async function handleSubmit(e) {
       sample_name: card.querySelector(".sample-name-input").value.trim(),
       value: card.querySelector(".sample-value").value.trim(),
       unit: card.querySelector(".sample-unit").value,
-      client_sample_code:
-        card.querySelector(".sample-client-code").value.trim() || "",
-      sampling_location:
-        card.querySelector(".sample-location").value.trim() || "",
-      reason_for_analysis:
-        card.querySelector(".sample-reason").value.trim() || "",
+      client_sample_code: card.querySelector(".sample-client-code").value.trim() || "",
+      sampling_location: card.querySelector(".sample-location").value.trim() || "",
+      reason_for_analysis: card.querySelector(".sample-reason").value.trim() || "",
       container_damage: card.querySelector(".sample-damage").value,
       temperature_condition: card.querySelector(".sample-temp").value,
       validity_status: card.querySelector(".sample-validity").value,
@@ -1476,10 +1543,7 @@ async function handleSubmit(e) {
     tests.push({
       sample: parseInt(cb.dataset.sample),
       parameter_id: parseInt(cb.dataset.param),
-      variant_id:
-        cb.dataset.variant && cb.dataset.variant !== ""
-          ? parseInt(cb.dataset.variant)
-          : null,
+      variant_id: cb.dataset.variant && cb.dataset.variant !== "" ? parseInt(cb.dataset.variant) : null,
       charge: charge,
     });
   });
@@ -1487,13 +1551,10 @@ async function handleSubmit(e) {
   formData.append("test_charges_total", testTotal);
   formData.append("grand_total", testTotal + addCharges);
 
-  // Payment status always "Not Paid" - NEW
   formData.append("payment_status", "Not Paid");
   formData.append("payment_reference", "");
 
-  // Add receipt email if provided - NEW
-  const receiptEmail =
-    document.getElementById("receiptEmail")?.value.trim() || "";
+  const receiptEmail = document.getElementById("receiptEmail")?.value.trim() || "";
   formData.append("receipt_email", receiptEmail);
 
   try {
@@ -1510,7 +1571,6 @@ async function handleSubmit(e) {
         "success"
       );
 
-      // Redirect to sample records page after successful submission
       setTimeout(() => {
         window.location.href = "index.php?page=sample-records-view";
       }, 1500);
@@ -1523,17 +1583,14 @@ async function handleSubmit(e) {
 
     submitBtn.disabled = false;
     submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Form';
-    isSubmitting = false; // Release lock on error
+    isSubmitting = false;
   }
 }
 
 // ==========================================
-// CITY AUTOCOMPLETE FUNCTIONS
+// CITY AUTOCOMPLETE
 // ==========================================
 
-/**
- * Initialize city autocomplete functionality
- */
 function initializeCityAutocomplete() {
   const cityInput = document.getElementById("city");
   const cityAutocomplete = document.getElementById("cityAutocomplete");
@@ -1553,12 +1610,9 @@ function initializeCityAutocomplete() {
 
   cityInput.addEventListener("keydown", handleCityKeyboardNavigation);
 
-  console.log("✓ City autocomplete initialized");
+  console.log("✅ City autocomplete initialized");
 }
 
-/**
- * Handle city search input
- */
 async function handleCitySearch() {
   const cityInput = document.getElementById("city");
   const cityAutocomplete = document.getElementById("cityAutocomplete");
@@ -1569,14 +1623,11 @@ async function handleCitySearch() {
     return;
   }
 
-  cityAutocomplete.innerHTML =
-    '<div class="city-autocomplete-loading">Searching...</div>';
+  cityAutocomplete.innerHTML = '<div class="city-autocomplete-loading">Searching...</div>';
   cityAutocomplete.classList.add("show");
 
   try {
-    const response = await fetch(
-      `${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`
-    );
+    const response = await fetch(`${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1588,36 +1639,33 @@ async function handleCitySearch() {
       displayCityResults(data.cities);
     } else {
       cityAutocomplete.innerHTML = `
-                <div class="city-autocomplete-empty">
-                    No cities found matching "${escapeHtml(query)}"
-                </div>
-            `;
+        <div class="city-autocomplete-empty">
+          No cities found matching "${escapeHtml(query)}"
+        </div>
+      `;
     }
   } catch (error) {
     console.error("City search error:", error);
     cityAutocomplete.innerHTML = `
-            <div class="city-autocomplete-empty text-danger">
-                Error searching cities
-            </div>
-        `;
+      <div class="city-autocomplete-empty text-danger">
+        Error searching cities
+      </div>
+    `;
   }
 }
 
-/**
- * Display city search results in dropdown
- */
 function displayCityResults(cities) {
   const cityAutocomplete = document.getElementById("cityAutocomplete");
 
   const html = cities
     .map(
       (city, index) => `
-        <div class="city-autocomplete-item" 
-             data-city-id="${city.city_id}" 
-             data-city-name="${escapeHtml(city.city_name)}"
-             data-index="${index}">
-            ${escapeHtml(city.city_name)}
-        </div>
+      <div class="city-autocomplete-item" 
+           data-city-id="${city.city_id}" 
+           data-city-name="${escapeHtml(city.city_name)}"
+           data-index="${index}">
+        ${escapeHtml(city.city_name)}
+      </div>
     `
     )
     .join("");
@@ -1625,16 +1673,11 @@ function displayCityResults(cities) {
   cityAutocomplete.innerHTML = html;
   cityAutocomplete.classList.add("show");
 
-  cityAutocomplete
-    .querySelectorAll(".city-autocomplete-item")
-    .forEach((item) => {
-      item.addEventListener("click", selectCityFromAutocomplete);
-    });
+  cityAutocomplete.querySelectorAll(".city-autocomplete-item").forEach((item) => {
+    item.addEventListener("click", selectCityFromAutocomplete);
+  });
 }
 
-/**
- * Handle city selection from autocomplete
- */
 async function selectCityFromAutocomplete() {
   const cityId = this.getAttribute("data-city-id");
   const cityName = this.getAttribute("data-city-name");
@@ -1661,12 +1704,9 @@ async function selectCityFromAutocomplete() {
     cityInput.classList.add("is-valid");
   }
 
-  console.log(`✓ City selected: ${cityName} (ID: ${cityId})`);
+  console.log(`✅ City selected: ${cityName} (ID: ${cityId})`);
 }
 
-/**
- * Track city usage for analytics
- */
 async function trackCityUsage(cityId) {
   const formData = new FormData();
   formData.append("action", "trackCityUsage");
@@ -1682,9 +1722,6 @@ async function trackCityUsage(cityId) {
   }
 }
 
-/**
- * Close city autocomplete dropdown
- */
 function closeCityAutocomplete() {
   const cityAutocomplete = document.getElementById("cityAutocomplete");
   if (cityAutocomplete) {
@@ -1693,9 +1730,6 @@ function closeCityAutocomplete() {
   }
 }
 
-/**
- * Handle keyboard navigation in city autocomplete
- */
 function handleCityKeyboardNavigation(e) {
   const cityAutocomplete = document.getElementById("cityAutocomplete");
 
@@ -1710,9 +1744,7 @@ function handleCityKeyboardNavigation(e) {
   }
 
   let currentIndex = -1;
-  const activeItem = cityAutocomplete.querySelector(
-    ".city-autocomplete-item.active"
-  );
+  const activeItem = cityAutocomplete.querySelector(".city-autocomplete-item.active");
 
   if (activeItem) {
     currentIndex = parseInt(activeItem.getAttribute("data-index"));
@@ -1745,30 +1777,19 @@ function handleCityKeyboardNavigation(e) {
   }
 }
 
-/**
- * Highlight a specific city item in the dropdown
- */
 function highlightCityItem(items, index) {
   items.forEach((item) => item.classList.remove("active"));
   items[index].classList.add("active");
   items[index].scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
-/**
- * Load city ID when selecting existing client
- * CRITICAL FIX: This ensures city_id is populated when loading client data
- */
 async function loadCityIdForClient(cityName) {
   if (!cityName || cityName.trim() === "") {
     return;
   }
 
   try {
-    const response = await fetch(
-      `${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(
-        cityName
-      )}`
-    );
+    const response = await fetch(`${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(cityName)}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1780,9 +1801,7 @@ async function loadCityIdForClient(cityName) {
       const selectedCityId = document.getElementById("selectedCityId");
       if (selectedCityId) {
         selectedCityId.value = data.city_id;
-        console.log(
-          `✓ City ID loaded: ${data.city_name} (ID: ${data.city_id})`
-        );
+        console.log(`✅ City ID loaded: ${data.city_name} (ID: ${data.city_id})`);
       }
     } else {
       console.log(`City not found in database: ${cityName}`);

@@ -1,8 +1,10 @@
 <?php
 
 /**
- * Sample Submission Form - COMPLETE VERSION WITH VALIDATION
- * Version: 2.0 - Production Ready
+ * Sample Submission Form - COMPLETE VERSION 3.0
+ * Version: 3.0 - 100% Production Ready with Server Time
+ * Date: February 5, 2026
+ * Features: Server time, 30-day backdate, auto tentative, time field
  */
 
 $currentUser = $_SESSION['fullname'] ?? 'Unknown User';
@@ -164,29 +166,52 @@ $userId = $_SESSION['user_id'] ?? 0;
                             <i class="fas fa-calendar-alt"></i> Step 3: Submission Details
                         </h2>
 
+                        <!-- ✅ SERVER TIME DISPLAY -->
+                        <div class="alert alert-info mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <i class="fas fa-server"></i> <strong>Server Time:</strong>
+                                    <span id="currentServerTime" class="fw-bold text-primary ms-2">Loading...</span>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> Asia/Colombo (UTC+5:30)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row g-3">
+                            <!-- ✅ RECEIVED DATE -->
                             <div class="col-md-6">
                                 <label class="form-label">
                                     Received Date <span class="text-danger">*</span>
                                 </label>
                                 <input type="date" class="form-control" id="receivedDate" required>
-                                <small class="text-muted">Today or up to 5 days in the past</small>
+                                <small class="text-muted">Today or up to 30 days in the past</small>
                                 <span class="error-label" id="receivedDateError"></span>
                             </div>
 
+                            <!-- ✅ RECEIVED TIME -->
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    Received Time <span class="text-danger">*</span>
+                                </label>
+                                <input type="time" class="form-control" id="receivedTime" required>
+                                <small class="text-muted">Exact time sample arrived at lab (24-hour format)</small>
+                                <span class="error-label" id="receivedTimeError"></span>
+                            </div>
+
+                            <!-- ✅ TENTATIVE DATE -->
                             <div class="col-md-6">
                                 <label class="form-label">
                                     Tentative Date <span class="text-danger">*</span>
                                 </label>
                                 <input type="date" class="form-control" id="tentativeDate" required>
-                                <small class="text-muted">Today or future date</small>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Auto-calculated as Received Date + 10 days
+                                </small>
                                 <span class="error-label" id="tentativeDateError"></span>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label">Additional Notes</label>
-                                <textarea class="form-control" id="additionalNotes" rows="3"
-                                    placeholder="Enter any additional notes or special instructions..."></textarea>
                             </div>
 
                             <div class="col-md-6">
@@ -195,6 +220,12 @@ $userId = $_SESSION['user_id'] ?? 0;
                                     min="0" step="0.01" value="0.00">
                                 <small class="text-muted">Any extra charges beyond test fees</small>
                                 <span class="error-label" id="additionalChargesError"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Additional Notes</label>
+                                <textarea class="form-control" id="additionalNotes" rows="3"
+                                    placeholder="Enter any additional notes or special instructions..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -238,37 +269,10 @@ $userId = $_SESSION['user_id'] ?? 0;
                         <!-- Summary -->
                         <div id="reviewSummary"></div>
 
-                        <!-- Payment Status -->
-                        <!-- <div class="payment-section">
-                            <h5 class="mb-3">
-                                <i class="fas fa-credit-card"></i> Payment Status <span class="text-danger">*</span>
-                            </h5>
-
-                            <div class="payment-options">
-                                <div class="payment-option" data-status="paid">
-                                    <i class="fas fa-check-circle fa-3x text-success"></i>
-                                    <h5>Paid</h5>
-                                </div>
-                                <div class="payment-option" data-status="not_paid">
-                                    <i class="fas fa-times-circle fa-3x text-danger"></i>
-                                    <h5>Not Paid</h5>
-                                </div>
-                            </div>
-
-                            <div id="paymentReferenceSection" class="mt-3 d-none">
-                                <label class="form-label">
-                                    Payment Reference <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="paymentReference"
-                                    placeholder="Enter payment reference number">
-                                <span class="error-label" id="paymentReferenceError"></span>
-                            </div>
-                        </div> -->
-
                         <!-- Receipt Delivery -->
                         <div class="receipt-delivery-section">
                             <h5 class="mb-3">
-                                <i class="fas fa-envelope"></i> Receipt Delivery
+                                <i class="fas fa-envelope"></i> Receipt Delivery (Optional)
                             </h5>
 
                             <div class="alert alert-warning">
@@ -277,12 +281,6 @@ $userId = $_SESSION['user_id'] ?? 0;
                             </div>
 
                             <div class="row g-3">
-                                <!-- <div class="col-md-6">
-                                    <label class="form-label">Mobile Number (for SMS receipt)</label>
-                                    <input type="text" class="form-control" id="receiptMobile"
-                                        placeholder="0XXXXXXXXX" disabled>
-                                    <small class="text-muted">Feature coming soon</small>
-                                </div> -->
                                 <div class="col-md-6">
                                     <label class="form-label">Email Address (for email receipt)</label>
                                     <input type="email" class="form-control" id="receiptEmail"

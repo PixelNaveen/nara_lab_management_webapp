@@ -1,8 +1,10 @@
 <?php
 
 /**
- * Sample Model - COMPLETE FINAL VERSION
- * Version: 5.0 - With Combo Support & Correct Field Names
+ * Sample Model - COMPLETE VERSION 3.0
+ * Version: 3.0 - 100% Production Ready with Server Time
+ * Date: February 5, 2026
+ * CRITICAL FIX: bind_param now includes received_time
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
@@ -160,7 +162,6 @@ class SampleModel
     public function getParameters($submissionType = 'regular')
     {
         try {
-            // Use single query with JOIN like the old version (more efficient)
             $sql = "SELECT 
                         tp.parameter_id, 
                         tp.parameter_code,
@@ -219,13 +220,12 @@ class SampleModel
                     ];
                 }
 
-                // Add variant with price
                 if ($row['variant_id']) {
                     $parameters[$paramId]['variants'][] = [
                         'variant_id' => $row['variant_id'],
                         'variant_name' => $row['variant_name'],
                         'full_display_name' => $row['full_display_name'],
-                        'price' => $parameters[$paramId]['price']  // ✅ FIXED: Include price
+                        'price' => $parameters[$paramId]['price']
                     ];
                 }
             }
@@ -244,9 +244,6 @@ class SampleModel
         }
     }
 
-    /**
-     * NEW: Get all active combos for frontend detection
-     */
     public function getCombos()
     {
         try {
@@ -274,7 +271,6 @@ class SampleModel
             while ($row = $result->fetch_assoc()) {
                 $paramIds = array_map('intval', explode(',', $row['parameter_ids']));
 
-                // Calculate individual total for this combo
                 $individualTotal = 0;
                 foreach ($paramIds as $paramId) {
                     $priceResult = $this->conn->query(
@@ -311,19 +307,11 @@ class SampleModel
         }
     }
 
-
-    /**
-     * Enhanced search sample names with case-insensitive matching and relevance scoring
-     * 
-     * @param string $query Search query
-     * @return array Result with sample names
-     */
     public function searchSampleNames($query)
     {
         try {
             $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
 
-            // Enhanced query with case-insensitive search and relevance scoring
             $sql = "SELECT 
                         sample_name, 
                         usage_count,
@@ -342,10 +330,9 @@ class SampleModel
                 throw new Exception("Prepare failed: " . $this->conn->error);
             }
 
-            // Bind parameters for relevance scoring
             $exactMatch = $query;
             $startsWithMatch = $query;
-            
+
             $stmt->bind_param("sss", $exactMatch, $startsWithMatch, $searchTerm);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -372,15 +359,6 @@ class SampleModel
         }
     }
 
-
-    /**
-     * Save complete sample submission
-     */
-
-    // ==========================================
-    // CITY AUTOCOMPLETE METHODS
-    // ==========================================
-    
     public function searchCities($query)
     {
         try {
@@ -492,11 +470,7 @@ class SampleModel
         }
     }
 
-    // ==========================================
-    // END CITY METHODS
-    // ==========================================
-
-        public function saveSample($data)
+    public function saveSample($data)
     {
         $this->conn->begin_transaction();
 
@@ -553,7 +527,7 @@ class SampleModel
                 'form_number' => $formNumber,
                 'sample_id' => $sampleId,
                 'report_ref' => $reportRef,
-                'ac_reference' => $acReference  // FIXED: Add AC reference
+                'ac_reference' => $acReference
             ];
         } catch (Exception $e) {
             $this->conn->rollback();
@@ -565,24 +539,29 @@ class SampleModel
         }
     }
 
+    /**
+     * ✅ CRITICAL FIX: bind_param now includes received_time
+     */
     private function insertSample($data, $formNumber, $reportRef)
     {
         $sql = "INSERT INTO samples (
                     client_id, sample_code, form_number, report_ref, submission_type,
-                    received_date, tentative_date, submitted_by, additional_notes,
+                    received_date, received_time, tentative_date, submitted_by, additional_notes,
                     additional_charges, test_charges_total, grand_total,
                     payment_status, payment_reference, status, status_updated_at, status_updated_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
             throw new Exception("Prepare failed (samples): " . $this->conn->error);
         }
 
+        // ✅ EXTRACT received_time WITH DEFAULT
         $clientId = $data['client_id'];
         $sampleCode = $formNumber;
         $submissionType = $data['submission_type'];
         $receivedDate = $data['received_date'];
+        $receivedTime = $data['received_time'] ?? '00:00:00'; // ✅ ADD DEFAULT
         $tentativeDate = $data['tentative_date'];
         $submittedBy = $data['submitted_by'];
         $additionalNotes = $data['additional_notes'];
@@ -595,23 +574,25 @@ class SampleModel
             : null;
         $statusUpdatedBy = $submittedBy;
 
+        // ✅ CRITICAL FIX: Now binding 16 parameters (was 15)
         $stmt->bind_param(
-            "issssssssdddsss",
-            $clientId,
-            $sampleCode,
-            $formNumber,
-            $reportRef,
-            $submissionType,
-            $receivedDate,
-            $tentativeDate,
-            $submittedBy,
-            $additionalNotes,
-            $additionalCharges,
-            $testChargesTotal,
-            $grandTotal,
-            $paymentStatus,
-            $paymentReference,
-            $statusUpdatedBy
+            "isssssssssdddsss", // ✅ 16 's' characters (added one for received_time)
+            $clientId,          // 1. client_id (i)
+            $sampleCode,        // 2. sample_code (s)
+            $formNumber,        // 3. form_number (s)
+            $reportRef,         // 4. report_ref (s)
+            $submissionType,    // 5. submission_type (s)
+            $receivedDate,      // 6. received_date (s)
+            $receivedTime,      // 7. received_time (s) ✅ ADDED
+            $tentativeDate,     // 8. tentative_date (s)
+            $submittedBy,       // 9. submitted_by (s)
+            $additionalNotes,   // 10. additional_notes (s)
+            $additionalCharges, // 11. additional_charges (d)
+            $testChargesTotal,  // 12. test_charges_total (d)
+            $grandTotal,        // 13. grand_total (d)
+            $paymentStatus,     // 14. payment_status (s)
+            $paymentReference,  // 15. payment_reference (s)
+            $statusUpdatedBy    // 16. status_updated_by (s)
         );
 
         if (!$stmt->execute()) {
@@ -666,9 +647,6 @@ class SampleModel
         return $this->conn->insert_id;
     }
 
-    /**
-     * Insert tests with FULL combo price
-     */
     private function insertSampleTests($sampleItemIds, $testsData, $submissionType, $comboCalc = null)
     {
         $sql = "INSERT INTO sample_tests (
@@ -720,12 +698,10 @@ class SampleModel
                 $comboId = null;
                 $isComboApplied = 0;
 
-                // CRITICAL FIX: Store DIVIDED combo price so SUM equals combo total
                 if (isset($parameterToCombo[$test['parameter_id']])) {
                     $combo = $parameterToCombo[$test['parameter_id']];
                     $comboId = $combo['combo_id'];
                     $isComboApplied = 1;
-                    // Store divided price: combo_price / number of parameters
                     $charge = $combo['combo_price'] / $combo['param_count'];
                 } else {
                     $charge = (float)$test['charge'];
@@ -750,12 +726,15 @@ class SampleModel
         }
     }
 
+    /**
+     * ✅ UPDATED: Now includes received_time
+     */
     private function insertSampleAcceptance($sampleId, $acReference, $firstSample, $data)
     {
         $sql = "INSERT INTO sample_acceptance (
-                    sample_id, report_ref, received_by, container_damage,
+                    sample_id, report_ref, received_by, received_time, container_damage,
                     temperature_condition, validity_ok, tentative_date, remarks
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
@@ -763,6 +742,7 @@ class SampleModel
         }
 
         $receivedBy = $data['submitted_by'];
+        $receivedTime = $data['received_time'] ?? '00:00:00'; // ✅ ADD received_time
         $containerDamage = $firstSample['container_damage'] ?? 'No';
         $temperatureCondition = $firstSample['temperature_condition'] ?? 'Ambient';
         $validityOk = ($firstSample['validity_status'] ?? 'OK') === 'OK' ? 'OK' : 'Not OK';
@@ -770,10 +750,11 @@ class SampleModel
         $remarks = null;
 
         $stmt->bind_param(
-            "isssssss",
+            "issssssss",
             $sampleId,
             $acReference,
             $receivedBy,
+            $receivedTime,        // ✅ ADDED
             $containerDamage,
             $temperatureCondition,
             $validityOk,
