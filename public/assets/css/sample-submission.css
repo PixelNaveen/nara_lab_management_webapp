@@ -1,0 +1,987 @@
+/* ======================================================
+   Sample Submission Styles - COMPLETE VERSION
+   Version: 2.0 - With Validation Styles
+====================================================== */
+
+/* ===== Scope all styles to this page ===== */
+.sample-submission-page {
+  /* Root Theme Variables */
+  --primary-blue: #1e3a8a;
+  --primary-blue-dark: #1e40af;
+  --primary-blue-light: #3b82f6;
+  --success-green: #16a34a;
+  --warning-yellow: #f59e0b;
+  --danger-red: #dc2626;
+  --light-gray: #f8f9fa;
+  --border-color: #e2e8f0;
+  --text-dark: #1e293b;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== Card Styling ===== */
+.sample-submission-page .card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.sample-submission-page .card-header {
+  background: linear-gradient(
+    135deg,
+    var(--primary-blue) 0%,
+    var(--primary-blue-dark) 100%
+  );
+  color: white;
+  padding: 1.5rem 2rem;
+  border-bottom: none;
+}
+
+.sample-submission-page .card-header h4 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.sample-submission-page .card-header small {
+  opacity: 0.9;
+  font-size: 0.875rem;
+}
+
+.sample-submission-page .card-body {
+  padding: 2rem;
+}
+
+/* ===== Navigation Tabs ===== */
+.sample-submission-page .nav-tabs {
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 2rem;
+}
+
+.sample-submission-page .nav-tabs .nav-item {
+  margin-bottom: -2px;
+}
+
+.sample-submission-page .nav-tabs .nav-link {
+  color: var(--text-dark);
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 1rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.sample-submission-page .nav-tabs .nav-link:hover {
+  color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue-light);
+}
+
+.sample-submission-page .nav-tabs .nav-link.active {
+  color: var(--primary-blue);
+  background: transparent;
+  border-bottom-color: var(--primary-blue);
+}
+
+/* ===== Step Content ===== */
+.sample-submission-page .step {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.sample-submission-page .step.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sample-submission-page .step-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--primary-blue);
+}
+
+.sample-submission-page .step-title i {
+  margin-right: 0.5rem;
+}
+
+/* ===== Validation Styles ===== */
+.sample-submission-page .error-label {
+  color: var(--danger-red);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: none;
+  font-weight: 500;
+}
+
+.sample-submission-page .error-label.show {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sample-submission-page .form-control.is-invalid,
+.sample-submission-page .form-select.is-invalid {
+  border-color: var(--danger-red);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc2626'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc2626' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: calc(1.5em + 0.75rem);
+}
+
+.sample-submission-page .form-control.is-valid,
+.sample-submission-page .form-select.is-valid {
+  border-color: var(--success-green);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2316a34a' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: calc(1.5em + 0.75rem);
+}
+
+.sample-submission-page .form-control.is-validating {
+  border-color: var(--warning-yellow);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%23f59e0b' d='M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 12c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1zm1-3H7V4h2v5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: calc(1.5em + 0.75rem);
+}
+
+/* ===== Alerts ===== */
+.sample-submission-page .alert {
+  border-radius: 8px;
+  border: none;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== Client Search Results ===== */
+.sample-submission-page .client-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1050;
+  box-shadow: var(--shadow-md);
+  display: none;
+}
+
+.sample-submission-page .client-results.show {
+  display: block;
+}
+
+.sample-submission-page .client-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.sample-submission-page .client-item:last-child {
+  border-bottom: none;
+}
+
+.sample-submission-page .client-item:hover {
+  background-color: var(--light-gray);
+}
+
+/* ===== Type Selection Cards ===== */
+.sample-submission-page .type-selection {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.sample-submission-page .type-card {
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  width: 220px;
+  background: white;
+}
+
+.sample-submission-page .type-card:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.sample-submission-page .type-card.selected {
+  border-color: var(--primary-blue);
+  background: rgba(30, 58, 138, 0.05);
+  box-shadow: var(--shadow-md);
+}
+
+.sample-submission-page .type-card i {
+  color: var(--primary-blue);
+  margin-bottom: 1rem;
+}
+
+.sample-submission-page .type-card h5 {
+  margin: 0.5rem 0;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.sample-submission-page .type-card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* ===== Sample Cards ===== */
+.sample-submission-page .sample-card {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.sample-submission-page .sample-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.sample-submission-page .sample-card .sample-header {
+  background: var(--light-gray);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sample-submission-page .sample-card h5 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.sample-submission-page .remove-sample {
+  border: none;
+  background: transparent;
+  color: var(--danger-red);
+  padding: 0.25rem 0.5rem;
+  transition: all 0.2s;
+}
+
+.sample-submission-page .remove-sample:hover {
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 4px;
+}
+
+/* ===== Sample Name Autocomplete ===== */
+.sample-submission-page .sample-name-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+  display: none;
+}
+
+.sample-submission-page .sample-name-autocomplete.show {
+  display: block;
+}
+
+.sample-submission-page .autocomplete-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sample-submission-page .autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.sample-submission-page .autocomplete-item:hover {
+  background: var(--light-gray);
+}
+
+.sample-submission-page .autocomplete-usage {
+  font-size: 0.875rem;
+  color: #64748b;
+  background: var(--light-gray);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* ===== Test Cards ===== */
+.sample-submission-page .test-card {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.sample-submission-page .test-card h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.sample-submission-page .test-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.sample-submission-page .test-list .form-check {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.sample-submission-page .test-list .form-check:hover {
+  background: var(--light-gray);
+  border-color: var(--primary-blue-light);
+}
+
+.sample-submission-page
+  .test-list
+  .form-check-input:checked
+  ~ .form-check-label {
+  color: var(--primary-blue);
+  font-weight: 500;
+}
+
+/* ===== Payment Options ===== */
+.sample-submission-page .payment-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.sample-submission-page .payment-options {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.sample-submission-page .payment-option {
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  min-width: 180px;
+  background: white;
+}
+
+.sample-submission-page .payment-option:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.sample-submission-page .payment-option.selected {
+  border-color: var(--primary-blue);
+  background: rgba(30, 58, 138, 0.05);
+  box-shadow: var(--shadow-md);
+}
+
+.sample-submission-page .payment-option i {
+  margin-bottom: 0.75rem;
+}
+
+.sample-submission-page .payment-option h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ===== Review Section ===== */
+.sample-submission-page .review-section {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: var(--light-gray);
+  border-radius: 10px;
+  border-left: 4px solid var(--primary-blue);
+}
+
+.sample-submission-page .review-section h6 {
+  margin-bottom: 1rem;
+  color: var(--primary-blue);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.sample-submission-page .review-section p {
+  margin: 0.5rem 0;
+  color: var(--text-dark);
+}
+
+.sample-submission-page .review-section ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.sample-submission-page .review-section li {
+  margin: 0.25rem 0;
+}
+
+/* ===== Receipt Delivery Section ===== */
+.sample-submission-page .receipt-delivery-section {
+  padding: 1.5rem;
+  background: var(--light-gray);
+  border-radius: 10px;
+  margin-top: 2rem;
+}
+
+.sample-submission-page .receipt-delivery-section h5 {
+  color: var(--primary-blue);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* ===== Navigation Buttons ===== */
+.sample-submission-page .nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  margin-top: 2rem;
+  border-top: 2px solid var(--border-color);
+}
+
+/* ===== Loading Spinner ===== */
+.sample-submission-page .spinner-border {
+  width: 2rem;
+  height: 2rem;
+  border-width: 0.25rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991px) {
+  .sample-submission-page .type-selection {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sample-submission-page .type-card {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .sample-submission-page .payment-options {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sample-submission-page .payment-option {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .sample-submission-page .test-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .sample-submission-page .card-header h4 {
+    font-size: 1.25rem;
+  }
+
+  .sample-submission-page .nav-tabs .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .sample-submission-page .step-title {
+    font-size: 1.25rem;
+  }
+
+  .sample-submission-page .card-body {
+    padding: 1.5rem;
+  }
+}
+
+/* ===================================
+   CITY AUTOCOMPLETE STYLES
+   =================================== */
+
+.city-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 2px;
+}
+
+.city-autocomplete.show {
+  display: block;
+}
+
+.city-autocomplete-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.city-autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.city-autocomplete-item:hover {
+  background-color: #f8f9fa;
+}
+
+.city-autocomplete-item.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.city-autocomplete-empty {
+  padding: 10px 15px;
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+}
+
+.city-autocomplete-loading {
+  padding: 10px 15px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.city-autocomplete-loading::after {
+  content: "...";
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0%,
+  20% {
+    content: ".";
+  }
+  40% {
+    content: "..";
+  }
+  60%,
+  100% {
+    content: "...";
+  }
+} /* =========================================
+   CITY AUTOCOMPLETE STYLES
+   Add this to: public/assets/css/sample-submission.css
+   ========================================= */
+
+/* City Autocomplete Dropdown */
+.city-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 2px;
+}
+
+.city-autocomplete.show {
+  display: block;
+}
+
+/* City Autocomplete Items */
+.city-autocomplete-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.city-autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.city-autocomplete-item:hover {
+  background-color: #f8f9fa;
+}
+
+.city-autocomplete-item.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Empty State */
+.city-autocomplete-empty {
+  padding: 10px 15px;
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* Loading Indicator */
+.city-autocomplete-loading {
+  padding: 10px 15px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.city-autocomplete-loading::after {
+  content: "...";
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0%,
+  20% {
+    content: ".";
+  }
+  40% {
+    content: "..";
+  }
+  60%,
+  100% {
+    content: "...";
+  }
+}
+
+/* Scrollbar Styling for Dropdown */
+.city-autocomplete::-webkit-scrollbar {
+  width: 8px;
+}
+
+.city-autocomplete::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.city-autocomplete::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.city-autocomplete::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Position Relative Parent (for dropdown positioning) */
+.position-relative {
+  position: relative;
+}
+
+/* Ensure city input has proper styling */
+#city {
+  transition: border-color 0.2s;
+}
+
+#city:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* City autocomplete responsive adjustments */
+@media (max-width: 768px) {
+  .city-autocomplete {
+    max-height: 200px;
+  }
+
+  .city-autocomplete-item {
+    padding: 12px 15px;
+    font-size: 15px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .city-autocomplete {
+    border: 2px solid #000;
+  }
+
+  .city-autocomplete-item.active {
+    background-color: #0056b3;
+    outline: 2px solid #000;
+  }
+}
+
+/* Animation for dropdown appearance */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.city-autocomplete.show {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* ==========================================
+   EXTRA ITEMS SECTION
+   ========================================== */
+
+.extra-items-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.extra-item-card {
+  background: #ffffff;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.extra-item-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #0d6efd !important;
+}
+
+.extra-item-qty {
+  font-size: 1.1rem;
+  color: #0d6efd;
+}
+
+.extra-items-total {
+  font-size: 1rem;
+  color: #198754;
+}
+
+/* ==========================================
+   TEMPERATURE SLIDER - ENHANCED
+   ========================================== */
+
+.temp-slider-wrapper {
+  background: linear-gradient(135deg, #eef6ff 0%, #f0f8ff 100%);
+  border: 1px solid #d0e3f5;
+  border-radius: 8px;
+  padding: 8px 12px; /* Reduced from 10px 14px for compact look */
+}
+
+.temp-slider-value {
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
+}
+
+.temp-slider-col {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ========================================
+   CUSTOM RANGE SLIDER STYLING
+   Make slider highly visible and professional
+   ======================================== */
+
+.sample-temp-value {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+  outline: none;
+  opacity: 1;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sample-temp-value:hover {
+  background: linear-gradient(to right, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+}
+
+.sample-temp-value:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Slider Thumb - WebKit (Chrome, Safari, Edge) */
+.sample-temp-value::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #2563eb;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.sample-temp-value::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.5);
+  border-color: #1d4ed8;
+}
+
+.sample-temp-value::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Slider Thumb - Firefox */
+.sample-temp-value::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #2563eb;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.sample-temp-value::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.5);
+  border-color: #1d4ed8;
+}
+
+.sample-temp-value::-moz-range-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Slider Track - Firefox */
+.sample-temp-value::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+}
+
+/* Slider Track - IE/Edge Legacy */
+.sample-temp-value::-ms-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+.sample-temp-value::-ms-fill-lower {
+  background: #2563eb;
+  border-radius: 3px;
+}
+
+.sample-temp-value::-ms-fill-upper {
+  background: #60a5fa;
+  border-radius: 3px;
+}
+
+.sample-temp-value::-ms-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #2563eb;
+  cursor: pointer;
+}
+
+/* Sample card bottom section divider */
+.sample-submission-page .sample-card hr {
+  border-color: var(--border-color, #e2e8f0);
+}
+
+/* Align label styling in sample cards */
+.sample-submission-page .sample-card label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+/* ==========================================
+   CATEGORY INTERCEPTOR MODAL
+   ========================================== */
+
+.new-name-row {
+  background: #fffbeb;
+  border-color: #ffc107 !important;
+}
+
+.new-name-row .form-select-sm {
+  border-color: #ffc107;
+}
+
+#newSampleNamesModal .modal-header {
+  border-bottom: 2px solid #ffc107;
+}

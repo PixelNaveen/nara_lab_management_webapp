@@ -1,0 +1,248 @@
+/* assets/css/sidebar.css - COMPLETE FILE - REPLACE ENTIRE FILE WITH THIS */
+
+/* Root Variables for Sidebar */
+:root {
+    --sidebar-width: 280px;
+    --sidebar-collapsed-width: 0px;
+    --primary-blue: #1e3a8a;
+    --primary-blue-dark: #1e40af;
+    --primary-blue-light: #3b82f6;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease-in-out;
+    z-index: 1050;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Navigation Links */
+.nav-link {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-link.active {
+    background: white;
+    color: var(--primary-blue);
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link i {
+    font-size: 1.1rem;
+    min-width: 20px;
+}
+
+/* Submenu Styles */
+.submenu-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.submenu-link.active {
+    background: rgba(59, 130, 246, 0.8);
+    color: white;
+}
+
+.submenu-arrow {
+    transition: transform 0.2s;
+    font-size: 0.75rem;
+}
+
+.nav-link[aria-expanded="true"] .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+/* ==================== SIDEBAR OVERLAY - FIXED ==================== */
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1045;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* ==================== MOBILE STYLES - FIXED ==================== */
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%) !important;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0) !important;
+    }
+
+    .sidebar-close-btn {
+        display: flex !important;
+    }
+}
+
+/* ==================== DESKTOP STYLES - FIXED ==================== */
+
+@media (min-width: 992px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
+    body.sidebar-collapsed .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar-close-btn {
+        display: none !important;
+    }
+}
+
+/* Focus Styles for Sidebar Elements */
+.sidebar a:focus,
+.sidebar button:focus {
+    outline: 2px solid var(--primary-blue-light);
+    outline-offset: 2px;
+}
+
+.logout-link {
+    font-weight: bold;
+    font-size: 13pt;
+    font-family: serif;
+}
+
+.sidebar-footer {
+   background-color: white;
+}
+
+/* ==================== CLOSE BUTTON STYLES ==================== */
+
+.sidebar-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 0.375rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 10;
+}
+
+.sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-close-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* =====================================================
+   COLLAPSE FIX - CRITICAL
+   ===================================================== */
+
+.collapse {
+    transition: height 0.35s ease;
+}
+
+.collapsing {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+}
+
+.collapse.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.submenu {
+    display: block !important;
+}
+
+.submenu .submenu-link {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.collapse.show .submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.collapse.show .submenu-link {
+    display: flex !important;
+    opacity: 1 !important;
+}
+
+.collapse:not(.show) {
+    display: none;
+}
+
+.collapse:not(.show) .submenu,
+.collapse:not(.show) .submenu-link {
+    display: none;
+}
