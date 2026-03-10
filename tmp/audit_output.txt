@@ -1,0 +1,128 @@
+﻿====================================================================
+  DEEP PRICE AUDIT FOR SUBMISSION QC/26/013 (sample_id=13)
+====================================================================
+
+--- SAMPLE RECORD ---
+  sample_id                      13
+  client_id                      53
+  sample_code                    QC/26/013/007
+  form_number                    26/013/007
+  city_id                        1
+  report_ref                     26/013
+  submission_type                regular
+  received_date                  2026-03-07
+  received_time                  15:05:00
+  sample_collected_date          2026-03-06
+  sample_collected_time          11:06:00
+  tentative_date                 2026-03-17
+  submitted_by                   Kavidu Naveen
+  additional_notes               NULL
+  additional_charges             100.00
+  test_charges_total             30250.00
+  grand_total                    30350.00
+  payment_status                 Paid
+  payment_reference              700-002
+  status                         Completed
+  status_updated_at              2026-03-07 16:15:49
+  status_updated_by              Kavidu Naveen
+  payment_date                   2026-03-07 16:12:31
+  payment_updated_by             Kavidu Naveen
+  forms_generated                0
+  generated_at                   NULL
+  created_at                     2026-03-07 16:12:10
+  analysis_start_date            2026-03-07
+  analysis_end_date              2026-03-12
+  is_drawn_by_nara               0
+
+--- INVOICE RECORD ---
+  invoice_id: 3
+  sample_id: 13
+  invoice_number: QC/M/26/013
+  report_number: QC/26/013/007
+  created_at: 2026-03-08 13:25:13
+  SNAPSHOT total_payable: 32225
+    - Drinking Water | Qty:3 | Unit:3750 | Sub:11250
+    - Potable water | Qty:1 | Unit:3750 | Sub:3750
+    - Waste Water | Qty:2 | Unit:7250 | Sub:14500
+    - Water | Qty:1 | Unit:2625 | Sub:2625
+    - EXTRA: Water Bottle | Qty:2 | Total:100
+
+--- ALL SAMPLE_ITEMS ---
+  item_id=16 | name=Drinking Water
+  item_id=17 | name=Waste Water
+  item_id=18 | name=Potable water
+  item_id=19 | name=Water
+  item_id=20 | name=Drinking Water
+  item_id=21 | name=Drinking Water
+  item_id=22 | name=Waste Water
+
+--- ALL SAMPLE_TESTS (RAW CHARGES) ---
+
+  >> Drinking Water (item=16)
+     test=59  Aerobic Plate Count at 22┬░C                       charge=1250.00  combo=NULL
+     test=60  Aerobic Plate Count at 30┬░C                       charge=1250.00  combo=NULL
+     test=61  Faecal Coliforms                                   charge=1250.00  combo=NULL
+
+  >> Drinking Water (item=20)
+     test=71  Aerobic Plate Count at 22┬░C                       charge=1250.00  combo=NULL
+     test=72  Aerobic Plate Count at 30┬░C                       charge=1250.00  combo=NULL
+     test=73  Aerobic Plate Count at 37┬░C                       charge=1250.00  combo=NULL
+     test=74  Coliforms [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=75  Faecal Coliforms [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=76  Escherichia coli [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+
+  >> Drinking Water (item=21)
+     test=77  Aerobic Plate Count at 37┬░C                       charge=1250.00  combo=NULL
+     test=78  Escherichia coli                                   charge=1375.00  combo=NULL
+     test=79  Staphylococcus aureus                              charge=2625.00  combo=NULL
+     test=80  Faecal Streptococci                                charge=0.00  combo=NULL
+
+  >> Potable water (item=18)
+     test=64  Coliforms [COMBO: Coliforms + Faecal Coliforms]    charge=625.00  combo=1
+     test=65  Faecal Coliforms [COMBO: Coliforms + Faecal Coliforms] charge=625.00  combo=1
+     test=66  Vibrio cholerae                                    charge=2500.00  combo=NULL
+
+  >> Waste Water (item=17)
+     test=62  Aerobic Plate Count at 22┬░C                       charge=1250.00  combo=NULL
+     test=63  Aerobic Plate Count at 30┬░C                       charge=1250.00  combo=NULL
+
+  >> Waste Water (item=22)
+     test=81  Aerobic Plate Count at 22┬░C                       charge=1250.00  combo=NULL
+     test=82  Aerobic Plate Count at 30┬░C                       charge=1250.00  combo=NULL
+     test=83  Aerobic Plate Count at 37┬░C                       charge=1250.00  combo=NULL
+     test=84  Coliforms [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=85  Faecal Coliforms [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=86  Escherichia coli [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=87  Vibrio spp.                                        charge=2125.00  combo=NULL
+
+  >> Water (item=19)
+     test=67  Aerobic Plate Count at 30┬░C                       charge=1250.00  combo=NULL
+     test=68  Coliforms [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=69  Faecal Coliforms [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+     test=70  Escherichia coli [COMBO: Coliforms + Escherichia coli + Faecal Coliforms] charge=458.00  combo=2
+
+  RAW SUM of ALL individual test charges: 30247
+
+--- PER-ITEM CHARGE SUMS ---
+  item_id=16  raw_charge_sum=3750
+  item_id=20  raw_charge_sum=5124
+  item_id=21  raw_charge_sum=5250
+  item_id=18  raw_charge_sum=3750
+  item_id=17  raw_charge_sum=2500
+  item_id=22  raw_charge_sum=7249
+  item_id=19  raw_charge_sum=2624
+
+--- EXTRA ITEMS ---
+  Water Bottle | qty=2 | unit=50.00 | total=100.00
+  Extra total: 100
+
+--- COMBO PRICING TABLE ---
+  combo_id=1 | name=Coliforms + Faecal Coliforms | pricing_charge=1250.00
+  combo_id=2 | name=Coliforms + Escherichia coli + Faecal Coliforms | pricing_charge=1375.00
+
+====================================================================
+  SUMMARY
+  Raw test charges sum: 30247
+  Extra items sum:      100
+  Raw grand total:      30347
+====================================================================

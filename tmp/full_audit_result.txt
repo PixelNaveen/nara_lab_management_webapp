@@ -1,0 +1,95 @@
+﻿====================================================================
+  COMPREHENSIVE PRICING INTEGRITY AUDIT
+  Date: 2026-03-08 10:00:10
+====================================================================
+
+ΓòÉΓòÉΓòÉ LAYER 1: Submissions (samples table vs sample_tests) ΓòÉΓòÉΓòÉ
+
+  [!!] QC/26/0001/02 (id=1)
+      stored_test=6500 raw_test=6498 diff=2
+      stored_extra=100 raw_extra=0 diff=100
+      stored_grand=6600 computed_grand=6498 diff=102
+  [!!] QC/26/0002/01 (id=2)
+      stored_test=2625 raw_test=2624 diff=1
+      stored_extra=100 raw_extra=0 diff=100
+      stored_grand=2725 computed_grand=2624 diff=101
+  [OK] QC/26/0003/01 (id=3)
+  [OK] QC/26/0004/01 (id=4)
+  [!!] QC/26/005/02 (id=5)
+      stored_test=6375 raw_test=6374 diff=1
+      stored_extra=100 raw_extra=0 diff=100
+      stored_grand=6475 computed_grand=6374 diff=101
+  [!!] QC/26/006/001 (id=6)
+      stored_test=5125 raw_test=5124 diff=1
+      stored_extra=50 raw_extra=0 diff=50
+      stored_grand=5175 computed_grand=5124 diff=51
+  [!!] QC/26/007/002 (id=7)
+      stored_test=7500 raw_test=7500 diff=0
+      stored_extra=50 raw_extra=0 diff=50
+      stored_grand=7550 computed_grand=7500 diff=50
+  [OK] QC/26/008/001 (id=8)
+  [OK] QC/26/009/001 (id=9)
+  [OK] QC/26/010/001 (id=10)
+  [OK] QC/26/011/001 (id=11)
+  [OK] QC/26/012/001 (id=12)
+  [OK] QC/26/013/007 (id=13)
+  [OK] QC/26/014/001 (id=14)
+  [OK] QC/26/015/002 (id=15)
+
+  Submissions: 15 total | 5 issues
+
+ΓòÉΓòÉΓòÉ LAYER 2: Invoices (snapshot vs stored vs recalculated) ΓòÉΓòÉΓòÉ
+
+  [OK] Invoice #1 (QC/M/26/015) | snap=5225 stored=5225 recalc=5225
+  [OK] Invoice #2 (QC/M/26/014) | snap=3975 stored=3975 recalc=3975
+  [OK] Invoice #3 (QC/M/26/013) | snap=30350 stored=30350 recalc=30350
+  [OK] Invoice #4 (QC/M/26/012) | snap=2550 stored=2550 recalc=2550
+  [OK] Invoice #5 (QC/M/26/011) | snap=1350 stored=1350 recalc=1350
+  [OK] Invoice #6 (QC/M/26/010) | snap=3850 stored=3850 recalc=3850
+
+  Invoices: 6 total | 0 issues
+
+ΓòÉΓòÉΓòÉ LAYER 3: Combo Pricing (combo_pricing vs sample_tests charges) ΓòÉΓòÉΓòÉ
+
+  [OK] combo_id=1 (Coliforms + Faecal Coliforms)
+      defined=1250  params=2  per_param=625  reconstructed=1250  rounding_loss=0
+  [OK] combo_id=2 (Coliforms + Escherichia coli + Faecal Coliforms)
+      defined=1375  params=3  per_param=458.33  reconstructed=1374.99  rounding_loss=0.0099999999999909
+
+ΓòÉΓòÉΓòÉ LAYER 4: Acknowledgements (sample_acknowledgement vs samples) ΓòÉΓòÉΓòÉ
+
+  All 15 acknowledgements match perfectly.
+
+ΓòÉΓòÉΓòÉ LAYER 5: Future Resilience Assessment ΓòÉΓòÉΓòÉ
+
+  [1] Submission pricing: LOCKED AT SAVE TIME
+      - test_charges_total stored in samples table
+      - Individual charges stored in sample_tests.charge
+      - Extra items stored in sample_extra_items.line_total
+      -> Future price changes will NOT affect existing submissions
+
+  [2] Invoice snapshots: FROZEN JSON
+      - invoice_data_snapshot stores full pricing breakdown
+      - Once generated, snapshots are immutable (unless regenerated)
+      -> Future price changes will NOT affect existing invoices
+
+  [3] InvoiceModel recalculation: CROSS-VALIDATED
+      - Reads charges from sample_tests (frozen at submission)
+      - Cross-validates against samples.grand_total
+      - Falls back to stored total if discrepancy > 5 LKR
+      -> Even if calculation has a bug, the safety net catches it
+
+  [4] Combo rounding: KNOWN LIMITATION
+      - combo_price / param_count may lose 1-2 LKR per combo
+      - Max impact: ~3 LKR per submission (within tolerance)
+      - InvoiceModel uses combo_test_charge from pricing table when available
+
+====================================================================
+  FINAL SUMMARY
+====================================================================
+  Submissions:     15 checked, 5 issues
+  Invoices:        6 checked, 0 issues
+  Acknowledgements: 15 checked, 0 issues
+  TOTAL ISSUES: 5
+  STATUS: ISSUES FOUND - Review above
+====================================================================
