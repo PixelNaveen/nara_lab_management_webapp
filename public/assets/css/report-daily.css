@@ -1,0 +1,284 @@
+/* ==========================================================
+   DAILY SUMMARY DASHBOARD (report-daily.css)
+   Scoped specifically to .daily-summary-page
+   ========================================================== */
+
+.daily-summary-page {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+    min-height: calc(100vh - 60px);
+}
+
+/* --- Premium Header --- */
+.ds-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 1.25rem 2rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.ds-header-left, .ds-header-right {
+    display: flex;
+    align-items: center;
+}
+
+.ds-time-widget {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.ds-clock-icon-wrapper {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.ds-pulse {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+}
+
+.ds-pulse::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; height: 100%;
+    background: inherit;
+    border-radius: inherit;
+    animation: ds-pulse-anim 2s infinite;
+}
+
+@keyframes ds-pulse-anim {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+.ds-clock-text {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.ds-time-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ds-date-widget {
+    text-align: right;
+}
+
+.ds-date-day {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.1rem;
+}
+
+.ds-date-details {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .ds-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+    }
+    .ds-date-widget {
+        text-align: left;
+    }
+}
+
+/* --- KPI Cards --- */
+.ds-kpi-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.ds-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.ds-kpi-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-right: 1.25rem;
+    flex-shrink: 0;
+}
+
+/* Predefined Icon Colors */
+.ds-icon-blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.ds-icon-green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.ds-icon-purple { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.ds-icon-orange { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+.ds-kpi-details .ds-kpi-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.ds-kpi-details .ds-kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.ds-kpi-subtext {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
+/* --- Charts Container --- */
+.ds-chart-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.ds-chart-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 0.75rem;
+}
+
+.ds-chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* --- Data Table Section --- */
+.ds-table-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.ds-table-header {
+    background: #f8fafc;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ds-table-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.ds-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.ds-table th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.ds-table td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    color: #334155;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.ds-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Badges */
+.ds-badge {
+    padding: 0.35em 0.7em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.ds-badge-pending { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+.ds-badge-progress { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+.ds-badge-completed { background: #dcfce3; color: #15803d; border: 1px solid #bbf7d0; }
+.ds-badge-cancelled { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.ds-badge-paid { background: #dcfce3; color: #15803d; }
+.ds-badge-notpaid { background: #fee2e2; color: #b91c1c; }
+
+/* Loader Overlay */
+.ds-loader-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 12px;
+}
