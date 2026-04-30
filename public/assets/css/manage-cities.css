@@ -53,7 +53,11 @@ body {
 }
 
 .stat-icon.bg-primary {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-blue) 0%,
+    var(--primary-blue-dark) 100%
+  );
 }
 
 .stat-icon.bg-success {
@@ -336,7 +340,11 @@ body {
   align-items: center;
   padding: 20px 24px;
   border-bottom: 2px solid var(--border-color);
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-blue) 0%,
+    var(--primary-blue-dark) 100%
+  );
   border-radius: 16px 16px 0 0;
 }
 
@@ -515,8 +523,12 @@ body {
   }
 
   /* Status Colors for Strip */
-  .cities-table tbody tr:has(.bg-success) { border-left-color: var(--success-green) !important; }
-  .cities-table tbody tr:has(.bg-secondary) { border-left-color: #94a3b8 !important; }
+  .cities-table tbody tr:has(.bg-success) {
+    border-left-color: var(--success-green) !important;
+  }
+  .cities-table tbody tr:has(.bg-secondary) {
+    border-left-color: #94a3b8 !important;
+  }
 
   .cities-table td {
     display: flex !important;
@@ -551,7 +563,7 @@ body {
   }
 
   /* Action Buttons in Cards */
-  .btn-cities-edit, 
+  .btn-cities-edit,
   .btn-cities-delete {
     min-width: 100px !important;
     height: 32px !important;
@@ -578,7 +590,7 @@ body {
     min-width: 0 !important;
   }
 
-  .btn-cities-edit, 
+  .btn-cities-edit,
   .btn-cities-delete {
     width: 100% !important;
     margin: 5px 0 !important;
@@ -586,6 +598,10 @@ body {
 }
 
 /* ===== Smooth Transitions ===== */
-button, input, select, .badge, tr {
+button,
+input,
+select,
+.badge,
+tr {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
