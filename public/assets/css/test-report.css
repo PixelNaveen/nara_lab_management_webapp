@@ -1,0 +1,418 @@
+/* public/assets/css/test-report.css - ALIGNED WITH MANAGE PARAMETERS */
+
+:root {
+  --primary-blue: #1e3a8a;
+  --primary-blue-dark: #1e40af;
+  --primary-blue-light: #3b82f6;
+  --success-green: #16a34a;
+  --warning-yellow: #f59e0b;
+  --danger-red: #dc2626;
+  --light-gray: #f8f9fa;
+  --border-color: #e2e8f0;
+  --text-dark: #1e293b;
+}
+
+body {
+  background-color: var(--light-gray);
+  color: var(--text-dark);
+}
+
+/* Container */
+.test-report-container {
+  padding: 20px;
+}
+
+/* Filter Card */
+.tr-card-filter {
+  border: 1px solid var(--border-color);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tr-card-filter input,
+.tr-card-filter select {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  height: 38px;
+}
+
+.btn-tr-filter {
+  border: 1px solid var(--primary-blue);
+  color: var(--primary-blue);
+  background: transparent;
+  min-width: 90px;
+  height: 38px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-tr-filter:hover {
+  background: var(--primary-blue);
+  color: #fff;
+}
+
+.btn-tr-reset:hover {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+/* Table Container */
+.tr-table-container {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  padding: 10px;
+}
+
+.tr-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  margin-bottom: 0;
+}
+
+.tr-table thead {
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.tr-table thead th {
+  padding: 16px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  border: none;
+  letter-spacing: 0.5px;
+  color: #000 !important;
+  text-transform: uppercase;
+  background-color: #fff !important;
+}
+
+/* Column Padding */
+.tr-table th:first-child,
+.tr-table td:first-child {
+  padding-left: 25px !important;
+}
+
+.tr-table th:last-child,
+.tr-table td:last-child {
+  padding-right: 25px !important;
+}
+
+/* Actions Column Alignment */
+.tr-table td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
+}
+
+.tr-table thead th:first-child {
+  border-radius: 0;
+}
+
+.tr-table thead th:last-child {
+  border-radius: 0;
+}
+
+.tr-table tbody tr {
+  background: #fff;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tr-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.tr-table tbody td {
+  padding: 15px 12px;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  border: none;
+}
+
+/* Badges */
+.badge-status {
+  padding: 0.45em 0.8em;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-status.bg-success {
+  background-color: var(--success-green) !important;
+}
+
+.badge-status.bg-warning {
+  background-color: var(--warning-yellow) !important;
+}
+
+/* Action Buttons */
+.btn-tr-action {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary-blue);
+}
+
+.btn-tr-action:hover {
+  background-color: var(--primary-blue);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+}
+
+/* Custom Styles for Wizard */
+.wizard-steps {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 80px; /* Increased gap to prevent overlapping */
+    margin-bottom: 35px;
+    position: relative;
+    padding-top: 10px;
+}
+
+.wizard-steps::before {
+    content: "";
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px; /* Line between steps */
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    min-width: 100px;
+}
+
+.step-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: 10px;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1px #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.wizard-step.active .step-number {
+    background: var(--primary-blue);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+}
+
+.wizard-step.completed .step-number {
+    background: var(--success-green);
+    color: #fff;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.wizard-step.active .step-label {
+    color: var(--primary-blue);
+}
+
+/* Modal Header Fixes */
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    padding: 20px 24px;
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header .modal-title {
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1); /* Make close button white */
+    opacity: 0.8;
+}
+
+/* Badge in Header */
+#wizardSampleCode {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: var(--success-green);
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 50px;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Panels and Alerts */
+.wizard-panel h6 {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #334155;
+    margin-bottom: 1.25rem;
+}
+
+.alert-info {
+    background: #f0f9ff;
+    border: 1px solid #e0f2fe;
+    color: #0369a1;
+    border-radius: 12px;
+}
+
+.alert-warning {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    color: #92400e;
+    border-radius: 12px;
+}
+
+/* Signatory Card */
+.signatory-card {
+    border: 1px solid #f1f5f9;
+    border-radius: 12px !important;
+    transition: all 0.2s ease;
+}
+
+.signatory-card:hover {
+    border-color: var(--primary-blue-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Buttons in Footer */
+.modal-footer .btn-emerald-600 {
+    background-color: var(--success-green);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+}
+
+.modal-footer .btn-dark {
+    background-color: #1e293b;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+}
+
+.modal-footer #btnWizardBack {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+}
+
+/* =============================================
+   RESPONSIVE - TABLE TO CARD TRANSFORMATION
+   Threshold: 992px (Large Mobile / Tablet)
+   ============================================= */
+@media (max-width: 991.98px) {
+  .tr-table-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .tr-table {
+    border-spacing: 0;
+  }
+
+  .tr-table thead {
+    display: none !important;
+  }
+
+  .tr-table tbody tr {
+    display: block;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+
+  .tr-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid #f8fafc;
+    width: 100% !important;
+  }
+
+  .tr-table tbody td:last-child {
+    border-bottom: none;
+    justify-content: center;
+    padding-top: 15px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .tr-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+    margin-right: 15px;
+  }
+}
