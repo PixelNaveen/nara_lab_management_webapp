@@ -52,11 +52,11 @@ try {
     require_once __DIR__ . '/../../Config/Database.php';
     $debug_log[] = "[" . date('H:i:s') . "] ✓ Database.php loaded";
     
-    require_once __DIR__ . '/../Helpers/functions.php';
-    $debug_log[] = "[" . date('H:i:s') . "] ✓ functions.php loaded";
+    require_once __DIR__ . '/../Helpers/Functions.php';
+    $debug_log[] = "[" . date('H:i:s') . "] ✓ Functions.php loaded";
     
-    require_once __DIR__ . '/../Models/sample-model.php';
-    $debug_log[] = "[" . date('H:i:s') . "] ✓ sample-model.php loaded";
+    require_once __DIR__ . '/../Models/SampleModel.php';
+    $debug_log[] = "[" . date('H:i:s') . "] ✓ SampleModel.php loaded";
     
     if (session_status() === PHP_SESSION_NONE) {
         session_start();

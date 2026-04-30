@@ -5,11 +5,20 @@
  * Version: 5.0 - With Combo Detection & Smart UI Support
  */
 
-require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/../Helpers/functions.php';
-require_once __DIR__ . '/../Models/sample-model.php';
+// Suppress PHP HTML error output — this is a JSON-only endpoint
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
 
-session_start();
+require_once __DIR__ . '/../../Config/Database.php';
+require_once __DIR__ . '/../Helpers/Functions.php';
+require_once __DIR__ . '/../Models/SampleModel.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Discard any accidental output before sending JSON
+ob_start();
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -58,6 +67,14 @@ try {
             handleSearchSampleNames($sampleModel);
             break;
 
+        case 'getExtraItems':
+            handleGetExtraItems($sampleModel);
+            break;
+
+        case 'bulkCreateSampleNames':
+            handleBulkCreateSampleNames($sampleModel);
+            break;
+
         case 'searchCities':
             handleSearchCities($sampleModel);
             break;
@@ -74,9 +91,16 @@ try {
             handleValidateSampleName($sampleModel);
             break;
 
-        
+        case 'getServerTime':
+            handleGetServerTime();
+            break;
+
         case 'saveSample':
             handleSaveSample($sampleModel);
+            break;
+
+        case 'getSwabCombos':
+            handleGetSwabCombos($sampleModel);
             break;
 
         default:
@@ -105,6 +129,12 @@ function handleSearchClients($model)
     }
 
     $result = $model->searchClients($query);
+    sendJsonResponse($result);
+}
+
+function handleGetSwabCombos($model)
+{
+    $result = $model->getSwabCombos();
     sendJsonResponse($result);
 }
 
@@ -209,6 +239,7 @@ function handleGetCombos($model)
 function handleSearchSampleNames($model)
 {
     $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
+    $submissionType = trim($_GET['type'] ?? 'regular'); // ✅ Get submission type
 
     if (strlen($query) < 2) {
         sendJsonResponse([
@@ -218,7 +249,8 @@ function handleSearchSampleNames($model)
         ]);
     }
 
-    $result = $model->searchSampleNames($query);
+    // ✅ FIX: Pass submission type to model for category filtering
+    $result = $model->searchSampleNames($query, $submissionType);
     sendJsonResponse($result);
 }
 
@@ -422,22 +454,36 @@ function handleSaveSample($model)
             ]);
         }
 
+        // Parse extra items data
+        $extraItemsData = [];
+        if (!empty($_POST['extra_items'])) {
+            $extraItemsData = is_string($_POST['extra_items'])
+                ? json_decode($_POST['extra_items'], true)
+                : $_POST['extra_items'];
+            if (!is_array($extraItemsData)) $extraItemsData = [];
+        }
+
         // PREPARE DATA FOR MODEL
         $submissionData = [
             'client_id' => $clientId,
+            'city_id' => !empty($_POST['city_id']) ? intval($_POST['city_id']) : null,
             'submission_type' => sanitizeInput($_POST['submission_type']),
             'received_date' => sanitizeInput($_POST['received_date']),
+            'received_time' => sanitizeInput($_POST['received_time'] ?? ''),
             'tentative_date' => sanitizeInput($_POST['tentative_date']),
+            'sample_collected_date' => sanitizeInput($_POST['sample_collected_date'] ?? ''),
+            'sample_collected_time' => sanitizeInput($_POST['sample_collected_time'] ?? ''),
             'submitted_by' => sanitizeInput($_SESSION['fullname']),
-            'additional_notes' => sanitizeInput($_POST['additional_notes'] ?? ''),
             'additional_charges' => $additionalCharges,
             'test_charges_total' => $testChargesTotal,
             'grand_total' => $grandTotal,
-            'payment_status' => 'Not Paid',  // Always set to Not Paid
-            'payment_reference' => '',        // Always empty
+            'payment_status' => 'Not Paid',
+            'payment_reference' => '',
+            'additional_notes' => sanitizeInput($_POST['additional_notes'] ?? ''),
             'samples' => $samplesData,
             'tests' => $testsData,
-            'combo_calculation' => $calculationResult
+            'combo_calculation' => $calculationResult,
+            'extra_items' => $extraItemsData
         ];
 
         // SAVE TO DATABASE
@@ -509,7 +555,7 @@ function handleFindCityByName($model)
     }
 
     $result = $model->findCityByName($cityName);
-    
+
     if ($result === null) {
         sendJsonResponse([
             'success' => false,
@@ -532,7 +578,7 @@ function handleTrackCityUsage($model)
     }
 
     $success = $model->incrementCityUsage($cityId);
-    
+
     sendJsonResponse([
         'success' => $success,
         'message' => $success ? 'Usage tracked' : 'Failed to track usage'
@@ -555,20 +601,20 @@ function handleTrackCityUsage($model)
 function handleValidateSampleName($model)
 {
     $name = trim($_GET['name'] ?? '');
-    
+
     if (empty($name)) {
         sendJsonResponse([
             'success' => false,
             'message' => 'Name is required'
         ]);
     }
-    
+
     // Get canonical name (existing capitalization)
     $canonical = getSampleNameCanonical($model->conn, $name);
-    
+
     // Normalize for suggestion (if new name)
     $normalized = normalizeSampleName($name);
-    
+
     sendJsonResponse([
         'success' => true,
         'input' => $name,
@@ -577,5 +623,51 @@ function handleValidateSampleName($model)
         'canonical_name' => $canonical['canonical_name'],
         'usage_count' => $canonical['usage_count'],
         'suggestion' => $canonical['exists'] ? $canonical['canonical_name'] : $normalized
+    ]);
+}
+
+/**
+ * Get all active extra items for the submission form
+ */
+function handleGetExtraItems($model)
+{
+    $result = $model->getExtraItems();
+    sendJsonResponse($result);
+}
+
+/**
+ * Bulk create new sample names with categories (interceptor modal)
+ */
+function handleBulkCreateSampleNames($model)
+{
+    $namesJson = $_POST['names'] ?? '';
+    $names = is_string($namesJson) ? json_decode($namesJson, true) : $namesJson;
+
+    if (!is_array($names) || count($names) === 0) {
+        sendJsonResponse([
+            'success' => false,
+            'message' => 'No sample names provided'
+        ]);
+    }
+
+    $result = $model->bulkCreateSampleNames($names);
+    sendJsonResponse($result);
+}
+
+/**
+ * Return current server date and time for frontend sync
+ */
+function handleGetServerTime()
+{
+    $tz = new DateTimeZone('Asia/Colombo');
+    $now = new DateTime('now', $tz);
+
+    sendJsonResponse([
+        'success' => true,
+        'date' => $now->format('Y-m-d'),
+        'time' => $now->format('H:i:s'),
+        'time_short' => $now->format('H:i'),
+        'formatted' => $now->format('d/m/Y, h:i:s A'),
+        'timezone' => 'Asia/Colombo'
     ]);
 }

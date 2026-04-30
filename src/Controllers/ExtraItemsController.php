@@ -68,16 +68,26 @@ try {
                 throw new Exception('Item name is required');
             }
             
+            // Letters only validation for name
+            if (!preg_match('/^[a-zA-Z\s]{2,}$/', $itemName)) {
+                throw new Exception('Item name must contain only letters and be at least 2 characters');
+            }
+            
             if ($itemValue <= 0) {
-                throw new Exception('Item value must be greater than 0');
+                throw new Exception('Item value must be a valid number greater than 0');
             }
             
             if ($itemUnit === '') {
                 throw new Exception('Item unit is required');
             }
             
+            // Standardize unit ml -> mL
+            if (strtolower($itemUnit) === 'ml') {
+                $itemUnit = 'mL';
+            }
+            
             if ($itemPrice <= 0) {
-                throw new Exception('Item price must be greater than 0');
+                throw new Exception('Item price must be a valid number greater than 0');
             }
             
             // Check for deleted record
@@ -96,7 +106,11 @@ try {
             } else {
                 // Check duplicate
                 if ($model->itemExists($itemName, $itemValue, $itemUnit)) {
-                    throw new Exception('Item with same name, value and unit already exists');
+                    echo json_encode([
+                        'status' => 'warning',
+                        'message' => 'Item with same name, value and unit already exists'
+                    ]);
+                    exit;
                 }
                 
                 // Insert new
@@ -132,21 +146,55 @@ try {
                 throw new Exception('Item name is required');
             }
             
+            // Letters only validation
+            if (!preg_match('/^[a-zA-Z\s]{2,}$/', $itemName)) {
+                throw new Exception('Item name must contain only letters and be at least 2 characters');
+            }
+            
             if ($itemValue <= 0) {
-                throw new Exception('Item value must be greater than 0');
+                throw new Exception('Item value must be a valid number greater than 0');
             }
             
             if ($itemUnit === '') {
                 throw new Exception('Item unit is required');
             }
+
+            // Standardize unit ml -> mL
+            if (strtolower($itemUnit) === 'ml') {
+                $itemUnit = 'mL';
+            }
             
             if ($itemPrice <= 0) {
-                throw new Exception('Item price must be greater than 0');
+                throw new Exception('Item price must be a valid number greater than 0');
+            }
+
+            // Check if any change was made
+            $currentData = $model->getItemById($itemId);
+            if ($currentData) {
+                $noChanges = (
+                    $currentData['item_name'] === $itemName &&
+                    floatval($currentData['item_value']) === $itemValue &&
+                    $currentData['item_unit'] === $itemUnit &&
+                    floatval($currentData['item_price']) === $itemPrice &&
+                    $currentData['item_description'] === $itemDescription
+                );
+                
+                if ($noChanges) {
+                    echo json_encode([
+                        'status' => 'warning',
+                        'message' => 'No changes detected'
+                    ]);
+                    exit;
+                }
             }
             
             // Check duplicate (excluding current item)
             if ($model->itemExists($itemName, $itemValue, $itemUnit, $itemId)) {
-                throw new Exception('Item with same name, value and unit already exists');
+                echo json_encode([
+                    'status' => 'warning',
+                    'message' => 'Item with same name, value and unit already exists'
+                ]);
+                exit;
             }
             
             if ($model->updateItem($itemId, $itemName, $itemValue, $itemUnit, $itemPrice, $itemDescription)) {
@@ -155,7 +203,11 @@ try {
                     'message' => 'Item updated successfully'
                 ]);
             } else {
-                throw new Exception('Failed to update item');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to update item'
+                ]);
+                exit;
             }
             break;
 

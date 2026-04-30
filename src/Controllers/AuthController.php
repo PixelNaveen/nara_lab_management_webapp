@@ -10,7 +10,7 @@
  */
 
 session_start();
-require_once __DIR__ . '/../Models/auth-model.php';
+require_once __DIR__ . '/../Models/AuthModel.php';
 
 header('Content-Type: application/json');
 

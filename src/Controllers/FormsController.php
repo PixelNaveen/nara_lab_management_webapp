@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Forms Controller - Master Router for All 3 Forms
  * Handles requests for SAF, Sample Acknowledgement, and Analyst Information forms
@@ -14,9 +15,9 @@
 
 session_start();
 
-require_once __DIR__ . '/../Models/saf-model.php';
-require_once __DIR__ . '/../Models/acknowledgement-model.php';
-require_once __DIR__ . '/../Models/analyst-model.php';
+require_once __DIR__ . '/../Models/SAFModel.php';
+require_once __DIR__ . '/../Models/AcknowledgementModel.php';
+require_once __DIR__ . '/../Models/AnalystModel.php';
 
 // Check authentication
 if (!isset($_SESSION['user_id'])) {
@@ -51,11 +52,11 @@ switch ($action) {
     case 'view':
         handleViewForms($safModel, $ackModel, $analystModel);
         break;
-    
+
     case 'getFormData':
         handleGetFormData($safModel, $ackModel, $analystModel);
         break;
-    
+
     default:
         http_response_code(400);
         echo json_encode([
@@ -98,10 +99,10 @@ function handleViewForms($safModel, $ackModel, $analystModel)
 
     // Prepare data for modal
     $safData = $safResult['data'];
-    
+
     // IMPORTANT: Mark SAF as inside carousel (hides its own controls)
     $safData['inside_carousel'] = true;
-    
+
     // Load carousel modal
     include __DIR__ . '/../Includes/forms-carousel-modal.php';
 }
@@ -113,7 +114,7 @@ function handleViewForms($safModel, $ackModel, $analystModel)
 function handleGetFormData($safModel, $ackModel, $analystModel)
 {
     header('Content-Type: application/json');
-    
+
     $sampleId = intval($_GET['sample_id'] ?? 0);
 
     if ($sampleId === 0) {

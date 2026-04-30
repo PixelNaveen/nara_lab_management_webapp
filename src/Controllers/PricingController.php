@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Pricing Controller - PERFECT VERSION FOR ACTUAL MODEL
  * Works with the actual PricingModel methods
@@ -12,8 +13,8 @@ session_start();
 
 // Include dependencies
 require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/../Helpers/functions.php';
-require_once __DIR__ . '/../Models/pricing-model.php';
+require_once __DIR__ . '/../Helpers/Functions.php';
+require_once __DIR__ . '/../Models/PricingModel.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -66,12 +67,12 @@ $action = $_POST['action'] ?? '';
 
 try {
     switch ($action) {
-        
+
         // ==================== FETCH ACTIVE PARAMETERS ====================
         case 'fetchActiveParameters':
             try {
                 $parameters = $model->getActiveParameters();
-                
+
                 echo json_encode([
                     'status' => 'success',
                     'data' => $parameters
@@ -84,18 +85,18 @@ try {
                 ]);
             }
             break;
-        
+
         // ==================== INDIVIDUAL PRICES ====================
-        
+
         case 'fetchAllIndividuals':
             try {
                 $filters = [
                     'search' => trim($_POST['search'] ?? ''),
                     'is_active' => $_POST['is_active'] ?? ''
                 ];
-                
+
                 $prices = $model->getAllIndividualPrices($filters);
-                
+
                 echo json_encode([
                     'status' => 'success',
                     'data' => $prices
@@ -108,11 +109,11 @@ try {
                 ]);
             }
             break;
-        
+
         case 'getIndividualById':
             try {
                 $id = intval($_POST['id'] ?? 0);
-                
+
                 if ($id <= 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -120,9 +121,9 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 $price = $model->getIndividualPriceById($id);
-                
+
                 if ($price) {
                     echo json_encode([
                         'status' => 'success',
@@ -142,13 +143,18 @@ try {
                 ]);
             }
             break;
-        
+
         case 'insertIndividual':
             try {
+                // Role check
+                if (!in_array(strtoupper($_SESSION['role'] ?? ''), ['ADMIN', 'LABMANAGER'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Only Admins and Lab Managers can add prices.']);
+                    exit;
+                }
                 $parameterId = intval($_POST['parameter_id'] ?? 0);
                 $testCharge = floatval($_POST['test_charge'] ?? 0);
                 $isActive = intval($_POST['is_active'] ?? 1);
-                
+
                 // Validation
                 if ($parameterId <= 0) {
                     echo json_encode([
@@ -158,7 +164,7 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 if ($testCharge < 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -167,7 +173,7 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 // Check for existing active price
                 if ($model->hasIndividualPrice($parameterId)) {
                     echo json_encode([
@@ -177,10 +183,10 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 // Check for deleted price (reactivation)
                 $deleted = $model->findDeletedIndividualPrice($parameterId);
-                
+
                 if ($deleted) {
                     // Reactivate existing deleted price
                     $success = $model->reactivateIndividualPrice(
@@ -188,7 +194,7 @@ try {
                         $testCharge,
                         $isActive
                     );
-                    
+
                     if ($success) {
                         echo json_encode([
                             'status' => 'success',
@@ -204,7 +210,7 @@ try {
                 } else {
                     // Insert new price
                     $pricingId = $model->insertIndividualPrice($parameterId, $testCharge, $isActive);
-                    
+
                     if ($pricingId) {
                         echo json_encode([
                             'status' => 'success',
@@ -226,21 +232,24 @@ try {
                 ]);
             }
             break;
-        
+
         case 'updateIndividual':
             try {
+                // Role check
+                if (!in_array(strtoupper($_SESSION['role'] ?? ''), ['ADMIN', 'LABMANAGER'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Only Admins and Lab Managers can modify prices.']);
+                    exit;
+                }
+
                 $id = intval($_POST['id'] ?? 0);
                 $testCharge = floatval($_POST['test_charge'] ?? 0);
                 $isActive = intval($_POST['is_active'] ?? 1);
-                
+
                 if ($id <= 0) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Invalid ID'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Invalid ID']);
                     exit;
                 }
-                
+
                 if ($testCharge < 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -249,49 +258,51 @@ try {
                     ]);
                     exit;
                 }
-                
-                // Get current data to extract parameter_id
+
+                // Get current data for comparison
                 $current = $model->getIndividualPriceById($id);
                 if (!$current) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Price not found'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Price not found']);
                     exit;
                 }
-                
-                // Update with same parameter_id
+
+                // Check if anything changed
+                if (
+                    floatval($current['test_charge']) === $testCharge &&
+                    intval($current['is_active']) === $isActive
+                ) {
+                    echo json_encode(['status' => 'info', 'message' => 'No update detected.']);
+                    exit;
+                }
+
+                // Update
                 $success = $model->updateIndividualPrice(
                     $id,
                     $current['parameter_id'],
                     $testCharge,
                     $isActive
                 );
-                
+
                 if ($success) {
-                    echo json_encode([
-                        'status' => 'success',
-                        'message' => 'Price updated successfully'
-                    ]);
+                    echo json_encode(['status' => 'success', 'message' => 'Price updated successfully']);
                 } else {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Failed to update price'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Failed to update price']);
                 }
             } catch (Exception $e) {
                 logError($e->getMessage(), 'updateIndividual');
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Error updating price: ' . $e->getMessage()
-                ]);
+                echo json_encode(['status' => 'error', 'message' => 'Error updating price: ' . $e->getMessage()]);
             }
             break;
-        
+
         case 'deleteIndividual':
             try {
+                // Role check
+                if (!in_array(strtoupper($_SESSION['role'] ?? ''), ['ADMIN', 'LABMANAGER'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Only Admins and Lab Managers can delete prices.']);
+                    exit;
+                }
                 $id = intval($_POST['id'] ?? 0);
-                
+
                 if ($id <= 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -299,9 +310,9 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 $success = $model->softDeleteIndividualPrice($id);
-                
+
                 if ($success) {
                     echo json_encode([
                         'status' => 'success',
@@ -321,18 +332,18 @@ try {
                 ]);
             }
             break;
-        
+
         // ==================== COMBO PRICES ====================
-        
+
         case 'fetchAllCombos':
             try {
                 $filters = [
                     'search' => trim($_POST['search'] ?? ''),
                     'is_active' => $_POST['is_active'] ?? ''
                 ];
-                
+
                 $combos = $model->getAllComboPrices($filters);
-                
+
                 echo json_encode([
                     'status' => 'success',
                     'data' => $combos
@@ -345,11 +356,11 @@ try {
                 ]);
             }
             break;
-        
+
         case 'getComboById':
             try {
                 $id = intval($_POST['id'] ?? 0);
-                
+
                 if ($id <= 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -357,9 +368,9 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 $combo = $model->getComboPriceById($id);
-                
+
                 if ($combo) {
                     echo json_encode([
                         'status' => 'success',
@@ -379,19 +390,30 @@ try {
                 ]);
             }
             break;
-        
+
         case 'insertCombo':
             try {
+                // Role check
+                if (!in_array(strtoupper($_SESSION['role'] ?? ''), ['ADMIN', 'LABMANAGER'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Only Admins and Lab Managers can add combos.']);
+                    exit;
+                }
                 // Parse parameter IDs
                 $parameterIds = $_POST['parameter_ids'] ?? [];
                 if (!is_array($parameterIds)) {
                     $parameterIds = json_decode($parameterIds, true) ?? [];
                 }
                 $parameterIds = array_filter(array_map('intval', $parameterIds));
-                
+
+                // Reject duplicate parameters
+                if (count($parameterIds) !== count(array_unique($parameterIds))) {
+                    echo json_encode(['status' => 'error', 'message' => 'Cannot select the same parameter twice', 'field' => 'parameter_ids']);
+                    exit;
+                }
+
                 $testCharge = floatval($_POST['test_charge'] ?? 0);
                 $isActive = intval($_POST['is_active'] ?? 1);
-                
+
                 // Validation
                 if (count($parameterIds) < 2) {
                     echo json_encode([
@@ -401,7 +423,7 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 if ($testCharge < 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -410,7 +432,7 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 // Check for duplicate combo
                 if ($model->hasExactCombo($parameterIds)) {
                     echo json_encode([
@@ -420,10 +442,10 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 // Insert combo
                 $comboId = $model->insertCombo($parameterIds, $testCharge, $isActive);
-                
+
                 if ($comboId) {
                     echo json_encode([
                         'status' => 'success',
@@ -444,85 +466,99 @@ try {
                 ]);
             }
             break;
-        
+
         case 'updateCombo':
             try {
+                // Role check
+                if (!in_array(strtoupper($_SESSION['role'] ?? ''), ['ADMIN', 'LABMANAGER'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Only Admins and Lab Managers can modify prices.']);
+                    exit;
+                }
+
                 $comboId = intval($_POST['id'] ?? 0);
-                
+
                 // Parse parameter IDs
                 $parameterIds = $_POST['parameter_ids'] ?? [];
                 if (!is_array($parameterIds)) {
                     $parameterIds = json_decode($parameterIds, true) ?? [];
                 }
                 $parameterIds = array_filter(array_map('intval', $parameterIds));
-                
+                sort($parameterIds); // Sort for comparison
+
+                // Reject duplicate parameters
+                if (count($parameterIds) !== count(array_unique($parameterIds))) {
+                    echo json_encode(['status' => 'error', 'message' => 'Cannot select the same parameter twice', 'field' => 'parameter_ids']);
+                    exit;
+                }
+
                 $testCharge = floatval($_POST['test_charge'] ?? 0);
                 $isActive = intval($_POST['is_active'] ?? 1);
-                
+
                 // Validation
                 if ($comboId <= 0) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Invalid ID'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Invalid ID']);
                     exit;
                 }
-                
+
                 if (count($parameterIds) < 2) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Please select at least 2 parameters',
-                        'field' => 'parameter_ids'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Please select at least 2 parameters', 'field' => 'parameter_ids']);
                     exit;
                 }
-                
+
                 if ($testCharge < 0) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Price cannot be negative',
-                        'field' => 'test_charge'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Price cannot be negative', 'field' => 'test_charge']);
                     exit;
                 }
-                
+
+                // Get current data for comparison
+                $current = $model->getComboPriceById($comboId);
+                if (!$current) {
+                    echo json_encode(['status' => 'error', 'message' => 'Combo not found']);
+                    exit;
+                }
+
+                $currentParamIds = $current['parameter_ids'];
+                sort($currentParamIds); // Sort for comparison
+
+                // Check if anything changed
+                if (
+                    floatval($current['test_charge']) === $testCharge &&
+                    intval($current['is_active']) === $isActive &&
+                    $currentParamIds === $parameterIds
+                ) {
+                    echo json_encode(['status' => 'info', 'message' => 'No update detected.']);
+                    exit;
+                }
+
                 // Check for duplicate combo (excluding current)
                 if ($model->hasExactCombo($parameterIds, $comboId)) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'A combo with these exact parameters already exists',
-                        'field' => 'parameter_ids'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'A combo with these exact parameters already exists', 'field' => 'parameter_ids']);
                     exit;
                 }
-                
+
                 // Update combo
                 $success = $model->updateCombo($comboId, $parameterIds, $testCharge, $isActive);
-                
+
                 if ($success) {
-                    echo json_encode([
-                        'status' => 'success',
-                        'message' => 'Combo updated successfully'
-                    ]);
+                    echo json_encode(['status' => 'success', 'message' => 'Combo updated successfully']);
                 } else {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Failed to update combo'
-                    ]);
+                    echo json_encode(['status' => 'error', 'message' => 'Failed to update combo']);
                 }
             } catch (Exception $e) {
                 logError($e->getMessage(), 'updateCombo');
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Error updating combo: ' . $e->getMessage()
-                ]);
+                echo json_encode(['status' => 'error', 'message' => 'Error updating combo: ' . $e->getMessage()]);
             }
             break;
-        
+
         case 'deleteCombo':
             try {
+                // Role check
+                if (!in_array(strtoupper($_SESSION['role'] ?? ''), ['ADMIN', 'LABMANAGER'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Only Admins and Lab Managers can delete combos.']);
+                    exit;
+                }
                 $id = intval($_POST['id'] ?? 0);
-                
+
                 if ($id <= 0) {
                     echo json_encode([
                         'status' => 'error',
@@ -530,9 +566,9 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 $success = $model->softDeleteCombo($id);
-                
+
                 if ($success) {
                     echo json_encode([
                         'status' => 'success',
@@ -552,9 +588,9 @@ try {
                 ]);
             }
             break;
-        
+
         // ==================== COMBO NAME PREVIEW ====================
-        
+
         case 'previewComboName':
             try {
                 // Parse parameter IDs
@@ -563,7 +599,7 @@ try {
                     $parameterIds = json_decode($parameterIds, true) ?? [];
                 }
                 $parameterIds = array_filter(array_map('intval', $parameterIds));
-                
+
                 if (count($parameterIds) < 2) {
                     echo json_encode([
                         'status' => 'error',
@@ -571,9 +607,9 @@ try {
                     ]);
                     exit;
                 }
-                
+
                 $comboName = $model->generateComboName($parameterIds);
-                
+
                 echo json_encode([
                     'status' => 'success',
                     'combo_name' => $comboName
@@ -586,7 +622,7 @@ try {
                 ]);
             }
             break;
-        
+
         default:
             echo json_encode([
                 'status' => 'error',
@@ -604,7 +640,7 @@ try {
 exit;
 
 // ==================== NOTES ====================
-// 1. sendJsonResponse() is already defined in functions.php - DO NOT redefine
+// 1. sendJsonResponse() is already defined in Functions.php - DO NOT redefine
 // 2. All model methods called match the actual PricingModel class
 // 3. Model returns arrays/values directly - wrapped in status/message here
 // 4. All exits are explicit to prevent double output

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SAF Controller - Sample Acceptance Form Generator
  * Version: 2.1 - CORRECTED
@@ -9,8 +10,8 @@
 
 session_start();
 
-require_once __DIR__ . '/../Models/saf-model.php';
-require_once __DIR__ . '/../Helpers/functions.php';
+require_once __DIR__ . '/../Models/SAFModel.php';
+require_once __DIR__ . '/../Helpers/Functions.php';
 
 // Check authentication
 if (!isset($_SESSION['user_id'])) {
@@ -114,11 +115,11 @@ switch ($action) {
     case 'view':
         handleViewSAF($safModel);
         break;
-    
+
     case 'checkExists':
         handleCheckExists($safModel);
         break;
-    
+
     default:
         http_response_code(400);
         echo '<!DOCTYPE html>
@@ -259,7 +260,7 @@ function handleViewSAF($model)
 function handleCheckExists($model)
 {
     header('Content-Type: application/json; charset=utf-8');
-    
+
     $sampleId = intval($_GET['sample_id'] ?? 0);
 
     if ($sampleId === 0) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sample Records Controller
  * Laboratory Management System
@@ -13,7 +14,7 @@
  */
 
 session_start();
-require_once __DIR__ . '/../Models/sample-records-model.php';
+require_once __DIR__ . '/../Models/SampleStatusModel.php';
 header('Content-Type: application/json');
 
 // ==================== AUTHENTICATION CHECK ====================
@@ -51,16 +52,16 @@ switch ($action) {
             $samples = $model->getAllSamplesAdvanced($filters);
             $counts = $model->getStatusCounts();
             $paymentCounts = $model->getPaymentCounts();
-            
+
             // Calculate grand total for filtered results
             $grandTotal = 0;
             $paidTotal = 0;
             $unpaidTotal = 0;
-            
+
             foreach ($samples as $sample) {
                 $amount = floatval($sample['grand_total']);
                 $grandTotal += $amount;
-                
+
                 if ($sample['payment_status'] === 'Paid') {
                     $paidTotal += $amount;
                 } else {
@@ -79,7 +80,6 @@ switch ($action) {
                     'unpaid_total' => $unpaidTotal
                 ]
             ]);
-            
         } catch (Exception $e) {
             error_log("Fetch All Error: " . $e->getMessage());
             http_response_code(500);
@@ -131,7 +131,6 @@ switch ($action) {
             } else {
                 throw new Exception('Failed to update status');
             }
-            
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
@@ -147,6 +146,7 @@ switch ($action) {
             $sampleId = intval($_POST['sample_id'] ?? 0);
             $newPaymentStatus = trim($_POST['payment_status'] ?? '');
             $referenceNumber = trim($_POST['reference_number'] ?? '');
+            $paymentDate = trim($_POST['payment_date'] ?? '');
 
             // Validation
             if ($sampleId <= 0) {
@@ -172,18 +172,37 @@ switch ($action) {
                 if (empty($referenceNumber)) {
                     throw new Exception('Reference number is required when marking as Paid');
                 }
-                
+
                 if (strlen($referenceNumber) > 100) {
                     throw new Exception('Reference number too long (maximum 100 characters)');
+                }
+
+                // Validate reference number format: digits + allowed symbols only
+                if (!preg_match('/^[0-9_\-\/\.,]+$/', $referenceNumber)) {
+                    throw new Exception('Reference number can only contain digits and symbols: _ / - , .');
+                }
+
+                if (empty($paymentDate)) {
+                    throw new Exception('Payment date is required when marking as Paid');
+                }
+
+                // Validate payment date is not in the future
+                $tz = new DateTimeZone('Asia/Colombo');
+                $today = new DateTime('now', $tz);
+                $today->setTime(23, 59, 59); // Allow the full today
+                $submittedDate = new DateTime($paymentDate, $tz);
+                if ($submittedDate > $today) {
+                    throw new Exception('Payment date cannot be in the future');
                 }
             }
 
             // Update payment status
             $result = $model->updatePaymentStatus(
-                $sampleId, 
-                $newPaymentStatus, 
-                $referenceNumber, 
-                $currentUser
+                $sampleId,
+                $newPaymentStatus,
+                $referenceNumber,
+                $currentUser,
+                $paymentDate
             );
 
             if ($result['success']) {
@@ -201,7 +220,6 @@ switch ($action) {
             } else {
                 throw new Exception($result['message']);
             }
-            
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
@@ -230,7 +248,6 @@ switch ($action) {
             } else {
                 throw new Exception('Sample not found');
             }
-            
         } catch (Exception $e) {
             http_response_code(404);
             echo json_encode([
@@ -293,7 +310,6 @@ switch ($action) {
             } else {
                 throw new Exception('Sample not found');
             }
-            
         } catch (Exception $e) {
             http_response_code(404);
             echo json_encode([

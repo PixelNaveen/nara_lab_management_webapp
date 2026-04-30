@@ -1,10 +1,18 @@
 <?php
 // src/Controllers/CityController.php - FINAL COMPLETE VERSION
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 require_once __DIR__ . '/../Models/CityModel.php';
 header('Content-Type: application/json');
+
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    if (!(error_reporting() & $errno)) return false;
+    echo json_encode(['status' => 'error', 'message' => "PHP Error [$errno]: $errstr in $errfile on line $errline"]);
+    exit;
+});
 
 // CSRF validation for POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -87,7 +95,11 @@ try {
             } else {
                 // Check duplicate
                 if ($model->cityExists($cityName)) {
-                    throw new Exception('City with this name already exists');
+                    echo json_encode([
+                        'status' => 'warning',
+                        'message' => 'City with this name already exists'
+                    ]);
+                    exit;
                 }
                 
                 // Insert new
@@ -122,9 +134,22 @@ try {
                 throw new Exception('City name is required');
             }
             
+            // Check if name is actually different
+            if (strtolower($currentCity['city_name']) === strtolower($cityName)) {
+                echo json_encode([
+                    'status' => 'warning',
+                    'message' => 'No changes detected'
+                ]);
+                exit;
+            }
+
             // Check duplicate (excluding current city)
             if ($model->cityExists($cityName, $cityId)) {
-                throw new Exception('City with this name already exists');
+                echo json_encode([
+                    'status' => 'warning',
+                    'message' => 'City with this name already exists'
+                ]);
+                exit;
             }
             
             if ($model->updateCity($cityId, $cityName, $isPredefined)) {
@@ -133,7 +158,11 @@ try {
                     'message' => 'City updated successfully'
                 ]);
             } else {
-                throw new Exception('Failed to update city');
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Failed to update city'
+                ]);
+                exit;
             }
             break;
 
