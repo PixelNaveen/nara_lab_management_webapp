@@ -64,12 +64,12 @@ $menuItems = [
     ]]
 ];
 
-function isActive($menuId, $currentPage)
+function isActive(string $menuId, string $currentPage)
 {
     return $currentPage === $menuId;
 }
 
-function hasActiveSubmenu($submenu, $currentPage, $userRole)
+function hasActiveSubmenu(array $submenu, string $currentPage, string $userRole)
 {
     foreach ($submenu as $item) {
         if (RolePermissions::hasPermission($userRole, $item['id']) && $item['id'] === $currentPage) {
@@ -82,7 +82,7 @@ function hasActiveSubmenu($submenu, $currentPage, $userRole)
 /**
  * Check if user has access to menu item
  */
-function hasAccess($item, $userRole)
+function hasAccess(array $item, string $userRole)
 {
     return RolePermissions::hasPermission($userRole, $item['id']);
 }
@@ -90,7 +90,7 @@ function hasAccess($item, $userRole)
 /**
  * Check if submenu has any visible items
  */
-function hasVisibleSubmenu($submenu, $userRole)
+function hasVisibleSubmenu(array $submenu, string $userRole)
 {
     foreach ($submenu as $item) {
         if (RolePermissions::hasPermission($userRole, $item['id'])) {

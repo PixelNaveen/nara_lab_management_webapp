@@ -18,7 +18,7 @@ class RolePermissions
     const CLIENT = 'Client';
 
     // ========== PERMISSION DEFINITIONS ==========
-    private static $permissions = [
+    private static array $permissions = [
         'Admin' => [
             'dashboard' => true,
             'clients' => true,
@@ -203,7 +203,7 @@ class RolePermissions
     /**
      * Check if a role has permission to access a page
      */
-    public static function hasPermission($role, $page)
+    public static function hasPermission(string $role, string $page)
     {
         // Admin always has access
         if ($role === self::ADMIN) {
@@ -226,7 +226,7 @@ class RolePermissions
     /**
      * Get all accessible pages for a role
      */
-    public static function getAccessiblePages($role)
+    public static function getAccessiblePages(string $role)
     {
         if (!isset(self::$permissions[$role])) {
             return [];
