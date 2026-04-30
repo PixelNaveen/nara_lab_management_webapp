@@ -1,0 +1,349 @@
+/* public/assets/css/result-entry.css - PREMIUM REFINED VERSION (SCOPED) */
+
+:root {
+  --re-primary-blue: #1e3a8a;
+  --re-primary-blue-dark: #1e40af;
+  --re-primary-blue-light: #3b82f6;
+  --re-success-green: #16a34a;
+  --re-warning-yellow: #f59e0b;
+  --re-danger-red: #dc2626;
+  --re-light-gray: #f8f9fa;
+  --re-border-color: #e2e8f0;
+  --re-text-dark: #1e293b;
+}
+
+/* Scoped Container Styles */
+.re-container {
+  padding: 20px;
+  background-color: var(--re-light-gray);
+  color: var(--re-text-dark);
+}
+
+/* Filter Card */
+.re-container .re-card-filter {
+  border: 1px solid var(--re-border-color);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.re-container .re-card-filter input,
+.re-container .re-card-filter select {
+  border: 1px solid var(--re-border-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  height: 38px;
+}
+
+.re-container .btn-re-filter {
+  border: 1px solid var(--re-primary-blue);
+  color: var(--re-primary-blue);
+  background: transparent;
+  min-width: 90px;
+  height: 38px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.re-container .btn-re-filter:hover {
+  background: var(--re-primary-blue);
+  color: #fff;
+}
+
+.re-container .btn-re-reset {
+  border: 1px solid #64748b;
+  color: #64748b;
+  background: transparent;
+  min-width: 90px;
+  height: 38px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.re-container .btn-re-reset:hover {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+/* Table Container */
+.re-container .re-table-container {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--re-border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  padding: 10px;
+}
+
+.re-container .re-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  margin-bottom: 0;
+}
+
+.re-container .re-table thead {
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--re-border-color);
+}
+
+.re-container .re-table thead th {
+  padding: 16px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  border: none;
+  letter-spacing: 0.5px;
+  color: #000 !important;
+  text-transform: uppercase;
+  background-color: #fff !important;
+}
+
+.re-container .re-table thead th:first-child {
+  border-radius: 0;
+}
+
+.re-container .re-table thead th:last-child {
+  border-radius: 0;
+}
+
+.re-container .re-table tbody tr {
+  background: #fff;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.re-container .re-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.re-container .re-table tbody td {
+  padding: 14px 12px;
+  font-size: 10.5pt;
+  vertical-align: middle;
+  border: none;
+  color: #334155;
+}
+
+/* Scoped Badges for Result Entry */
+.re-container .badge,
+#resultEntryModal .badge {
+  padding: 0.5em 0.9em;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 95px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.re-container .badge-pending,
+#resultEntryModal .badge-pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #d97706 !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.re-container .badge-in-progress,
+#resultEntryModal .badge-in-progress {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #2563eb !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.re-container .badge-completed,
+#resultEntryModal .badge-completed {
+  background: rgba(22, 163, 74, 0.15) !important;
+  color: #15803d !important;
+  border-color: rgba(22, 163, 74, 0.3) !important;
+}
+
+/* Action Buttons Refined Icon Style */
+.re-container .btn-re-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f7ff;
+  color: #1e3a8a;
+}
+
+.re-container .btn-re-action:hover {
+  background-color: #e0efff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.re-container .btn-assign i,
+.re-container .btn-view-results i,
+.re-container .btn-print-re i {
+  font-size: 1.1rem;
+}
+
+/* Modal Styling - Scoped to resultEntryModal */
+#resultEntryModal .modal-content {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+#resultEntryModal .modal-header {
+  background: linear-gradient(
+    135deg,
+    var(--re-primary-blue) 0%,
+    var(--re-primary-blue-dark) 100%
+  );
+  padding: 20px 24px;
+  border-bottom: none;
+}
+
+#resultEntryModal .modal-title {
+  color: #fff;
+  font-weight: 600;
+}
+
+#resultEntryModal .re-error-label {
+  color: var(--re-danger-red);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 2px;
+  display: none;
+}
+
+.re-container .is-invalid,
+#resultEntryModal .is-invalid {
+  border-color: var(--re-danger-red) !important;
+}
+
+/* Progress Section */
+.re-container .re-progress-wrap {
+  width: 60px;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  margin: 0 auto 4px;
+  overflow: hidden;
+}
+
+.re-container .re-progress-bar {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+/* Checkbox Style */
+#resultEntryModal .re-espc-check {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#resultEntryModal .re-espc-check:checked {
+  background-color: var(--re-warning-yellow);
+  border-color: var(--re-warning-yellow);
+}
+
+/* Form Chip Overrides */
+#resultEntryModal .re-sample-header {
+  background: var(--re-light-gray);
+  border: 1px solid var(--re-border-color);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+#resultEntryModal .re-info-chip {
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--re-border-color);
+  border-radius: 8px;
+}
+
+#resultEntryModal .re-date-chip {
+  background: #fff;
+  border: 1px dashed var(--re-border-color);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+/* =============================================
+   RESPONSIVE - TABLE TO CARD TRANSFORMATION
+   Threshold: 992px (Large Mobile / Tablet)
+   ============================================= */
+@media (max-width: 991.98px) {
+  .re-container .re-table-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .re-container .re-table {
+    border-spacing: 0;
+  }
+
+  .re-container .re-table thead {
+    display: none !important;
+  }
+
+  .re-container .re-table tbody tr {
+    display: block;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--re-border-color);
+    padding: 12px;
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+
+  .re-container .re-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid #f8fafc;
+    width: 100% !important;
+  }
+
+  .re-container .re-table tbody td:last-child {
+    border-bottom: none;
+    justify-content: center;
+    padding-top: 15px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .re-container .re-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+    margin-right: 15px;
+  }
+}
