@@ -165,7 +165,7 @@ body {
 .a4-natural th,
 .a4-natural td {
   border: 1pt solid #000; /* ✅ Thicker for official docs */
-  padding: 8pt 9pt; /* ✅ Loosened for perfect balance */
+  padding: 7pt 8pt; /* ✅ Restored original compact padding */
   text-align: left;
   font-size: 10pt; /* ✅ Government body text */
   vertical-align: middle;
@@ -176,22 +176,23 @@ body {
 .a4-natural th {
   font-weight: bold;
   background: transparent;
+  text-align: center; /* ✅ Centered headers for professional alignment */
 }
 
 /* HEADER ROW - Adjusted Height */
 .a4-natural .header-row td {
-  height: 38pt; /* ✅ Increased for breathing room */
+  height: 36pt; /* ✅ Restored original height */
   font-weight: normal;
 }
 
 /* SAMPLE ROW - Adjusted Height */
 .a4-natural .sample-row {
-  height: 36pt; /* ✅ Increased for breathing room */
+  height: 34pt; /* ✅ Restored original height */
 }
 
 /* PAYMENT ROW - Adjusted Height */
 .a4-natural .payment-row td {
-  height: 40pt; /* ✅ Increased for breathing room */
+  height: 38pt; /* ✅ Restored original height */
 }
 
 /* DECISION SECTION */
