@@ -416,7 +416,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['logged_in']) && $_SESSION['l
             registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
 
             try {
-                const response = await fetch('../Controllers/auth-controller.php', {
+                const response = await fetch('../Controllers/AuthController.php', {
                     method: 'POST',
                     body: formData
                 });

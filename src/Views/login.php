@@ -233,7 +233,7 @@ $registered = isset($_GET['registered']) ? true : false;
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
 
             try {
-                const response = await fetch('../Controllers/auth-controller.php', {
+                const response = await fetch('../Controllers/AuthController.php', {
                     method: 'POST',
                     body: formData
                 });

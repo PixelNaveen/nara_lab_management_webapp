@@ -5,7 +5,7 @@
  * @features Server time sync, 30-day backdate, auto tentative, time validation
  */
 
-const API_BASE = "src/Controllers/sample-controller.php";
+const API_BASE = "src/Controllers/SampleController.php";
 
 // ==========================================
 // GLOBAL STATE
@@ -15,10 +15,18 @@ let currentStep = 1;
 let sampleCount = 0;
 let submissionType = "";
 let allParameters = [];
-let availableCombos = [];
+let availableCombos = []; // Regular combos (exact match)
+let availableSwabCombos = []; // Swab combo GROUPS (partial match, fixed surcharge)
 let serverDateTime = null;
 let serverTimeInterval = null;
 let isSubmitting = false;
+let allExtraItems = [];
+let sampleCategories = [
+  { id: 1, name: "Water and Ice", code: "WAT" },
+  { id: 2, name: "Fish and Shellfish", code: "FSH" },
+  { id: 3, name: "Surface Swab", code: "SWB" },
+  { id: 4, name: "Other", code: "OTH" },
+];
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -48,7 +56,8 @@ function showToast(message, type = "info") {
   if (!toastContainer) {
     toastContainer = document.createElement("div");
     toastContainer.id = "submissionToastContainer";
-    toastContainer.className = "toast-container position-fixed bottom-0 end-0 p-3";
+    toastContainer.className =
+      "toast-container position-fixed bottom-0 end-0 p-3";
     toastContainer.style.zIndex = "1080";
     document.body.appendChild(toastContainer);
   }
@@ -130,16 +139,18 @@ function showSuccess(inputId) {
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("✅ Sample Submission initialized - Version 3.0 (Server Time Edition)");
+  console.log(
+    "✅ Sample Submission initialized - Version 3.0 (Server Time Edition)",
+  );
   initializeEventListeners();
   initializeRealTimeValidation();
   initializeCityAutocomplete();
-  
+
   // Fetch server time immediately
   fetchServerTime().then(() => {
     console.log("✅ Server time fetched successfully");
   });
-  
+
   showStep(1);
 });
 
@@ -159,13 +170,13 @@ async function fetchServerTime() {
     if (data.success) {
       serverDateTime = data;
       console.log("✅ Server time loaded:", data.formatted);
-      
+
       // Update display immediately
       updateServerTimeDisplay();
-      
+
       // Start clock
       startServerTimeClock();
-      
+
       return true;
     } else {
       throw new Error(data.message || "Failed to get server time");
@@ -199,7 +210,7 @@ function useBrowserTime() {
       hour12: true,
     }),
   };
-  
+
   updateServerTimeDisplay();
   startServerTimeClock();
 }
@@ -245,7 +256,7 @@ function startServerTimeClock() {
   // Update immediately and then every second
   updateClock();
   serverTimeInterval = setInterval(updateClock, 1000);
-  
+
   console.log("⏰ Server time clock started");
 }
 
@@ -259,7 +270,9 @@ function initializeDateTimeFields() {
 
   // Check if elements exist (might not be in DOM yet)
   if (!receivedDateEl || !receivedTimeEl || !tentativeDateEl) {
-    console.warn("⏳ Date/time fields not in DOM yet, will initialize when Step 3 is shown");
+    console.warn(
+      "⏳ Date/time fields not in DOM yet, will initialize when Step 3 is shown",
+    );
     return false;
   }
 
@@ -318,7 +331,12 @@ function updateTentativeDate() {
   // Set tentative date minimum to received date
   tentativeDateEl.min = receivedDate;
 
-  console.log("📅 Tentative date updated:", tentativeDate, "(+10 days from", receivedDate + ")");
+  console.log(
+    "📅 Tentative date updated:",
+    tentativeDate,
+    "(+10 days from",
+    receivedDate + ")",
+  );
 }
 
 /**
@@ -354,7 +372,7 @@ function initializeDateTimeListeners() {
 function validateReceivedDate() {
   const receivedDateEl = document.getElementById("receivedDate");
   if (!receivedDateEl) return false;
-  
+
   const value = receivedDateEl.value;
 
   if (!value) {
@@ -378,7 +396,10 @@ function validateReceivedDate() {
   }
 
   if (selectedDate < minDate) {
-    showError("receivedDate", "Received date cannot be more than 30 days in the past");
+    showError(
+      "receivedDate",
+      "Received date cannot be more than 30 days in the past",
+    );
     return false;
   }
 
@@ -392,7 +413,7 @@ function validateReceivedDate() {
 function validateReceivedTime() {
   const receivedTimeEl = document.getElementById("receivedTime");
   if (!receivedTimeEl) return false;
-  
+
   const value = receivedTimeEl.value;
 
   if (!value) {
@@ -472,20 +493,21 @@ function initializeEventListeners() {
   document.getElementById("prevBtn").addEventListener("click", handlePrev);
   document.getElementById("siForm").addEventListener("submit", handleSubmit);
 
-  // Additional Charges
-  const additionalChargesEl = document.getElementById("additionalCharges");
-  if (additionalChargesEl) {
-    additionalChargesEl.addEventListener("input", updateGrandTotal);
-  }
+  // Extra items total drives additional charges — no manual listener needed
 
   // Click outside to close dropdowns
   document.addEventListener("click", function (e) {
     if (!e.target.closest(".position-relative")) {
-      document.querySelectorAll(".sample-name-autocomplete").forEach((dropdown) => {
-        dropdown.classList.remove("show");
-      });
+      document
+        .querySelectorAll(".sample-name-autocomplete")
+        .forEach((dropdown) => {
+          dropdown.classList.remove("show");
+        });
     }
-    if (!e.target.closest("#clientSearch") && !e.target.closest("#clientResults")) {
+    if (
+      !e.target.closest("#clientSearch") &&
+      !e.target.closest("#clientResults")
+    ) {
       const clientResults = document.getElementById("clientResults");
       if (clientResults) {
         clientResults.classList.remove("show");
@@ -534,19 +556,7 @@ function initializeRealTimeValidation() {
     });
   }
 
-  // Additional Charges
-  const additionalChargesEl = document.getElementById("additionalCharges");
-  if (additionalChargesEl) {
-    additionalChargesEl.addEventListener("input", function () {
-      const value = parseFloat(this.value);
-
-      if (isNaN(value) || value < 0) {
-        showError("additionalCharges", "Additional charges must be a positive number");
-      } else {
-        showSuccess("additionalCharges");
-      }
-    });
-  }
+  // Additional charges are now auto-calculated from extra items — no manual validation needed
 
   // Email Validation
   const receiptEmailEl = document.getElementById("receiptEmail");
@@ -585,7 +595,9 @@ async function handleClientSearch() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}?action=searchClients&query=${encodeURIComponent(query)}`);
+    const res = await fetch(
+      `${API_BASE}?action=searchClients&query=${encodeURIComponent(query)}`,
+    );
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -606,8 +618,8 @@ async function handleClientSearch() {
                data-city="${escapeHtml(client.city || "")}">
             <strong>${escapeHtml(client.client_name)}</strong><br>
             <small class="text-muted">${escapeHtml(client.phone_primary)} • ${escapeHtml(
-          client.contact_person || "No contact"
-        )}</small>
+              client.contact_person || "No contact",
+            )}</small>
           </div>`;
       });
       resultsDiv.innerHTML = html;
@@ -665,7 +677,10 @@ async function createNewClient() {
 
   const phoneClean = phone.replace(/[\s-]/g, "");
   if (!/^0\d{9}$/.test(phoneClean)) {
-    showToast("Phone must be 10 digits starting with 0 (e.g., 0771234567)", "error");
+    showToast(
+      "Phone must be 10 digits starting with 0 (e.g., 0771234567)",
+      "error",
+    );
     showError("phonePrimary", "Invalid phone format");
     return false;
   }
@@ -675,9 +690,15 @@ async function createNewClient() {
     formData.append("action", "createClient");
     formData.append("client_name", clientName);
     formData.append("phone_primary", phoneClean);
-    formData.append("address_line1", document.getElementById("addressLine1").value.trim());
+    formData.append(
+      "address_line1",
+      document.getElementById("addressLine1").value.trim(),
+    );
     formData.append("city", document.getElementById("city").value.trim());
-    formData.append("contact_person", document.getElementById("contactPerson").value.trim());
+    formData.append(
+      "contact_person",
+      document.getElementById("contactPerson").value.trim(),
+    );
 
     const res = await fetch(API_BASE, {
       method: "POST",
@@ -690,8 +711,12 @@ async function createNewClient() {
       document.getElementById("selectedClientId").value = data.client_id;
       document.getElementById("originalClientName").value = clientName;
       document.getElementById("originalPhone").value = phoneClean;
-      document.getElementById("originalContactPerson").value = document.getElementById("contactPerson").value.trim();
-      document.getElementById("originalCity").value = document.getElementById("city").value.trim();
+      document.getElementById("originalContactPerson").value = document
+        .getElementById("contactPerson")
+        .value.trim();
+      document.getElementById("originalCity").value = document
+        .getElementById("city")
+        .value.trim();
 
       showToast("New client created successfully", "success");
       return true;
@@ -714,13 +739,17 @@ async function updateClientIfModified() {
   }
 
   const currentName = document.getElementById("clientName").value.trim();
-  const currentPhone = document.getElementById("phonePrimary").value.replace(/[\s-]/g, "");
+  const currentPhone = document
+    .getElementById("phonePrimary")
+    .value.replace(/[\s-]/g, "");
   const currentContact = document.getElementById("contactPerson").value.trim();
   const currentCity = document.getElementById("city").value.trim();
 
   const originalName = document.getElementById("originalClientName").value;
   const originalPhone = document.getElementById("originalPhone").value;
-  const originalContact = document.getElementById("originalContactPerson").value;
+  const originalContact = document.getElementById(
+    "originalContactPerson",
+  ).value;
   const originalCity = document.getElementById("originalCity").value;
 
   const isModified =
@@ -739,7 +768,10 @@ async function updateClientIfModified() {
     formData.append("client_id", clientId);
     formData.append("client_name", currentName);
     formData.append("phone_primary", currentPhone);
-    formData.append("address_line1", document.getElementById("addressLine1").value.trim());
+    formData.append(
+      "address_line1",
+      document.getElementById("addressLine1").value.trim(),
+    );
     formData.append("city", document.getElementById("city").value.trim());
     formData.append("contact_person", currentContact);
 
@@ -774,7 +806,9 @@ async function updateClientIfModified() {
 // ==========================================
 
 function showStep(step) {
-  document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
+  document
+    .querySelectorAll(".step")
+    .forEach((s) => s.classList.remove("active"));
   const targetStep = document.querySelector(`.step[data-step="${step}"]`);
   if (targetStep) {
     targetStep.classList.add("active");
@@ -788,16 +822,20 @@ function showStep(step) {
     }
   });
 
-  document.getElementById("prevBtn").style.display = step === 1 ? "none" : "inline-block";
-  document.getElementById("nextBtn").style.display = step === 6 ? "none" : "inline-block";
-  document.getElementById("submitBtn").style.display = step === 6 ? "inline-block" : "none";
+  document.getElementById("prevBtn").style.display =
+    step === 1 ? "none" : "inline-block";
+  document.getElementById("nextBtn").style.display =
+    step === 6 ? "none" : "inline-block";
+  document.getElementById("submitBtn").style.display =
+    step === 6 ? "inline-block" : "none";
 
-  // ✅ INITIALIZE DATE/TIME FIELDS WHEN STEP 3 IS SHOWN
+  // INITIALIZE DATE/TIME FIELDS WHEN STEP 3 IS SHOWN
   if (step === 3) {
     const initialized = initializeDateTimeFields();
     if (initialized) {
       initializeDateTimeListeners();
     }
+    loadExtraItems();
   }
 
   if (step === 4) loadSamples();
@@ -828,6 +866,14 @@ async function handleNext() {
       if (!updated) {
         return;
       }
+    }
+  }
+
+  // CATEGORY INTERCEPTOR: Before going from Step 4 → Step 5
+  if (currentStep === 4) {
+    const intercepted = await checkNewSampleNames();
+    if (intercepted) {
+      return; // Modal is shown, don't advance yet
     }
   }
 
@@ -884,7 +930,6 @@ function validateStep(step) {
   }
 
   if (step === 3) {
-    // ✅ USE VALIDATION FUNCTIONS
     if (!validateReceivedDate()) {
       showToast("Please fix received date errors", "error");
       return false;
@@ -900,13 +945,7 @@ function validateStep(step) {
       return false;
     }
 
-    const addCharges = parseFloat(document.getElementById("additionalCharges").value);
-    if (isNaN(addCharges) || addCharges < 0) {
-      showToast("Additional charges must be a positive number", "error");
-      showError("additionalCharges", "Must be a positive number");
-      return false;
-    }
-
+    // Additional charges are auto-calculated from extra items - always valid
     return true;
   }
 
@@ -943,7 +982,9 @@ function validateStep(step) {
 
   if (step === 5) {
     for (let i = 1; i <= sampleCount; i++) {
-      const selectedTests = document.querySelectorAll(`input[data-sample="${i}"]:checked`);
+      const selectedTests = document.querySelectorAll(
+        `input[data-sample="${i}"]:checked`,
+      );
       if (selectedTests.length === 0) {
         showToast(`Sample ${i} must have at least one test selected`, "error");
         return false;
@@ -964,7 +1005,9 @@ function validateStep(step) {
 // ==========================================
 
 function selectSubmissionType() {
-  document.querySelectorAll(".type-card").forEach((c) => c.classList.remove("selected"));
+  document
+    .querySelectorAll(".type-card")
+    .forEach((c) => c.classList.remove("selected"));
   this.classList.add("selected");
   submissionType = this.dataset.type;
   console.log("✅ Submission type selected:", submissionType);
@@ -990,6 +1033,13 @@ function loadSamples() {
 function addSample() {
   sampleCount++;
   const index = sampleCount;
+
+  // Build container options from extra items
+  let containerOptions = '<option value="">None</option>';
+  allExtraItems.forEach((item) => {
+    containerOptions += `<option value="${item.item_id}">${escapeHtml(item.item_name)} (${item.item_value}${item.item_unit})</option>`;
+  });
+
   const html = `
     <div class="sample-card mb-4 p-4 border rounded" data-index="${index}">
       <div class="d-flex justify-content-between align-items-center mb-3">
@@ -1004,6 +1054,8 @@ function addSample() {
         <div class="col-md-6 position-relative">
           <label>Sample Name <span class="text-danger">*</span></label>
           <input type="text" class="form-control sample-name-input" placeholder="Type to search..." required>
+          <input type="hidden" class="sample-category-id" value="">
+          <input type="hidden" class="sample-category-name" value="">
           <div class="sample-name-autocomplete"></div>
         </div>
         <div class="col-md-3">
@@ -1033,24 +1085,41 @@ function addSample() {
           <label>Reason for Analysis</label>
           <textarea class="form-control sample-reason" rows="2"></textarea>
         </div>
+        <div class="col-12"><hr class="my-2 opacity-25"></div>
+        <div class="col-md-4">
+          <label>Container Type</label>
+          <select class="form-select sample-container">${containerOptions}</select>
+        </div>
         <div class="col-md-4">
           <label>Container Damage</label>
           <select class="form-select sample-damage"><option>No</option><option>Yes</option></select>
         </div>
         <div class="col-md-4">
-          <label>Temperature</label>
+          <label>Validity</label>
+          <select class="form-select sample-validity"><option>OK</option><option>Damaged</option><option>Expired</option></select>
+        </div>
+        <div class="col-md-4">
+          <label>Temperature Condition</label>
           <select class="form-select sample-temp">
             <option>Ambient</option><option>Chilled</option><option>Frozen</option>
           </select>
         </div>
-        <div class="col-md-4">
-          <label>Validity</label>
-          <select class="form-select sample-validity"><option>OK</option><option>Damaged</option><option>Expired</option></select>
+        <div class="col-md-4 temp-slider-col" style="display:none;">
+          <label>Temperature (°C)</label>
+          <div class="temp-slider-wrapper">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="temp-slider-value badge bg-primary">4.0°C</span>
+              <small class="text-muted">2.0 – 6.0°C</small>
+            </div>
+            <input type="range" class="form-range sample-temp-value" min="2" max="6" step="0.5" value="4">
+          </div>
         </div>
       </div>
     </div>`;
 
-  document.getElementById("samplesContainer").insertAdjacentHTML("beforeend", html);
+  document
+    .getElementById("samplesContainer")
+    .insertAdjacentHTML("beforeend", html);
 
   const card = document.querySelector(`.sample-card[data-index="${index}"]`);
 
@@ -1071,7 +1140,7 @@ function addSample() {
     "input",
     debounce(function () {
       handleSampleNameSearch(this);
-    }, 400)
+    }, 400),
   );
 
   sampleNameInput.addEventListener("blur", function () {
@@ -1096,6 +1165,26 @@ function addSample() {
       this.classList.add("is-valid");
     }
   });
+
+  // Temperature slider toggle
+  const tempSelect = card.querySelector(".sample-temp");
+  const sliderCol = card.querySelector(".temp-slider-col");
+  const tempSlider = card.querySelector(".sample-temp-value");
+  const tempBadge = card.querySelector(".temp-slider-value");
+
+  tempSelect.addEventListener("change", function () {
+    if (this.value === "Chilled") {
+      sliderCol.style.display = "block";
+    } else {
+      sliderCol.style.display = "none";
+    }
+  });
+
+  if (tempSlider && tempBadge) {
+    tempSlider.addEventListener("input", function () {
+      tempBadge.textContent = parseFloat(this.value).toFixed(1) + "°C";
+    });
+  }
 }
 
 function renumberSamples() {
@@ -1109,22 +1198,39 @@ function renumberSamples() {
 
 async function handleSampleNameSearch(input) {
   const query = input.value.trim();
-  const dropdown = input.closest(".position-relative").querySelector(".sample-name-autocomplete");
+  const card = input.closest(".sample-card");
+  const dropdown = input
+    .closest(".position-relative")
+    .querySelector(".sample-name-autocomplete");
+  const categoryIdField = card.querySelector(".sample-category-id");
+  const categoryNameField = card.querySelector(".sample-category-name");
 
   if (query.length < 2) {
     dropdown.classList.remove("show");
     return;
   }
 
+  // ✅ FIX: Include submission type for filtering
+  if (!submissionType) {
+    console.warn("⚠️ Submission type not selected yet");
+    dropdown.classList.remove("show");
+    return;
+  }
+
   try {
-    const res = await fetch(`${API_BASE}?action=searchSampleNames&query=${encodeURIComponent(query)}`);
+    const res = await fetch(
+      `${API_BASE}?action=searchSampleNames&query=${encodeURIComponent(query)}&type=${submissionType}`,
+    );
     const data = await res.json();
 
     if (data.success && data.names && data.names.length > 0) {
       let html = "";
       data.names.forEach((n) => {
-        html += `<div class="autocomplete-item" data-name="${escapeHtml(n.sample_name)}">
-          ${escapeHtml(n.sample_name)} 
+        const catBadge = n.category_name
+          ? `<span class="badge bg-secondary ms-1">${escapeHtml(n.category_name)}</span>`
+          : "";
+        html += `<div class="autocomplete-item" data-name="${escapeHtml(n.sample_name)}" data-category-id="${n.category_id || ""}" data-category-name="${escapeHtml(n.category_name || "")}">
+          ${escapeHtml(n.sample_name)} ${catBadge}
           <span class="autocomplete-usage">${n.usage_count} uses</span>
         </div>`;
       });
@@ -1137,10 +1243,18 @@ async function handleSampleNameSearch(input) {
           input.classList.add("is-valid");
           input.classList.remove("is-invalid");
           dropdown.classList.remove("show");
+          // Store category info
+          if (categoryIdField)
+            categoryIdField.value = item.dataset.categoryId || "";
+          if (categoryNameField)
+            categoryNameField.value = item.dataset.categoryName || "";
         };
       });
     } else {
       dropdown.classList.remove("show");
+      // Clear category since name is not in DB
+      if (categoryIdField) categoryIdField.value = "";
+      if (categoryNameField) categoryNameField.value = "";
     }
   } catch (err) {
     console.error("Sample name search error:", err);
@@ -1157,7 +1271,9 @@ async function loadTests() {
     "<div class='text-center p-4'><div class='spinner-border'></div><p class='mt-2'>Loading tests...</p></div>";
 
   try {
-    const res = await fetch(`${API_BASE}?action=getParameters&type=${submissionType}`);
+    const res = await fetch(
+      `${API_BASE}?action=getParameters&type=${submissionType}`,
+    );
     const data = await res.json();
 
     if (!data.success) throw new Error(data.message);
@@ -1165,7 +1281,12 @@ async function loadTests() {
     allParameters = data.parameters;
     console.log("✅ Loaded parameters:", allParameters);
 
-    await loadCombos();
+    // Load the correct combo set based on submission type
+    if (submissionType === "swab") {
+      await loadSwabCombos();
+    } else {
+      await loadCombos();
+    }
 
     renderTests();
   } catch (err) {
@@ -1182,7 +1303,7 @@ async function loadCombos() {
 
     if (data.success) {
       availableCombos = data.combos || [];
-      console.log("✅ Loaded combos:", availableCombos);
+      console.log("✅ Loaded regular combos:", availableCombos);
     } else {
       console.warn("⚠️ No combos loaded:", data.message);
       availableCombos = [];
@@ -1193,37 +1314,52 @@ async function loadCombos() {
   }
 }
 
-function detectCombosInSelection() {
-  const selectedTests = Array.from(document.querySelectorAll(".test-checkbox:checked"));
+async function loadSwabCombos() {
+  try {
+    const res = await fetch(`${API_BASE}?action=getSwabCombos`);
+    const data = await res.json();
+
+    if (data.success) {
+      availableSwabCombos = data.swab_combos || [];
+      console.log("✅ Loaded swab combo groups:", availableSwabCombos);
+    } else {
+      console.warn("⚠️ No swab combos loaded:", data.message);
+      availableSwabCombos = [];
+    }
+  } catch (err) {
+    console.error("❌ Load swab combos error:", err);
+    availableSwabCombos = [];
+  }
+}
+
+function detectCombosForSample(sampleIdx) {
+  const selectedTests = Array.from(
+    document.querySelectorAll(
+      `.test-checkbox[data-sample="${sampleIdx}"]:checked`,
+    ),
+  );
 
   if (selectedTests.length < 2) {
     return [];
   }
 
-  const selectedParams = selectedTests.map((cb) => parseInt(cb.dataset.param)).sort((a, b) => a - b);
+  const selectedParams = selectedTests.map((cb) => parseInt(cb.dataset.param));
 
-  const sortedCombos = [...availableCombos].sort((a, b) => b.parameter_ids.length - a.parameter_ids.length);
+  const sortedCombos = [...availableCombos].sort(
+    (a, b) => b.parameter_ids.length - a.parameter_ids.length,
+  );
 
   const detected = [];
   const usedParams = new Set();
 
   for (const combo of sortedCombos) {
-    const comboParams = combo.parameter_ids.map((p) => parseInt(p)).sort((a, b) => a - b);
-
+    const comboParams = combo.parameter_ids.map((p) => parseInt(p));
     const allMatch = comboParams.every((pid) => selectedParams.includes(pid));
 
-    if (!allMatch) {
-      continue;
-    }
-
-    const hasConflict = comboParams.some((pid) => usedParams.has(pid));
-
-    if (hasConflict) {
-      continue;
-    }
+    if (!allMatch) continue;
+    if (comboParams.some((pid) => usedParams.has(pid))) continue;
 
     detected.push(combo);
-
     comboParams.forEach((pid) => usedParams.add(pid));
   }
 
@@ -1236,7 +1372,8 @@ function renderTests() {
 
   document.querySelectorAll(".sample-card").forEach((card, idx) => {
     const sampleIdx = idx + 1;
-    const sampleName = card.querySelector(".sample-name-input").value || `Sample ${sampleIdx}`;
+    const sampleName =
+      card.querySelector(".sample-name-input").value || `Sample ${sampleIdx}`;
 
     let html = `<div class="test-card mb-4 p-4 border rounded">
       <h5><i class="fas fa-vial"></i> ${escapeHtml(sampleName)}</h5>
@@ -1250,11 +1387,19 @@ function renderTests() {
             param.parameter_id,
             v.variant_id,
             `${param.parameter_name} - ${v.variant_name}`,
-            v.price
+            v.test_charge ?? v.price,
+            v.swab_charge ?? 0,
           );
         });
       } else {
-        html += createTestCheckbox(sampleIdx, param.parameter_id, null, param.parameter_name, param.price);
+        html += createTestCheckbox(
+          sampleIdx,
+          param.parameter_id,
+          null,
+          param.parameter_name,
+          param.test_charge ?? param.price,
+          param.swab_charge ?? 0,
+        );
       }
     });
 
@@ -1265,48 +1410,173 @@ function renderTests() {
   document.querySelectorAll(".test-checkbox").forEach((cb) => {
     cb.addEventListener("change", function (e) {
       const sampleNum = this.dataset.sample;
-      const checked = document.querySelectorAll(`input[data-sample="${sampleNum}"]:checked`);
+      const checked = document.querySelectorAll(
+        `input[data-sample="${sampleNum}"]:checked`,
+      );
 
       if (checked.length > 10) {
         e.preventDefault();
         this.checked = false;
-        showToast(`Sample ${sampleNum} can have maximum 10 tests (physical form limit)`, "warning");
+        showToast(
+          `Sample ${sampleNum} can have maximum 10 tests (physical form limit)`,
+          "warning",
+        );
         return;
       }
 
       calculateTestTotals();
     });
   });
+
+  // Show the live price summary bar ONLY in swab mode, hide in regular mode
+  const summaryBar = document.getElementById("step5PriceSummary");
+  const swabColEl = document.getElementById("swabChargeSummary");
+  if (summaryBar)
+    summaryBar.style.display = submissionType === "swab" ? "block" : "none";
+  if (swabColEl)
+    swabColEl.style.display = submissionType === "swab" ? "block" : "none";
+
+  // Trigger an initial calculation to reset totals to Rs. 0.00
+  calculateTestTotals();
 }
 
-function createTestCheckbox(sampleIdx, paramId, variantId, label, price) {
-  const id = variantId ? `test_${sampleIdx}_v${variantId}` : `test_${sampleIdx}_p${paramId}`;
+function createTestCheckbox(
+  sampleIdx,
+  paramId,
+  variantId,
+  label,
+  testCharge,
+  swabCharge,
+) {
+  const id = variantId
+    ? `test_${sampleIdx}_v${variantId}`
+    : `test_${sampleIdx}_p${paramId}`;
+
+  const isSwab = submissionType === "swab";
+  const swabBadge = isSwab
+    ? `<span class="badge bg-info" style="font-size:0.65em; vertical-align:middle; padding:2px 6px;">+ Swab</span>`
+    : "";
+
   return `
     <div class="col-md-6 mb-2">
-      <div class="form-check">
-        <input class="form-check-input test-checkbox" type="checkbox"
+      <div class="d-flex align-items-center gap-2" style="min-height:28px;">
+        <input class="form-check-input test-checkbox flex-shrink-0" type="checkbox"
                id="${id}"
                data-sample="${sampleIdx}"
                data-param="${paramId}"
                data-variant="${variantId || ""}"
-               data-price="${price}">
-        <label class="form-check-label" for="${id}">
-          ${escapeHtml(label)}
-          <strong class="float-end">${formatCurrency(price)}</strong>
+               data-price="${testCharge}"
+               data-test-charge="${testCharge}"
+               data-swab-charge="${swabCharge || 0}"
+               style="margin-top:0;">
+        <label class="form-check-label d-flex align-items-center justify-content-between w-100 gap-1" for="${id}" style="cursor:pointer; flex-wrap:nowrap;">
+          <span class="text-truncate" style="min-width:0; flex:1;">${escapeHtml(label)}</span>
+          ${swabBadge}
+          <strong class="flex-shrink-0 text-end" style="white-space:nowrap; min-width:80px;">${formatCurrency(testCharge)}</strong>
         </label>
       </div>
     </div>`;
 }
 
 function calculateTestTotals() {
-  let total = 0;
-  document.querySelectorAll(".test-checkbox:checked").forEach((cb) => {
-    total += parseFloat(cb.dataset.price);
-  });
+  if (submissionType === "swab") {
+    // ============================================================
+    // SWAB MODE: Two-Layer Calculation
+    // Layer 1: Sum all individual test charges
+    // Layer 2: Detect swab groups (partial match), add fixed fee
+    //          Standalone params add their own swab_charge
+    // ============================================================
+    let testTotal = 0;
+    let swabTotal = 0;
+
+    const checkedBoxes = Array.from(
+      document.querySelectorAll(".test-checkbox:checked"),
+    );
+    const selectedParamIds = checkedBoxes.map((cb) =>
+      parseInt(cb.dataset.param),
+    );
+
+    // Layer 1: Sum test charges
+    checkedBoxes.forEach((cb) => {
+      testTotal += parseFloat(cb.dataset.testCharge || cb.dataset.price || 0);
+    });
+
+    // Layer 2: Detect swab combo groups (greedy, largest first)
+    const claimedParamIds = new Set();
+    const detectedGroups = [];
+
+    const sortedSwabCombos = [...availableSwabCombos].sort(
+      (a, b) => b.parameter_ids.length - a.parameter_ids.length,
+    );
+
+    for (const combo of sortedSwabCombos) {
+      // Find which selected params belong to this group
+      const matching = combo.parameter_ids.filter((pid) =>
+        selectedParamIds.includes(pid),
+      );
+      if (matching.length === 0) continue;
+
+      // Remove already claimed ones
+      const available = matching.filter((pid) => !claimedParamIds.has(pid));
+      if (available.length === 0) continue;
+
+      // This group is detected — apply fixed fee ONCE
+      swabTotal += combo.combo_price;
+      detectedGroups.push({ combo, matchedIds: available });
+      available.forEach((pid) => claimedParamIds.add(pid));
+    }
+
+    // Standalone params (not in any group): add their individual swab_charge
+    checkedBoxes.forEach((cb) => {
+      const pid = parseInt(cb.dataset.param);
+      if (!claimedParamIds.has(pid)) {
+        swabTotal += parseFloat(cb.dataset.swabCharge || 0);
+      }
+    });
+
+    const grandTotal = testTotal + swabTotal;
+
+    // Update display
+    const testTotalEl = document.getElementById("testChargesTotal");
+    if (testTotalEl) testTotalEl.textContent = formatCurrency(testTotal);
+
+    const swabTotalEl = document.getElementById("swabChargesTotal");
+    if (swabTotalEl) swabTotalEl.textContent = formatCurrency(swabTotal);
+
+    // Store for updateGrandTotal
+    window._swabTestTotal = testTotal;
+    window._swabSwabTotal = swabTotal;
+
+    updateGrandTotal();
+    return;
+  }
+
+  // ============================================================
+  // REGULAR MODE: Calculate combos PER SAMPLE
+  // ============================================================
+  let finalTotal = 0;
+  const sampleCount = document.querySelectorAll(".sample-card").length;
+
+  for (let i = 1; i <= sampleCount; i++) {
+    const checkedInSample = Array.from(
+      document.querySelectorAll(`.test-checkbox[data-sample="${i}"]:checked`),
+    );
+    let sampleTotal = 0;
+    checkedInSample.forEach(
+      (cb) => (sampleTotal += parseFloat(cb.dataset.price || 0)),
+    );
+
+    const sampleCombos = detectCombosForSample(i);
+    sampleCombos.forEach((combo) => {
+      sampleTotal -= combo.individual_total;
+      sampleTotal += combo.combo_price;
+    });
+    finalTotal += sampleTotal;
+  }
 
   const testTotalElement = document.getElementById("testChargesTotal");
   if (testTotalElement) {
-    testTotalElement.textContent = formatCurrency(total);
+    testTotalElement.textContent = formatCurrency(finalTotal);
   }
 
   updateGrandTotal();
@@ -1328,18 +1598,28 @@ function generateReview() {
       <p><strong>Contact:</strong> ${escapeHtml(document.getElementById("contactPerson").value || "N/A")}</p>
     </div>`;
 
+  const collectedDateVal = document.getElementById("collectedDate")?.value;
+  const collectedTimeVal = document.getElementById("collectedTime")?.value;
+  let collectedHtml = "";
+  if (collectedDateVal) {
+    collectedHtml = `<p><strong>Collected:</strong> ${formatDate(collectedDateVal)}${collectedTimeVal ? " at " + collectedTimeVal : ""}</p>`;
+  }
+
   html += `
     <div class="review-section">
       <h6><i class="fas fa-calendar-alt"></i> Submission Details</h6>
       <p><strong>Type:</strong> ${submissionType.charAt(0).toUpperCase() + submissionType.slice(1)}</p>
       <p><strong>Received:</strong> ${formatDate(document.getElementById("receivedDate").value)} at ${
-    document.getElementById("receivedTime").value
-  }</p>
+        document.getElementById("receivedTime").value
+      }</p>
+      ${collectedHtml}
       <p><strong>Tentative:</strong> ${formatDate(document.getElementById("tentativeDate").value)}</p>
     </div>`;
 
-  let individualTotal = 0;
-  html += '<div class="review-section"><h6><i class="fas fa-flask"></i> Samples & Tests</h6>';
+  html +=
+    '<div class="review-section"><h6><i class="fas fa-flask"></i> Samples & Tests</h6>';
+
+  let testGrandTotal = 0;
 
   document.querySelectorAll(".sample-card").forEach((sample, idx) => {
     const sampleIdx = idx + 1;
@@ -1347,13 +1627,20 @@ function generateReview() {
 
     html += `<p><strong>Sample ${sampleIdx}:</strong> ${escapeHtml(sampleName)}</p><ul>`;
 
-    const selectedTests = document.querySelectorAll(`input[data-sample="${sampleIdx}"]:checked`);
+    const selectedTests = document.querySelectorAll(
+      `input[data-sample="${sampleIdx}"]:checked`,
+    );
 
     selectedTests.forEach((test) => {
-      const label = test.nextElementSibling.textContent.split("Rs.")[0].trim();
-      const price = parseFloat(test.dataset.price);
-      individualTotal += price;
-      html += `<li>${label} - ${formatCurrency(price)}</li>`;
+      const label = test.nextElementSibling.textContent
+        .split("Rs.")[0]
+        .replace(/\+\s*Swab/i, "")
+        .trim();
+      const testCharge = parseFloat(
+        test.dataset.testCharge || test.dataset.price || 0,
+      );
+      testGrandTotal += testCharge;
+      html += `<li>${label} - ${formatCurrency(testCharge)}</li>`;
     });
 
     html += "</ul>";
@@ -1361,60 +1648,176 @@ function generateReview() {
 
   html += "</div>";
 
-  const combosDetected = detectCombosInSelection();
-  const hasCombo = combosDetected.length > 0;
+  const addCharges =
+    parseFloat(document.getElementById("additionalCharges").value) || 0;
 
-  let finalTotal = individualTotal;
-  let totalDiscount = 0;
-
-  if (hasCombo) {
-    let usedParams = new Set();
-
-    combosDetected.forEach((combo) => {
-      const canApply = combo.parameter_ids.every((pid) => !usedParams.has(pid));
-
-      if (canApply) {
-        finalTotal -= combo.individual_total;
-        finalTotal += combo.combo_price;
-        totalDiscount += combo.savings;
-
-        combo.parameter_ids.forEach((pid) => usedParams.add(pid));
+  // Show extra items in review if any
+  const extraItemsForReview = getExtraItemsData();
+  if (extraItemsForReview.length > 0) {
+    html +=
+      '<div class="review-section"><h6><i class="fas fa-box-open"></i> Additional Items</h6><ul>';
+    extraItemsForReview.forEach((ei) => {
+      const item = allExtraItems.find((i) => i.item_id == ei.item_id);
+      if (item) {
+        html += `<li>${escapeHtml(item.item_name)} (${item.item_value}${item.item_unit}) × ${ei.quantity} = ${formatCurrency(ei.unit_price * ei.quantity)}</li>`;
       }
     });
+    html += `</ul><p><strong>Extra Items Total:</strong> ${formatCurrency(addCharges)}</p></div>`;
   }
 
-  const addCharges = parseFloat(document.getElementById("additionalCharges").value) || 0;
-  const grandTotal = finalTotal + addCharges;
+  // ================================================================
+  // SWAB MODE TOTALS: Show Test Charges + Swab Surcharges separately
+  // ================================================================
+  if (submissionType === "swab") {
+    const checkedBoxes = Array.from(
+      document.querySelectorAll(".test-checkbox:checked"),
+    );
+    const selectedParamIds = checkedBoxes.map((cb) =>
+      parseInt(cb.dataset.param),
+    );
 
-  if (hasCombo && totalDiscount > 0) {
-    const discountPercent = Math.round((totalDiscount / individualTotal) * 100);
+    // Detect swab groups (partial match)
+    const claimedParamIds = new Set();
+    const detectedGroups = [];
+    let swabTotal = 0;
+
+    const sortedSwabCombos = [...availableSwabCombos].sort(
+      (a, b) => b.parameter_ids.length - a.parameter_ids.length,
+    );
+
+    for (const combo of sortedSwabCombos) {
+      const matching = combo.parameter_ids.filter((pid) =>
+        selectedParamIds.includes(pid),
+      );
+      if (matching.length === 0) continue;
+      const available = matching.filter((pid) => !claimedParamIds.has(pid));
+      if (available.length === 0) continue;
+
+      swabTotal += combo.combo_price;
+      detectedGroups.push({ combo, matchedIds: available });
+      available.forEach((pid) => claimedParamIds.add(pid));
+    }
+
+    // Standalone params
+    let standaloneSwabTotal = 0;
+    checkedBoxes.forEach((cb) => {
+      const pid = parseInt(cb.dataset.param);
+      if (!claimedParamIds.has(pid)) {
+        standaloneSwabTotal += parseFloat(cb.dataset.swabCharge || 0);
+      }
+    });
+    swabTotal += standaloneSwabTotal;
+
+    const grandTotal = testGrandTotal + swabTotal + addCharges;
+
+    let swabBreakdownHtml = "";
+    if (detectedGroups.length > 0) {
+      swabBreakdownHtml += detectedGroups
+        .map(
+          (g) =>
+            `<p class="text-muted small mb-1"><i class="fas fa-check-circle text-success"></i> ${escapeHtml(g.combo.combo_name)}: <strong>${formatCurrency(g.combo.combo_price)}</strong></p>`,
+        )
+        .join("");
+    }
+    if (standaloneSwabTotal > 0) {
+      swabBreakdownHtml += `<p class="text-muted small mb-1"><i class="fas fa-circle text-info"></i> Individual Swab Fees: <strong>${formatCurrency(standaloneSwabTotal)}</strong></p>`;
+    }
 
     html += `
       <div class="review-section">
         <h6><i class="fas fa-calculator"></i> Totals</h6>
-        <p><strong>Individual Price:</strong> 
-          <span style="text-decoration: line-through; color: #999;">
-            ${formatCurrency(individualTotal)}
+        <p><strong>Test Charges:</strong>
+          <span id="testChargesTotal" style="color: #007bff; font-weight: bold;">
+            ${formatCurrency(testGrandTotal)}
           </span>
         </p>
-        <p><strong>Combo Discount:</strong> 
+        <p><strong>Swab Surcharges:</strong>
+          <span id="swabChargesTotal" style="color: #6f42c1; font-weight: bold;">
+            ${formatCurrency(swabTotal)}
+          </span>
+        </p>
+        ${swabBreakdownHtml}
+        <p><strong>Additional Charges:</strong> ${formatCurrency(addCharges)}</p>
+        <h5 class="mt-3"><strong>Grand Total:
+          <span id="grandTotalDisplay" style="color: #28a745;">
+            ${formatCurrency(grandTotal)}
+          </span>
+        </strong></h5>
+        <p class="text-muted small mt-2">
+          * Backend will validate and apply swab surcharges automatically
+        </p>
+      </div>`;
+
+    container.innerHTML = html;
+    return;
+  }
+
+  // ================================================================
+  // REGULAR MODE TOTALS: Combo discounts applied PER SAMPLE
+  // ================================================================
+  let finalTotal = 0;
+  let totalDiscount = 0;
+  let allAppliedCombos = [];
+  const sampleCount = document.querySelectorAll(".sample-card").length;
+
+  for (let i = 1; i <= sampleCount; i++) {
+    const checkedInSample = Array.from(
+      document.querySelectorAll(`.test-checkbox[data-sample="${i}"]:checked`),
+    );
+    if (checkedInSample.length === 0) continue;
+
+    let sampleSubTotal = 0;
+    checkedInSample.forEach(
+      (cb) =>
+        (sampleSubTotal += parseFloat(
+          cb.dataset.testCharge || cb.dataset.price || 0,
+        )),
+    );
+
+    const sampleCombos = detectCombosForSample(i);
+    let sampleDiscount = 0;
+    sampleCombos.forEach((combo) => {
+      sampleDiscount += combo.savings;
+      allAppliedCombos.push(combo);
+    });
+
+    finalTotal += sampleSubTotal - sampleDiscount;
+    totalDiscount += sampleDiscount;
+  }
+
+  const grandTotal = finalTotal + addCharges;
+
+  if (allAppliedCombos.length > 0) {
+    const discountPercent = Math.round(
+      (totalDiscount / (finalTotal + totalDiscount)) * 100,
+    );
+
+    html += `
+      <div class="review-section">
+        <h6><i class="fas fa-calculator"></i> Totals</h6>
+        <p><strong>Individual Price:</strong>
+          <span style="text-decoration: line-through; color: #999;">
+            ${formatCurrency(finalTotal + totalDiscount)}
+          </span>
+        </p>
+        <p><strong>Combo Discount:</strong>
           <span style="color: #28a745; font-weight: bold;">
-            -${formatCurrency(totalDiscount)} 
+            -${formatCurrency(totalDiscount)}
             (${discountPercent}% off!)
           </span>
         </p>
         <p class="text-muted small">
-          <i class="fas fa-check-circle"></i> 
-          ${combosDetected.length} combo${combosDetected.length > 1 ? "s" : ""} applied: 
-          ${combosDetected.map((c) => c.combo_name).join(", ")}
+          <i class="fas fa-check-circle"></i>
+          ${allAppliedCombos.length} combo${allAppliedCombos.length > 1 ? "s" : ""} applied across all samples:
+          ${[...new Set(allAppliedCombos.map((c) => c.combo_name))].join(", ")}
         </p>
-        <p><strong>Test Charges:</strong> 
+        <p><strong>Test Charges:</strong>
           <span id="testChargesTotal" style="color: #007bff; font-weight: bold;">
             ${formatCurrency(finalTotal)}
           </span>
         </p>
         <p><strong>Additional Charges:</strong> ${formatCurrency(addCharges)}</p>
-        <h5 class="mt-3"><strong>Grand Total: 
+        <h5 class="mt-3"><strong>Grand Total:
           <span id="grandTotalDisplay" style="color: #28a745;">
             ${formatCurrency(grandTotal)}
           </span>
@@ -1427,11 +1830,11 @@ function generateReview() {
     html += `
       <div class="review-section">
         <h6><i class="fas fa-calculator"></i> Totals</h6>
-        <p><strong>Test Charges:</strong> 
-          <span id="testChargesTotal">${formatCurrency(individualTotal)}</span>
+        <p><strong>Test Charges:</strong>
+          <span id="testChargesTotal">${formatCurrency(finalTotal)}</span>
         </p>
         <p><strong>Additional Charges:</strong> ${formatCurrency(addCharges)}</p>
-        <h5 class="mt-3"><strong>Grand Total: 
+        <h5 class="mt-3"><strong>Grand Total:
           <span id="grandTotalDisplay">${formatCurrency(grandTotal)}</span>
         </strong></h5>
       </div>`;
@@ -1441,10 +1844,28 @@ function generateReview() {
 }
 
 function updateGrandTotal() {
-  const testTotal = parseFloat(
-    document.getElementById("testChargesTotal")?.textContent.replace(/[^0-9.]/g, "") || 0
+  const addCharges = parseFloat(
+    document.getElementById("additionalCharges").value || 0,
   );
-  const addCharges = parseFloat(document.getElementById("additionalCharges").value || 0);
+
+  if (submissionType === "swab") {
+    // Use stored swab totals computed by calculateTestTotals
+    const testTotal = window._swabTestTotal || 0;
+    const swabTotal = window._swabSwabTotal || 0;
+    const grand = testTotal + swabTotal + addCharges;
+    const grandTotalElement = document.getElementById("grandTotalDisplay");
+    if (grandTotalElement) {
+      grandTotalElement.textContent = formatCurrency(grand);
+    }
+    return;
+  }
+
+  const testTotal = parseFloat(
+    document
+      .getElementById("testChargesTotal")
+      ?.textContent.replace(/[^0-9.]/g, "") || 0,
+  );
+
   const grand = testTotal + addCharges;
 
   const grandTotalElement = document.getElementById("grandTotalDisplay");
@@ -1506,29 +1927,75 @@ async function handleSubmit(e) {
 
   const formData = new FormData();
   formData.append("action", "saveSample");
-  formData.append("submitted_by", document.querySelector('[name="submitted_by"]').value);
+  formData.append(
+    "submitted_by",
+    document.querySelector('[name="submitted_by"]').value,
+  );
   formData.append("user_id", document.querySelector('[name="user_id"]').value);
-  formData.append("client_id", document.getElementById("selectedClientId").value);
+  formData.append(
+    "client_id",
+    document.getElementById("selectedClientId").value,
+  );
+  formData.append(
+    "city_id",
+    document.getElementById("selectedCityId")?.value || "",
+  );
   formData.append("submission_type", submissionType);
-  formData.append("received_date", document.getElementById("receivedDate").value);
-  formData.append("received_time", document.getElementById("receivedTime").value); // ✅ ADDED
-  formData.append("tentative_date", document.getElementById("tentativeDate").value);
-  formData.append("additional_notes", document.getElementById("additionalNotes").value || "");
+  formData.append(
+    "received_date",
+    document.getElementById("receivedDate").value,
+  );
+  formData.append(
+    "received_time",
+    document.getElementById("receivedTime").value,
+  );
+  formData.append(
+    "tentative_date",
+    document.getElementById("tentativeDate").value,
+  );
+  formData.append(
+    "sample_collected_date",
+    document.getElementById("collectedDate")?.value || "",
+  );
+  formData.append(
+    "sample_collected_time",
+    document.getElementById("collectedTime")?.value || "",
+  );
 
-  const addCharges = parseFloat(document.getElementById("additionalCharges").value) || 0;
+  const addCharges =
+    parseFloat(document.getElementById("additionalCharges").value) || 0;
   formData.append("additional_charges", addCharges);
+
+  // Extra items data
+  const extraItemsSubmit = getExtraItemsData();
+  formData.append("extra_items", JSON.stringify(extraItemsSubmit));
 
   const samples = [];
   document.querySelectorAll(".sample-card").forEach((card) => {
+    const tempCondition = card.querySelector(".sample-temp").value;
+    const tempValue =
+      tempCondition === "Chilled"
+        ? card.querySelector(".sample-temp-value")?.value || null
+        : null;
+    const containerSelect = card.querySelector(".sample-container");
+    const containerItemId = containerSelect?.value || null;
+    const categoryId = card.querySelector(".sample-category-id")?.value || null;
+
     samples.push({
       sample_name: card.querySelector(".sample-name-input").value.trim(),
       value: card.querySelector(".sample-value").value.trim(),
       unit: card.querySelector(".sample-unit").value,
-      client_sample_code: card.querySelector(".sample-client-code").value.trim() || "",
-      sampling_location: card.querySelector(".sample-location").value.trim() || "",
-      reason_for_analysis: card.querySelector(".sample-reason").value.trim() || "",
+      client_sample_code:
+        card.querySelector(".sample-client-code").value.trim() || "",
+      sampling_location:
+        card.querySelector(".sample-location").value.trim() || "",
+      reason_for_analysis:
+        card.querySelector(".sample-reason").value.trim() || "",
       container_damage: card.querySelector(".sample-damage").value,
-      temperature_condition: card.querySelector(".sample-temp").value,
+      temperature_condition: tempCondition,
+      temperature_value: tempValue,
+      container_item_id: containerItemId,
+      sample_category_id: categoryId,
       validity_status: card.querySelector(".sample-validity").value,
     });
   });
@@ -1537,24 +2004,32 @@ async function handleSubmit(e) {
   const tests = [];
   let testTotal = 0;
   document.querySelectorAll(".test-checkbox:checked").forEach((cb) => {
-    const charge = parseFloat(cb.dataset.price);
+    // Always use the base test charge (NOT the combined swab+test price)
+    const charge = parseFloat(cb.dataset.testCharge || cb.dataset.price || 0);
     testTotal += charge;
 
     tests.push({
       sample: parseInt(cb.dataset.sample),
       parameter_id: parseInt(cb.dataset.param),
-      variant_id: cb.dataset.variant && cb.dataset.variant !== "" ? parseInt(cb.dataset.variant) : null,
+      variant_id:
+        cb.dataset.variant && cb.dataset.variant !== ""
+          ? parseInt(cb.dataset.variant)
+          : null,
       charge: charge,
     });
   });
   formData.append("tests", JSON.stringify(tests));
   formData.append("test_charges_total", testTotal);
-  formData.append("grand_total", testTotal + addCharges);
+
+  // Grand total includes swab charges for swab submissions (backend recalculates anyway)
+  const swabTotal = submissionType === "swab" ? window._swabSwabTotal || 0 : 0;
+  formData.append("grand_total", testTotal + swabTotal + addCharges);
 
   formData.append("payment_status", "Not Paid");
   formData.append("payment_reference", "");
 
-  const receiptEmail = document.getElementById("receiptEmail")?.value.trim() || "";
+  const receiptEmail =
+    document.getElementById("receiptEmail")?.value.trim() || "";
   formData.append("receipt_email", receiptEmail);
 
   try {
@@ -1568,7 +2043,7 @@ async function handleSubmit(e) {
       console.log("✅ Submission successful:", data.form_number);
       showToast(
         `✅ Sample submitted successfully!\n📋 Form: ${data.form_number}\n🔖 AC Ref: ${data.ac_reference}`,
-        "success"
+        "success",
       );
 
       setTimeout(() => {
@@ -1616,6 +2091,10 @@ function initializeCityAutocomplete() {
 async function handleCitySearch() {
   const cityInput = document.getElementById("city");
   const cityAutocomplete = document.getElementById("cityAutocomplete");
+
+  // Real-time filtering: Allow letters, numbers, spaces, and hyphens
+  cityInput.value = cityInput.value.replace(/[^a-zA-Z0-9\s\-]/g, "");
+
   const query = cityInput.value.trim();
 
   if (query.length < 2) {
@@ -1623,11 +2102,14 @@ async function handleCitySearch() {
     return;
   }
 
-  cityAutocomplete.innerHTML = '<div class="city-autocomplete-loading">Searching...</div>';
+  cityAutocomplete.innerHTML =
+    '<div class="city-autocomplete-loading">Searching...</div>';
   cityAutocomplete.classList.add("show");
 
   try {
-    const response = await fetch(`${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`);
+    const response = await fetch(
+      `${API_BASE}?action=searchCities&query=${encodeURIComponent(query)}`,
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1666,16 +2148,18 @@ function displayCityResults(cities) {
            data-index="${index}">
         ${escapeHtml(city.city_name)}
       </div>
-    `
+    `,
     )
     .join("");
 
   cityAutocomplete.innerHTML = html;
   cityAutocomplete.classList.add("show");
 
-  cityAutocomplete.querySelectorAll(".city-autocomplete-item").forEach((item) => {
-    item.addEventListener("click", selectCityFromAutocomplete);
-  });
+  cityAutocomplete
+    .querySelectorAll(".city-autocomplete-item")
+    .forEach((item) => {
+      item.addEventListener("click", selectCityFromAutocomplete);
+    });
 }
 
 async function selectCityFromAutocomplete() {
@@ -1744,7 +2228,9 @@ function handleCityKeyboardNavigation(e) {
   }
 
   let currentIndex = -1;
-  const activeItem = cityAutocomplete.querySelector(".city-autocomplete-item.active");
+  const activeItem = cityAutocomplete.querySelector(
+    ".city-autocomplete-item.active",
+  );
 
   if (activeItem) {
     currentIndex = parseInt(activeItem.getAttribute("data-index"));
@@ -1789,7 +2275,9 @@ async function loadCityIdForClient(cityName) {
   }
 
   try {
-    const response = await fetch(`${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(cityName)}`);
+    const response = await fetch(
+      `${API_BASE}?action=findCityByName&city_name=${encodeURIComponent(cityName)}`,
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1801,7 +2289,9 @@ async function loadCityIdForClient(cityName) {
       const selectedCityId = document.getElementById("selectedCityId");
       if (selectedCityId) {
         selectedCityId.value = data.city_id;
-        console.log(`✅ City ID loaded: ${data.city_name} (ID: ${data.city_id})`);
+        console.log(
+          `✅ City ID loaded: ${data.city_name} (ID: ${data.city_id})`,
+        );
       }
     } else {
       console.log(`City not found in database: ${cityName}`);
@@ -1809,4 +2299,248 @@ async function loadCityIdForClient(cityName) {
   } catch (error) {
     console.warn("Error loading city ID:", error);
   }
+}
+
+// ==========================================
+// EXTRA ITEMS MANAGEMENT
+// ==========================================
+
+async function loadExtraItems() {
+  const container = document.getElementById("extraItemsContainer");
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}?action=getExtraItems`);
+    const data = await res.json();
+
+    if (data.success && data.items && data.items.length > 0) {
+      allExtraItems = data.items;
+      let html = '<div class="row g-2">';
+
+      data.items.forEach((item) => {
+        const label = `${escapeHtml(item.item_name)} (${item.item_value}${item.item_unit})`;
+        const priceLabel =
+          item.item_price > 0
+            ? `Rs. ${parseFloat(item.item_price).toFixed(2)}`
+            : "Free";
+
+        html += `
+          <div class="col-md-6 col-lg-4">
+            <div class="extra-item-card border rounded p-3 d-flex align-items-center justify-content-between" data-item-id="${item.item_id}" data-price="${item.item_price}">
+              <div>
+                <strong>${label}</strong><br>
+                <small class="text-muted">${priceLabel} each</small>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary extra-item-minus" disabled>
+                  <i class="fas fa-minus"></i>
+                </button>
+                <span class="extra-item-qty fw-bold" style="min-width:24px;text-align:center;">0</span>
+                <button type="button" class="btn btn-sm btn-outline-primary extra-item-plus">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>`;
+      });
+
+      html += "</div>";
+      container.innerHTML = html;
+
+      // Wire up +/- buttons
+      container.querySelectorAll(".extra-item-card").forEach((card) => {
+        const minusBtn = card.querySelector(".extra-item-minus");
+        const plusBtn = card.querySelector(".extra-item-plus");
+        const qtySpan = card.querySelector(".extra-item-qty");
+
+        plusBtn.addEventListener("click", () => {
+          let qty = parseInt(qtySpan.textContent) || 0;
+          qty++;
+          qtySpan.textContent = qty;
+          minusBtn.disabled = qty <= 0;
+          updateExtraItemsTotal();
+        });
+
+        minusBtn.addEventListener("click", () => {
+          let qty = parseInt(qtySpan.textContent) || 0;
+          if (qty > 0) qty--;
+          qtySpan.textContent = qty;
+          minusBtn.disabled = qty <= 0;
+          updateExtraItemsTotal();
+        });
+      });
+    } else {
+      container.innerHTML =
+        '<div class="text-muted p-3">No extra items available</div>';
+    }
+  } catch (err) {
+    console.error("Error loading extra items:", err);
+    container.innerHTML =
+      '<div class="text-danger p-3"><i class="fas fa-exclamation-triangle"></i> Failed to load extra items</div>';
+  }
+}
+
+function updateExtraItemsTotal() {
+  let total = 0;
+  document.querySelectorAll(".extra-item-card").forEach((card) => {
+    const qty =
+      parseInt(card.querySelector(".extra-item-qty").textContent) || 0;
+    const price = parseFloat(card.dataset.price) || 0;
+    total += qty * price;
+  });
+
+  const display = document.getElementById("extraItemsTotalDisplay");
+  if (display) display.textContent = `Rs. ${total.toFixed(2)}`;
+
+  const hidden = document.getElementById("additionalCharges");
+  if (hidden) hidden.value = total.toFixed(2);
+
+  updateGrandTotal();
+}
+
+function getExtraItemsData() {
+  const items = [];
+  document.querySelectorAll(".extra-item-card").forEach((card) => {
+    const qty =
+      parseInt(card.querySelector(".extra-item-qty").textContent) || 0;
+    if (qty > 0) {
+      items.push({
+        item_id: parseInt(card.dataset.itemId),
+        quantity: qty,
+        unit_price: parseFloat(card.dataset.price) || 0,
+      });
+    }
+  });
+  return items;
+}
+
+// ==========================================
+// CATEGORY INTERCEPTOR (Step 4 → Step 5)
+// ==========================================
+
+async function checkNewSampleNames() {
+  const newNames = [];
+
+  document.querySelectorAll(".sample-card").forEach((card) => {
+    const name = card.querySelector(".sample-name-input").value.trim();
+    const categoryId = card.querySelector(".sample-category-id")?.value;
+
+    if (name && !categoryId) {
+      // Name not from DB autocomplete — it's new
+      if (!newNames.find((n) => n.name.toLowerCase() === name.toLowerCase())) {
+        newNames.push({ name });
+      }
+    }
+  });
+
+  if (newNames.length === 0) {
+    return false; // No interception needed
+  }
+
+  // Build modal content
+  const listContainer = document.getElementById("newNamesListContainer");
+  let listHtml = "";
+
+  newNames.forEach((entry, idx) => {
+    let options = "";
+    sampleCategories.forEach((cat) => {
+      const selected = cat.id === 4 ? "selected" : "";
+      options += `<option value="${cat.id}" ${selected}>${escapeHtml(cat.name)}</option>`;
+    });
+
+    listHtml += `
+      <div class="new-name-row row align-items-center mb-2 pb-2 border-bottom" data-name="${escapeHtml(entry.name)}">
+        <div class="col-5">
+            <span class="fw-bold">${escapeHtml(entry.name)}</span>
+        </div>
+        <div class="col-4">
+            <select class="form-select form-select-sm new-name-category">${options}</select>
+        </div>
+        <div class="col-3 text-center">
+            <input class="form-check-input new-name-slab" type="checkbox" value="1">
+        </div>
+      </div>`;
+  });
+
+  listContainer.innerHTML = listHtml;
+
+  // Show modal
+  const modal = new bootstrap.Modal(
+    document.getElementById("newSampleNamesModal"),
+  );
+  modal.show();
+
+  // Return a promise that resolves when Save is clicked
+  return new Promise((resolve) => {
+    const saveBtn = document.getElementById("saveNewNamesBtn");
+
+    // Remove old listeners
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+    newSaveBtn.addEventListener("click", async () => {
+      newSaveBtn.disabled = true;
+      newSaveBtn.innerHTML =
+        '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+      const namesPayload = [];
+      listContainer.querySelectorAll(".new-name-row").forEach((row) => {
+        namesPayload.push({
+          name: row.dataset.name,
+          category_id: parseInt(row.querySelector(".new-name-category").value),
+          is_slab_accredited: row.querySelector(".new-name-slab").checked
+            ? 1
+            : 0,
+        });
+      });
+
+      try {
+        const fd = new FormData();
+        fd.append("action", "bulkCreateSampleNames");
+        fd.append("names", JSON.stringify(namesPayload));
+
+        const res = await fetch(API_BASE, { method: "POST", body: fd });
+        const result = await res.json();
+
+        if (result.success) {
+          // Update hidden fields on matching sample cards
+          namesPayload.forEach((np) => {
+            document.querySelectorAll(".sample-card").forEach((card) => {
+              const nameInput = card.querySelector(".sample-name-input");
+              if (
+                nameInput.value.trim().toLowerCase() === np.name.toLowerCase()
+              ) {
+                const catField = card.querySelector(".sample-category-id");
+                const catNameField = card.querySelector(
+                  ".sample-category-name",
+                );
+                if (catField) catField.value = np.category_id;
+                if (catNameField) {
+                  const cat = sampleCategories.find(
+                    (c) => c.id === np.category_id,
+                  );
+                  catNameField.value = cat ? cat.name : "Other";
+                }
+              }
+            });
+          });
+
+          showToast(`${result.count} sample name(s) saved`, "success");
+        } else {
+          showToast(result.message || "Failed to save names", "error");
+        }
+      } catch (err) {
+        console.error("Error saving new sample names:", err);
+        showToast("Error saving sample names", "error");
+      }
+
+      modal.hide();
+      newSaveBtn.disabled = false;
+      newSaveBtn.innerHTML = '<i class="fas fa-check"></i> Save & Continue';
+
+      // Now advance to step 5
+      showStep(currentStep + 1);
+      resolve(true);
+    });
+  });
 }

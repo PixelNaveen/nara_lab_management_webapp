@@ -24,9 +24,8 @@ class Database
             }
 
             $this->conn->set_charset("utf8mb4");
-
         } catch (Exception $e) {
-            die("Database connection error: " . $e->getMessage());
+            throw new Exception("Database connection error: " . $e->getMessage());
         }
 
         return $this->conn;
