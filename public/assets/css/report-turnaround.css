@@ -1,0 +1,404 @@
+/* public/assets/css/report-turnaround.css - PREMIUM TAT REPORT STYLES (SCOPED) */
+
+:root {
+  --tat-primary: #1e3a8a;
+  --tat-primary-light: #3b82f6;
+  --tat-success: #16a34a;
+  --tat-success-light: #dcfce7;
+  --tat-warning: #f59e0b;
+  --tat-warning-light: #fef3c7;
+  --tat-danger: #dc2626;
+  --tat-danger-light: #fee2e2;
+  --tat-info: #0ea5e9;
+  --tat-info-light: #e0f2fe;
+  --tat-gray: #64748b;
+  --tat-gray-light: #f1f5f9;
+  --tat-border: #e2e8f0;
+  --tat-text: #1e293b;
+  --tat-text-secondary: #64748b;
+  --tat-bg: #f8f9fa;
+  --tat-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ==================== CONTAINER ==================== */
+.tat-container {
+  padding: 20px;
+  background: var(--tat-bg);
+  color: var(--tat-text);
+  min-height: 100vh;
+}
+
+.tat-container .tat-page-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--tat-primary);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tat-container .tat-page-title i {
+  font-size: 1.2rem;
+}
+
+/* ==================== FILTER CARD ==================== */
+.tat-container .tat-filter-card {
+  background: #fff;
+  border: 1px solid var(--tat-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  box-shadow: var(--tat-card-shadow);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tat-container .tat-filter-card input,
+.tat-container .tat-filter-card select {
+  font-size: 0.82rem;
+  border-radius: 6px;
+  border: 1px solid var(--tat-border);
+  padding: 6px 10px;
+  height: 34px;
+}
+
+.tat-container .tat-filter-card input:focus,
+.tat-container .tat-filter-card select:focus {
+  border-color: var(--tat-primary-light);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.tat-container .tat-filter-card .tat-btn {
+  font-size: 0.82rem;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  transition: all 0.2s ease;
+}
+
+.tat-container .tat-btn-filter {
+  background: var(--tat-primary);
+  color: #fff;
+}
+
+.tat-container .tat-btn-filter:hover {
+  background: var(--tat-primary-light);
+}
+
+.tat-container .tat-btn-reset {
+  background: #e2e8f0;
+  color: var(--tat-text);
+}
+
+.tat-container .tat-btn-reset:hover {
+  background: #cbd5e1;
+}
+
+/* ==================== KPI CARDS ==================== */
+.tat-container .tat-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.tat-container .tat-kpi-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--tat-border);
+  box-shadow: var(--tat-card-shadow);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tat-container .tat-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.tat-container .tat-kpi-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.tat-container .tat-kpi-icon.kpi-avg {
+  background: var(--tat-info-light);
+  color: var(--tat-info);
+}
+
+.tat-container .tat-kpi-icon.kpi-done {
+  background: var(--tat-success-light);
+  color: var(--tat-success);
+}
+
+.tat-container .tat-kpi-icon.kpi-breach {
+  background: var(--tat-danger-light);
+  color: var(--tat-danger);
+}
+
+.tat-container .tat-kpi-icon.kpi-ontime {
+  background: var(--tat-success-light);
+  color: var(--tat-success);
+}
+
+.tat-container .tat-kpi-icon.kpi-pending {
+  background: var(--tat-warning-light);
+  color: var(--tat-warning);
+}
+
+.tat-container .tat-kpi-info h4 {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--tat-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+
+.tat-container .tat-kpi-info .tat-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--tat-text);
+  line-height: 1;
+  margin: 0;
+}
+
+.tat-container .tat-kpi-info .tat-kpi-unit {
+  font-size: 0.75rem;
+  color: var(--tat-text-secondary);
+  font-weight: 500;
+}
+
+/* ==================== CHART SECTION ==================== */
+.tat-container .tat-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.tat-container .tat-chart-card {
+  background: #fff;
+  border: 1px solid var(--tat-border);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: var(--tat-card-shadow);
+}
+
+.tat-container .tat-chart-card h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--tat-text);
+  margin: 0 0 12px 0;
+}
+
+.tat-container .tat-chart-canvas-wrap {
+  position: relative;
+  height: 220px;
+}
+
+/* ==================== DATA TABLE ==================== */
+.tat-container .tat-table-card {
+  background: #fff;
+  border: 1px solid var(--tat-border);
+  border-radius: 10px;
+  box-shadow: var(--tat-card-shadow);
+  overflow: hidden;
+}
+
+.tat-container .tat-table-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--tat-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tat-container .tat-table-header h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--tat-text);
+  margin: 0;
+}
+
+.tat-container .tat-table-header .tat-count-badge {
+  background: var(--tat-primary);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.tat-container .tat-table-wrap {
+  overflow-x: auto;
+}
+
+.tat-container .tat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.tat-container .tat-table thead th {
+  background: var(--tat-gray-light);
+  color: var(--tat-text-secondary);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--tat-border);
+  white-space: nowrap;
+}
+
+.tat-container .tat-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.tat-container .tat-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.tat-container .tat-table tbody td {
+  padding: 9px 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: var(--tat-text);
+}
+
+/* ==================== STATUS BADGES ==================== */
+.tat-container .tat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tat-container .tat-badge-completed {
+  background: var(--tat-success-light);
+  color: var(--tat-success);
+}
+
+.tat-container .tat-badge-pending {
+  background: var(--tat-warning-light);
+  color: #b45309;
+}
+
+.tat-container .tat-badge-progress {
+  background: var(--tat-info-light);
+  color: #0369a1;
+}
+
+.tat-container .tat-badge-breach {
+  background: var(--tat-danger-light);
+  color: var(--tat-danger);
+}
+
+.tat-container .tat-badge-ontime {
+  background: var(--tat-success-light);
+  color: var(--tat-success);
+}
+
+.tat-container .tat-tat-value {
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.tat-container .tat-tat-value.tat-good {
+  color: var(--tat-success);
+}
+
+.tat-container .tat-tat-value.tat-warn {
+  color: var(--tat-warning);
+}
+
+.tat-container .tat-tat-value.tat-bad {
+  color: var(--tat-danger);
+}
+
+/* ==================== EMPTY STATE ==================== */
+.tat-container .tat-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--tat-text-secondary);
+}
+
+.tat-container .tat-empty i {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+.tat-container .tat-empty p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ==================== LOADING SKELETON ==================== */
+.tat-container .tat-loading {
+  text-align: center;
+  padding: 30px;
+  color: var(--tat-text-secondary);
+  font-size: 0.85rem;
+}
+
+.tat-container .tat-loading i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .tat-container .tat-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tat-container .tat-charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tat-container .tat-filter-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tat-container .tat-filter-card input,
+  .tat-container .tat-filter-card select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .tat-container .tat-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

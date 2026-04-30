@@ -1,0 +1,513 @@
+/* ======================================================
+   Client Reports (CRM) Page Styles
+   Theme: Lab Management System - Matching project design
+   Scoped under .crm-report-container
+   ====================================================== */
+
+/* ===== CSS Variables matching the project ===== */
+:root {
+  --crm-primary-blue: #1e3a8a;
+  --crm-primary-blue-dark: #1e40af;
+  --crm-primary-blue-light: #3b82f6;
+  --crm-success-green: #16a34a;
+  --crm-warning-yellow: #f59e0b;
+  --crm-danger-red: #dc2626;
+  --crm-light-gray: #f8f9fa;
+  --crm-border-color: #e2e8f0;
+  --crm-text-dark: #1e293b;
+  --crm-text-muted: #64748b;
+  --crm-hover-bg: rgba(59, 130, 246, 0.08);
+}
+
+/* ===== Main Container ===== */
+.crm-report-container {
+  padding: 20px;
+  background-color: var(--crm-light-gray);
+  color: var(--crm-text-dark);
+  font-family: "Poppins", sans-serif;
+}
+
+/* ===== Page Title ===== */
+.crm-report-container .crm-page-header {
+  margin-bottom: 20px;
+}
+
+.crm-report-container .crm-page-header h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--crm-primary-blue);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== Selector Card (Filter Bar style matching project) ===== */
+.crm-report-container .crm-selector-bar {
+  background: #fff;
+  border: 1px solid var(--crm-border-color);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.crm-report-container .crm-selector-bar label {
+  font-weight: 600;
+  color: var(--crm-text-dark);
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.crm-report-container .crm-selector-bar .crm-client-wrapper {
+  flex: 1;
+  min-width: 250px;
+  max-width: 400px;
+  position: relative;
+}
+
+.crm-report-container .crm-selector-bar .crm-client-input {
+  width: 100%;
+  border: 1px solid var(--crm-border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  height: 42px;
+  padding: 0.4rem 0.75rem;
+  font-family: "Poppins", sans-serif;
+  color: var(--crm-text-dark);
+  transition: all 0.2s ease-in-out;
+  background-color: #fff;
+}
+
+.crm-report-container .crm-selector-bar .crm-client-input:focus {
+  border-color: var(--crm-primary-blue-light);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
+  outline: none;
+}
+
+.crm-report-container .crm-client-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--crm-border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+
+.crm-report-container .crm-client-dropdown.show {
+  display: block;
+}
+
+.crm-report-container .crm-client-dropdown-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  transition: background 0.1s;
+}
+
+.crm-report-container .crm-client-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.crm-report-container .crm-client-dropdown-item:hover,
+.crm-report-container .crm-client-dropdown-item.active {
+  background: var(--crm-hover-bg);
+  color: var(--crm-primary-blue);
+}
+
+.crm-report-container .crm-client-dropdown-item small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--crm-text-muted);
+}
+
+.crm-report-container .crm-btn-load {
+  height: 38px;
+  padding: 0 18px;
+  background: var(--crm-primary-blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: "Poppins", sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.crm-report-container .crm-btn-load:hover {
+  background: var(--crm-primary-blue-dark);
+}
+
+.crm-report-container .crm-btn-load:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* ===== Empty / Placeholder State ===== */
+.crm-report-container .crm-empty-state {
+  background: #fff;
+  border: 1px dashed var(--crm-border-color);
+  border-radius: 12px;
+  padding: 50px 20px;
+  text-align: center;
+  color: var(--crm-text-muted);
+}
+
+.crm-report-container .crm-empty-state i {
+  font-size: 2.8rem;
+  margin-bottom: 14px;
+  opacity: 0.35;
+  color: var(--crm-primary-blue);
+}
+
+.crm-report-container .crm-empty-state h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--crm-text-dark);
+  margin-bottom: 6px;
+}
+
+.crm-report-container .crm-empty-state p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ===== Dashboard Content (hidden initially) ===== */
+.crm-report-container .crm-dashboard {
+  display: none;
+}
+
+/* ===== Profile Card ===== */
+.crm-report-container .crm-profile-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--crm-border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border-left: 5px solid var(--crm-primary-blue);
+}
+
+.crm-report-container .crm-profile-info h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--crm-primary-blue);
+  margin: 0 0 12px 0;
+}
+
+.crm-report-container .crm-profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.crm-report-container .crm-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.88rem;
+  color: var(--crm-text-muted);
+}
+
+.crm-report-container .crm-meta-item i {
+  color: var(--crm-primary-blue-light);
+  font-size: 0.95rem;
+}
+
+.crm-report-container .crm-meta-item strong {
+  color: var(--crm-text-dark);
+  font-weight: 600;
+}
+
+/* Financial Summary Strip */
+.crm-report-container .crm-finance-strip {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--crm-border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--crm-light-gray);
+}
+
+.crm-report-container .crm-finance-box {
+  padding: 14px 20px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.crm-report-container .crm-finance-box:not(:last-child) {
+  border-right: 1px solid var(--crm-border-color);
+}
+
+.crm-report-container .crm-finance-box .crm-fin-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--crm-text-muted);
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.crm-report-container .crm-finance-box .crm-fin-value {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--crm-text-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-report-container .crm-fin-paid { color: var(--crm-success-green) !important; }
+.crm-report-container .crm-fin-due  { color: var(--crm-danger-red) !important; }
+
+/* ===== Tabs (matching project patterns) ===== */
+.crm-report-container .crm-tabs-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--crm-border-color);
+}
+
+.crm-report-container .crm-tab-btn {
+  background: none;
+  border: none;
+  padding: 11px 22px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: "Poppins", sans-serif;
+  color: var(--crm-text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.crm-report-container .crm-tab-btn.active {
+  color: var(--crm-primary-blue);
+  border-bottom-color: var(--crm-primary-blue);
+}
+
+.crm-report-container .crm-tab-btn:hover:not(.active) {
+  color: var(--crm-primary-blue-light);
+}
+
+.crm-report-container .crm-tab-content {
+  display: none;
+}
+
+.crm-report-container .crm-tab-content.active {
+  display: block;
+  animation: crmFadeIn 0.25s ease;
+}
+
+@keyframes crmFadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Table Card Shell ===== */
+.crm-report-container .crm-table-card {
+  background: #fff;
+  border: 1px solid var(--crm-border-color);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.crm-report-container .crm-table-card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--crm-border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.crm-report-container .crm-table-card-header h5 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--crm-primary-blue);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-report-container .crm-count-chip {
+  background: var(--crm-primary-blue);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ===== Data Table (matching project's .clientsTable pattern) ===== */
+.crm-report-container .crm-table-wrap {
+  overflow-x: auto;
+}
+
+.crm-report-container .crm-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.crm-report-container .crm-data-table thead th {
+  background: var(--crm-primary-blue);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 11px 14px;
+  text-align: left;
+  white-space: nowrap;
+  border: none;
+}
+
+.crm-report-container .crm-data-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease-in-out;
+}
+
+.crm-report-container .crm-data-table tbody tr:hover {
+  background: var(--crm-hover-bg);
+}
+
+.crm-report-container .crm-data-table tbody td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  font-size: 0.88rem;
+  color: var(--crm-text-dark);
+  white-space: nowrap;
+}
+
+/* ===== Status Badges (matching project badge pattern) ===== */
+.crm-report-container .crm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.crm-report-container .badge-completed { background: #dcfce7; color: #166534; }
+.crm-report-container .badge-pending   { background: #fef3c7; color: #92400e; }
+.crm-report-container .badge-progress  { background: #e0f2fe; color: #075985; }
+.crm-report-container .badge-pay-paid     { background: #dcfce7; color: #166534; }
+.crm-report-container .badge-pay-pending  { background: #fef3c7; color: #92400e; }
+.crm-report-container .badge-pay-notpaid  { background: #fee2e2; color: #991b1b; }
+
+/* ===== Money value styling ===== */
+.crm-report-container .crm-money {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ===== Trends Grid ===== */
+.crm-report-container .crm-trends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.crm-report-container .crm-trend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--crm-light-gray);
+  border: 1px solid var(--crm-border-color);
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.crm-report-container .crm-trend-item:hover {
+  border-color: var(--crm-primary-blue-light);
+}
+
+.crm-report-container .crm-trend-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--crm-text-dark);
+}
+
+.crm-report-container .crm-trend-count {
+  background: var(--crm-primary-blue);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ===== Empty row message in table ===== */
+.crm-report-container .crm-no-data-row td {
+  text-align: center;
+  padding: 28px;
+  color: var(--crm-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .crm-report-container .crm-selector-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .crm-report-container .crm-selector-bar select {
+    max-width: 100%;
+  }
+  .crm-report-container .crm-profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .crm-report-container .crm-finance-strip {
+    width: 100%;
+    flex-direction: column;
+  }
+  .crm-report-container .crm-finance-box:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid var(--crm-border-color);
+  }
+  .crm-report-container .crm-tabs-bar {
+    flex-wrap: wrap;
+  }
+}
