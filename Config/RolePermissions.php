@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Role-Based Access Control (RBAC) Configuration
  * Defines all roles and their permissions
@@ -36,6 +37,7 @@ class RolePermissions
             'methods' => true,
             'pricing' => true,
             'samples' => true,
+            'sample-records-view' => true,
             'report-daily' => true,
             'report-client' => true,
             'report-revenue' => true,
@@ -46,7 +48,11 @@ class RolePermissions
             'settings-backup' => true,
             'settings-notifications' => true,
             'manage-cities' => true,
-            'manage-extra-items' => true
+            'manage-extra-items' => true,
+            'certificates' => true,
+            'manage-sample-names' => true,
+            'test-reports' => true,
+            'manage-signatories' => true
         ],
 
         'LabManager' => [
@@ -67,6 +73,7 @@ class RolePermissions
             'methods' => true,
             'pricing' => true,
             'samples' => true,
+            'sample-records-view' => true,
             'report-daily' => true,
             'report-client' => true,
             'report-revenue' => true,
@@ -77,7 +84,11 @@ class RolePermissions
             'settings-backup' => false,
             'settings-notifications' => true,
             'manage-cities' => true,
-            'manage-extra-items' => true
+            'manage-extra-items' => true,
+            'certificates' => true,
+            'manage-sample-names' => true,
+            'test-reports' => true,
+            'manage-signatories' => true
         ],
 
         'LabTechnician' => [
@@ -98,6 +109,7 @@ class RolePermissions
             'methods' => false, // Can view
             'pricing' => false,
             'samples' => true,
+            'sample-records-view' => true,
             'report-daily' => true,
             'report-client' => false,
             'report-revenue' => false,
@@ -108,7 +120,11 @@ class RolePermissions
             'settings-backup' => false,
             'settings-notifications' => false,
             'manage-cities' => true,
-            'manage-extra-items' => true
+            'manage-extra-items' => true,
+            'certificates' => false,
+            'manage-sample-names' => false,
+            'test-reports' => true,
+            'manage-signatories' => false
         ],
 
         'Receptionist' => [
@@ -129,6 +145,7 @@ class RolePermissions
             'methods' => false,
             'pricing' => true, // Can view pricing
             'samples' => true, // Can view
+            'sample-records-view' => true,
             'report-daily' => true,
             'report-client' => true,
             'report-revenue' => false,
@@ -139,7 +156,11 @@ class RolePermissions
             'settings-backup' => false,
             'settings-notifications' => false,
             'manage-cities' => false,
-            'manage-extra-items' => false
+            'manage-extra-items' => false,
+            'certificates' => false,
+            'manage-sample-names' => false,
+            'test-reports' => false,
+            'manage-signatories' => false
         ],
 
         'Client' => [
@@ -160,6 +181,7 @@ class RolePermissions
             'methods' => false,
             'pricing' => true, // Can view pricing
             'samples' => true, // Can view own samples only
+            'sample-records-view' => true,
             'report-daily' => false,
             'report-client' => false,
             'report-revenue' => false,
@@ -170,7 +192,11 @@ class RolePermissions
             'settings-backup' => false,
             'settings-notifications' => false,
             'manage-cities' => false,
-            'manage-extra-items' => false
+            'manage-extra-items' => false,
+            'certificates' => false,
+            'manage-sample-names' => false,
+            'test-reports' => false,
+            'manage-signatories' => false
         ]
     ];
 
@@ -230,4 +256,3 @@ class RolePermissions
         ];
     }
 }
-?>
