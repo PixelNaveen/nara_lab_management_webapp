@@ -1,0 +1,510 @@
+// ========== CONSTANTS ==========
+const getCsrfToken = () => document.getElementById("csrf_token").value;
+const CONTROLLER_PATH = "src/Controllers/PricingController.php";
+
+// ========== DOM ELEMENTS ==========
+const modalOverlay = document.getElementById("parametersModal");
+const modalTitle = document.getElementById("parametersModalTitle");
+const pricingForm = document.getElementById("pricingForm");
+const typeInput = document.getElementById("type");
+const idInput = document.getElementById("id");
+const individualFields = document.getElementById("individualFields");
+const comboFields = modalOverlay.querySelector(".combo-fields");
+const parameterSelect = document.getElementById("parameterId");
+const comboParameters = document.getElementById("comboParameters");
+const comboPreview = document.getElementById("comboPreview");
+const comboPreviewText = document.getElementById("comboPreviewText");
+const comboCodeDisplay = document.getElementById("comboCodeDisplay");
+const comboCodeReadonly = document.getElementById("comboCodeReadonly");
+const testCharge = document.getElementById("testCharge");
+const isActive = document.getElementById("isActive");
+const tableBody = document.querySelector("#pricingTable tbody");
+const searchInput = document.getElementById("searchInput");
+const statusFilter = document.getElementById("statusFilter");
+const typeFilter = document.getElementById("typeFilter");
+const btnFilter = document.getElementById("btnFilter");
+const btnReset = document.getElementById("btnReset");
+const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+const btnCancelDelete = document.getElementById("btnCancelDelete");
+const btnConfirmDelete = document.getElementById("btnConfirmDelete");
+const btnCloseDeleteModal = document.getElementById("btnCloseDeleteModal");
+const btnCloseModal = document.getElementById("btnCloseModal");
+const btnCancel = document.getElementById("btnCancel");
+
+let choices = null;
+let deleteType = "";
+let deleteId = "";
+let currentFilters = {};
+
+// ========== TOAST HELPER ==========
+function showToast(message, type = "success") {
+  const colors = {
+    success: "bg-success text-white",
+    warning: "bg-warning text-dark",
+    error: "bg-danger text-white",
+    danger: "bg-danger text-white",
+    info: "bg-warning text-dark",
+  };
+
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast align-items-center ${colors[type]} border-0`;
+  toastEl.setAttribute("role", "alert");
+  toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close ${type === "warning" ? "btn-close-black" : "btn-close-white"} me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+
+  document.getElementById("toastContainer").appendChild(toastEl);
+  const toast = new bootstrap.Toast(toastEl, {
+    delay: 3000,
+  });
+  toast.show();
+  toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+}
+
+// ========== AJAX HELPER ==========
+async function sendAjax(action, data = {}) {
+  try {
+    const formData = new FormData();
+    formData.append("action", action);
+
+    for (const key in data) {
+      if (Array.isArray(data[key])) {
+        data[key].forEach((val) => formData.append(`${key}[]`, val));
+      } else {
+        formData.append(key, data[key]);
+      }
+    }
+
+    const response = await fetch(CONTROLLER_PATH, {
+      method: "POST",
+      body: formData,
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error("AJAX Error:", error);
+    return {
+      status: "error",
+      message: "Network error occurred",
+    };
+  }
+}
+
+// ========== LOAD ACTIVE PARAMETERS ==========
+async function loadActiveParameters() {
+  const result = await sendAjax("fetchActiveParameters");
+
+  if (result.status === "success") {
+    // For individual dropdown
+    const options = result.data
+      .map(
+        (p) => `<option value="${p.parameter_id}">${p.parameter_name}</option>`,
+      )
+      .join("");
+    parameterSelect.innerHTML =
+      '<option value="">Select Parameter</option>' + options;
+
+    // For combo multi-select (Choices.js)
+    // Destroy existing instance if any
+    if (choices) {
+      choices.destroy();
+      choices = null;
+    }
+
+    // Initialize Choices.js
+    choices = new Choices(comboParameters, {
+      removeItemButton: true,
+      searchEnabled: true,
+      placeholderValue: "Select parameters",
+      shouldSort: false,
+      removeItems: true,
+      duplicateItemsAllowed: false,
+    });
+
+    const choiceOptions = result.data.map((p) => ({
+      value: `${p.parameter_id}`,
+      label: p.parameter_name,
+    }));
+
+    choices.setChoices(choiceOptions, "value", "label", true);
+  } else {
+    showToast(result.message || "Failed to load parameters", "error");
+  }
+}
+
+// ========== LOAD PRICES ==========
+async function loadPrices(filters = {}) {
+  tableBody.innerHTML =
+    '<tr><td colspan="6" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  const indResult = await sendAjax("fetchAllIndividuals", filters);
+  const comboResult = await sendAjax("fetchAllCombos", filters);
+
+  tableBody.innerHTML = "";
+  let hasRows = false;
+
+  // Add individual prices
+  if (indResult.status === "success" && indResult.data.length > 0) {
+    indResult.data.forEach((price) => {
+      if (filters.type && filters.type !== "individual") return;
+      const row = createRow("individual", price);
+      tableBody.appendChild(row);
+      hasRows = true;
+    });
+  }
+
+  // Add combo prices
+  if (comboResult.status === "success" && comboResult.data.length > 0) {
+    comboResult.data.forEach((combo) => {
+      if (filters.type && filters.type !== "combo") return;
+      const row = createRow("combo", combo);
+      tableBody.appendChild(row);
+      hasRows = true;
+    });
+  }
+
+  if (!hasRows) {
+    tableBody.innerHTML =
+      '<tr><td colspan="5" class="text-center text-muted">No prices found</td></tr>';
+  }
+}
+
+// ========== CREATE TABLE ROW ==========
+function createRow(type, data) {
+  const row = document.createElement("tr");
+  row.dataset.type = type;
+  row.dataset.id = type === "individual" ? data.pricing_id : data.combo_id;
+
+  const name = type === "individual" ? data.parameter_name : data.combo_params;
+  const code = type === "individual" ? data.parameter_code : data.combo_code;
+  const price = parseFloat(data.test_charge).toFixed(2);
+  const status =
+    data.is_active == 1
+      ? '<span class="badge-status bg-success">Active</span>'
+      : '<span class="badge-status bg-secondary">Inactive</span>';
+  const typeDisplay = type.charAt(0).toUpperCase() + type.slice(1);
+
+  row.innerHTML = `
+        <td data-label="Name:">${name}</td>
+        <td data-label="Price:">${price}</td>
+        <td data-label="Type:">${typeDisplay}</td>
+        <td data-label="Status:">${status}</td>
+        <td data-label="Actions:">
+            <button class="btn-parameters-edit" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-parameters-delete" title="Delete"><i class="fas fa-trash"></i></button>
+        </td>
+    `;
+
+  // Attach events
+  row
+    .querySelector(".btn-parameters-edit")
+    .addEventListener("click", () => editPrice(type, row.dataset.id));
+  row
+    .querySelector(".btn-parameters-delete")
+    .addEventListener("click", () => openDeleteModal(type, row.dataset.id));
+
+  return row;
+}
+
+// ========== OPEN MODAL ==========
+async function openModal(mode, type, id = null) {
+  modalTitle.textContent =
+    mode === "add"
+      ? `Add ${type === "combo" ? "Combo" : "Individual"} Price`
+      : `Edit ${type === "combo" ? "Combo" : "Individual"} Price`;
+
+  // Reset form
+  resetValidation();
+  pricingForm.reset();
+  typeInput.value = type;
+  idInput.value = id || "";
+  testCharge.value = "";
+  isActive.value = "1";
+  comboPreview.classList.add("d-none");
+  comboCodeDisplay.classList.add("d-none");
+
+  // Show/hide fields
+  if (type === "individual") {
+    individualFields.classList.remove("d-none");
+    comboFields.classList.add("d-none");
+    parameterSelect.value = "";
+    parameterSelect.required = true;
+  } else {
+    individualFields.classList.add("d-none");
+    comboFields.classList.remove("d-none");
+    parameterSelect.required = false;
+    if (choices) choices.removeActiveItems();
+  }
+
+  const btnSave = document.getElementById("btnSave");
+  if (mode === "edit") {
+    btnSave.className = "btn btn-warning";
+    btnSave.innerHTML = '<i class="fas fa-save"></i> Update Price';
+  } else {
+    btnSave.className = "btn btn-success";
+    btnSave.innerHTML = '<i class="fas fa-save"></i> Save Price';
+  }
+
+  // Load data for edit mode
+  if (mode === "edit" && id) {
+    const action = type === "individual" ? "getIndividualById" : "getComboById";
+    const result = await sendAjax(action, {
+      id,
+    });
+
+    if (result.status === "success") {
+      const data = result.data;
+      testCharge.value = parseFloat(data.test_charge);
+      isActive.value = data.is_active;
+
+      if (type === "individual") {
+        parameterSelect.value = data.parameter_id;
+      } else {
+        // Show combo code in edit mode
+        comboCodeDisplay.classList.remove("d-none");
+        comboCodeReadonly.value = data.combo_code;
+
+        // Set selected parameters
+        if (choices && data.parameter_ids) {
+          choices.setChoiceByValue(data.parameter_ids.map((id) => `${id}`));
+
+          // Trigger preview update
+          updateComboPreview();
+        }
+      }
+    } else {
+      showToast(result.message || "Failed to load data", "error");
+      return;
+    }
+  }
+
+  modalOverlay.classList.add("active");
+}
+
+// ========== UPDATE COMBO PREVIEW ==========
+async function updateComboPreview() {
+  const selectedIds = choices.getValue(true);
+
+  if (selectedIds.length >= 2) {
+    const result = await sendAjax("previewComboName", {
+      parameter_ids: selectedIds,
+    });
+
+    if (result.status === "success") {
+      comboPreviewText.textContent = result.combo_name;
+      comboPreview.classList.remove("d-none");
+    }
+  } else {
+    comboPreview.classList.add("d-none");
+  }
+}
+
+// ========== EDIT PRICE ==========
+function editPrice(type, id) {
+  openModal("edit", type, id);
+}
+
+// ========== DELETE MODAL ==========
+function openDeleteModal(type, id) {
+  deleteType = type;
+  deleteId = id;
+  deleteConfirmModal.classList.add("active");
+}
+
+function closeDeleteModal() {
+  deleteConfirmModal.classList.remove("active");
+  deleteType = "";
+  deleteId = "";
+}
+
+// ========== RESET VALIDATION ==========
+function resetValidation() {
+  document
+    .querySelectorAll(".is-invalid")
+    .forEach((el) => el.classList.remove("is-invalid"));
+  document
+    .querySelectorAll(".invalid-feedback")
+    .forEach((el) => (el.style.display = "none"));
+}
+
+// ========== FORM SUBMIT ==========
+pricingForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  resetValidation();
+
+  const type = typeInput.value;
+  const id = idInput.value;
+  let isValid = true;
+
+  const data = {
+    csrf_token: getCsrfToken(),
+    test_charge: testCharge.value.trim(),
+    is_active: isActive.value,
+  };
+
+  // Frontend Validation
+  if (
+    !data.test_charge ||
+    isNaN(data.test_charge) ||
+    parseFloat(data.test_charge) < 0
+  ) {
+    testCharge.classList.add("is-invalid");
+    document.getElementById("testChargeError").style.display = "block";
+    isValid = false;
+  }
+
+  if (type === "individual") {
+    data.parameter_id = parameterSelect.value;
+    if (!data.parameter_id) {
+      parameterSelect.classList.add("is-invalid");
+      document.getElementById("parameterIdError").style.display = "block";
+      isValid = false;
+    }
+  } else {
+    if (!choices) {
+      showToast("Parameter selector not initialized", "error");
+      return;
+    }
+    data.parameter_ids = choices.getValue(true);
+    if (!data.parameter_ids || data.parameter_ids.length < 2) {
+      const container = comboParameters.closest(".mb-3");
+      container.classList.add("is-invalid");
+      document.getElementById("comboParametersError").style.display = "block";
+      isValid = false;
+    } else {
+      // Check for duplicate parameters
+      const uniqueIds = [...new Set(data.parameter_ids)];
+      if (uniqueIds.length !== data.parameter_ids.length) {
+        showToast("Cannot select the same parameter twice", "warning");
+        isValid = false;
+      }
+    }
+  }
+
+  if (!isValid) return;
+
+  if (id) data.id = id;
+
+  const action = id
+    ? type === "individual"
+      ? "updateIndividual"
+      : "updateCombo"
+    : type === "individual"
+      ? "insertIndividual"
+      : "insertCombo";
+
+  const btnSave = document.getElementById("btnSave");
+  const originalBtnHtml = btnSave.innerHTML;
+  btnSave.disabled = true;
+  btnSave.innerHTML =
+    '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+  try {
+    const result = await sendAjax(action, data);
+
+    if (result.status === "success") {
+      showToast(result.message, "success");
+      modalOverlay.classList.remove("active");
+      loadPrices(currentFilters);
+    } else if (result.status === "info") {
+      showToast(result.message, "info");
+      // Don't close modal on info/no-update
+    } else {
+      showToast(result.message || "Operation failed", "error");
+    }
+  } catch (error) {
+    console.error("Submit error:", error);
+    showToast("An error occurred: " + error.message, "error");
+  } finally {
+    btnSave.disabled = false;
+    btnSave.innerHTML = originalBtnHtml;
+  }
+});
+
+// ========== DELETE CONFIRM ==========
+btnConfirmDelete.addEventListener("click", async () => {
+  if (!deleteType || !deleteId) return;
+
+  const action =
+    deleteType === "individual" ? "deleteIndividual" : "deleteCombo";
+  const result = await sendAjax(action, {
+    id: deleteId,
+    csrf_token: getCsrfToken(),
+  });
+
+  if (result.status === "success") {
+    showToast(result.message, "success");
+    loadPrices(currentFilters);
+  } else {
+    showToast(result.message || "Failed to delete", "error");
+  }
+
+  closeDeleteModal();
+});
+
+// ========== FILTER / RESET ==========
+btnFilter.addEventListener("click", () => {
+  currentFilters = {
+    search: searchInput.value.trim(),
+    is_active: statusFilter.value,
+    type: typeFilter.value,
+  };
+  loadPrices(currentFilters);
+});
+
+btnReset.addEventListener("click", () => {
+  searchInput.value = "";
+  statusFilter.value = "";
+  typeFilter.value = "";
+  currentFilters = {};
+  loadPrices();
+});
+
+// ========== MODAL CONTROLS ==========
+document.querySelectorAll(".btn-parameters-new").forEach((btn) => {
+  btn.addEventListener("click", () => openModal("add", btn.dataset.type));
+});
+
+btnCloseModal.addEventListener("click", () =>
+  modalOverlay.classList.remove("active"),
+);
+btnCancel.addEventListener("click", () =>
+  modalOverlay.classList.remove("active"),
+);
+modalOverlay.addEventListener("click", (e) => {
+  if (e.target === modalOverlay) modalOverlay.classList.remove("active");
+});
+
+btnCancelDelete.addEventListener("click", closeDeleteModal);
+btnCloseDeleteModal.addEventListener("click", closeDeleteModal);
+deleteConfirmModal.addEventListener("click", (e) => {
+  if (e.target === deleteConfirmModal) closeDeleteModal();
+});
+
+// ========== COMBO PARAMETERS CHANGE EVENT ==========
+// Listen to Choices.js change event properly
+if (comboParameters) {
+  comboParameters.addEventListener("addItem", updateComboPreview);
+  comboParameters.addEventListener("removeItem", updateComboPreview);
+}
+
+// ========== SEARCH ON ENTER ==========
+searchInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") btnFilter.click();
+});
+
+// ========== INITIAL LOAD ==========
+async function initialize() {
+  await loadActiveParameters();
+  await loadPrices();
+}
+
+// Initialize when page loads
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initialize);
+} else {
+  initialize();
+}
