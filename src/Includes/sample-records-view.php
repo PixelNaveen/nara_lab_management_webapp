@@ -12,7 +12,7 @@
     <!-- ==================== FILTERS SECTION ==================== -->
     <div class="row mb-3">
         <div class="col-12">
-            <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="sample-records-filters d-flex flex-wrap gap-2 align-items-center mb-3">
 
                 <!-- Search Input -->
                 <input type="text"
@@ -72,7 +72,6 @@
                             <th class="px-3 py-3">PAYMENT</th>
                             <th class="px-3 py-3">RECEIVED DATE</th>
                             <th class="px-3 py-3 text-end">AMOUNT (LKR)</th>
-                            <th class="px-3 py-3 text-center" style="width: 80px;">VIEW</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -135,7 +134,7 @@
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            
+
             <!-- Modal Header -->
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="paymentModalLabel">
@@ -146,7 +145,7 @@
 
             <!-- Modal Body -->
             <div class="modal-body p-4">
-                
+
                 <!-- Sample Information Display -->
                 <div class="alert alert-info mb-4">
                     <div class="row">
@@ -186,21 +185,37 @@
                     <label for="modalReferenceNumber" class="form-label fw-semibold">
                         Reference Number <span class="text-danger">*</span>
                     </label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="modalReferenceNumber" 
-                           placeholder="Enter payment reference number"
-                           maxlength="100"
-                           autocomplete="off">
+                    <input type="text"
+                        class="form-control"
+                        id="modalReferenceNumber"
+                        placeholder="Enter payment reference number"
+                        maxlength="100"
+                        autocomplete="off">
+                    <div class="invalid-feedback" id="refNumberError">Invalid reference number format</div>
                     <small class="form-text text-muted">
-                        📝 Enter transaction ID, cheque number, or any payment reference
+                        📝 Enter transaction ID, cheque number (digits and _ / - , . only)
+                    </small>
+                </div>
+
+                <!-- Payment Date Input (Hidden by default, shown when "Paid" selected) -->
+                <div id="paymentDateGroup" class="mb-3" style="display: none;">
+                    <label for="modalPaymentDate" class="form-label fw-semibold">
+                        Payment Date <span class="text-danger">*</span>
+                    </label>
+                    <input type="date"
+                        class="form-control"
+                        id="modalPaymentDate"
+                        max="<?php echo date('Y-m-d'); ?>">
+                    <div class="invalid-feedback" id="paymentDateError">Payment date cannot be in the future</div>
+                    <small class="form-text text-muted">
+                        📅 Select the date the payment was received
                     </small>
                 </div>
 
                 <!-- Current Status Indicator (Hidden until loaded) -->
                 <div id="currentStatusInfo" class="alert alert-secondary" style="display: none;">
                     <small>
-                        <strong>Current Status:</strong> 
+                        <strong>Current Status:</strong>
                         <span id="modalCurrentStatus" class="badge">-</span>
                     </small>
                 </div>
@@ -231,6 +246,54 @@
 </div>
 
 <!-- ============================================================
+   INVOICE GENERATION MODAL
+   ============================================================ -->
+<div class="modal fade" id="invoiceModal" tabindex="-1" aria-labelledby="invoiceModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="invoiceModalLabel">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Generate Invoice
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="invoiceSignatory" class="form-label fw-semibold">
+                        Select Signatory <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="invoiceSignatory" required>
+                        <option value="">Loading signatories...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="invoiceRequestDate" class="form-label fw-semibold">
+                        Date of Request <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control" id="invoiceRequestDate" max="<?php echo date('Y-m-d'); ?>" required>
+                </div>
+                <!-- Error Alert -->
+                <div id="invoiceErrorAlert" class="alert alert-danger" style="display: none;"></div>
+
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="fas fa-info-circle me-1"></i> Generating the invoice creates a permanent snapshot of current testing prices.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-primary" id="btnPreviewInvoice">
+                    <i class="fas fa-eye me-1"></i>Preview
+                </button>
+                <button type="button" class="btn btn-primary" id="btnGenerateInvoice">
+                    <i class="fas fa-print me-1"></i>Generate & Print
+                </button>
+            </div>
+            <input type="hidden" id="invoiceSampleId" value="">
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
    TOAST NOTIFICATIONS CONTAINER
    For success/error messages (bottom-right position)
    ============================================================ -->
@@ -243,6 +306,9 @@
    EXTERNAL JAVASCRIPT
    ============================================================ -->
 
+<!-- SweetAlert2 for Confirmation Dialogs -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script src="../../public/assets/js/sample-records.js"></script>
 
 <!-- ============================================================
@@ -251,49 +317,49 @@
    ============================================================ -->
 
 <script>
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Sample Records View: DOM Loaded');
-    
-    // Check if SampleRecords module is available
-    if (typeof SampleRecords !== 'undefined') {
-        console.log('✅ SampleRecords Module: Loaded');
-        
-        // Initialize the module
-        try {
-            SampleRecords.init();
-            console.log('✅ SampleRecords Module: Initialized Successfully');
-        } catch (error) {
-            console.error('❌ SampleRecords Module: Initialization Failed', error);
-            
-            // Show error to user
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-danger m-3';
-            errorDiv.innerHTML = `
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ Sample Records View: DOM Loaded');
+
+        // Check if SampleRecords module is available
+        if (typeof SampleRecords !== 'undefined') {
+            console.log('✅ SampleRecords Module: Loaded');
+
+            // Initialize the module
+            try {
+                SampleRecords.init();
+                console.log('✅ SampleRecords Module: Initialized Successfully');
+            } catch (error) {
+                console.error('❌ SampleRecords Module: Initialization Failed', error);
+
+                // Show error to user
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger m-3';
+                errorDiv.innerHTML = `
                 <h5><i class="fas fa-exclamation-triangle"></i> Initialization Error</h5>
                 <p>Failed to initialize Sample Records module. Please refresh the page.</p>
                 <small>${error.message}</small>
             `;
-            document.querySelector('.container-fluid').prepend(errorDiv);
+                document.querySelector('.container-fluid').prepend(errorDiv);
+            }
+        } else {
+            console.error('❌ SampleRecords Module: Not Found');
+            console.error('❌ Check if sample-records.js is loaded correctly');
         }
-    } else {
-        console.error('❌ SampleRecords Module: Not Found');
-        console.error('❌ Check if sample-records.js is loaded correctly');
-    }
-    
-    // Debug: Log all loaded scripts
-    console.log('📜 Loaded Scripts:', 
-        Array.from(document.scripts).map(s => s.src).filter(Boolean)
-    );
-});
 
-// Global error handler for debugging
-window.addEventListener('error', function(e) {
-    console.error('💥 Global Error:', e.message, e.filename, e.lineno);
-});
+        // Debug: Log all loaded scripts
+        console.log('📜 Loaded Scripts:',
+            Array.from(document.scripts).map(s => s.src).filter(Boolean)
+        );
+    });
 
-// Log when page is fully loaded (including all resources)
-window.addEventListener('load', function() {
-    console.log('✅ Page Fully Loaded (All Resources)');
-});
+    // Global error handler for debugging
+    window.addEventListener('error', function(e) {
+        console.error('💥 Global Error:', e.message, e.filename, e.lineno);
+    });
+
+    // Log when page is fully loaded (including all resources)
+    window.addEventListener('load', function() {
+        console.log('✅ Page Fully Loaded (All Resources)');
+    });
 </script>

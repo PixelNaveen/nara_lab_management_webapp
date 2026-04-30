@@ -26,7 +26,8 @@ const SampleRecords = (function () {
   // ==================== CONFIGURATION ====================
 
   const CONFIG = {
-    CONTROLLER_URL: "../../src/Controllers/sample-records-controller.php",
+    CONTROLLER_URL: "../../src/Controllers/SampleRecordsController.php",
+    INVOICE_URL: "../../src/Controllers/InvoiceController.php",
     DEBOUNCE_DELAY: 500,
     TOAST_DURATION: 3000,
     ANIMATION_DURATION: 300,
@@ -78,6 +79,8 @@ const SampleRecords = (function () {
     modalPaymentStatus: null,
     modalReferenceNumber: null,
     referenceNumberGroup: null,
+    modalPaymentDate: null,
+    paymentDateGroup: null,
     currentStatusInfo: null,
     modalCurrentStatus: null,
     paymentErrorAlert: null,
@@ -86,6 +89,15 @@ const SampleRecords = (function () {
 
     // Toast Container
     toastContainer: null,
+
+    // Invoice Modal
+    invoiceModal: null,
+    invoiceModalInstance: null,
+    invoiceSignatory: null,
+    invoiceSampleId: null,
+    btnPreviewInvoice: null,
+    btnGenerateInvoice: null,
+    invoiceErrorAlert: null,
   };
 
   // ==================== INITIALIZATION ====================
@@ -124,7 +136,7 @@ const SampleRecords = (function () {
     ELEMENTS.searchInput = document.getElementById("searchInput");
     ELEMENTS.statusFilter = document.getElementById("statusFilter");
     ELEMENTS.paymentStatusFilter = document.getElementById(
-      "paymentStatusFilter"
+      "paymentStatusFilter",
     );
     ELEMENTS.datePreset = document.getElementById("datePreset");
     ELEMENTS.customDateRange = document.getElementById("customDateRange");
@@ -148,21 +160,32 @@ const SampleRecords = (function () {
     ELEMENTS.modalAmount = document.getElementById("modalAmount");
     ELEMENTS.modalPaymentStatus = document.getElementById("modalPaymentStatus");
     ELEMENTS.modalReferenceNumber = document.getElementById(
-      "modalReferenceNumber"
+      "modalReferenceNumber",
     );
     ELEMENTS.referenceNumberGroup = document.getElementById(
-      "referenceNumberGroup"
+      "referenceNumberGroup",
     );
+    ELEMENTS.modalPaymentDate = document.getElementById("modalPaymentDate");
+    ELEMENTS.paymentDateGroup = document.getElementById("paymentDateGroup");
     ELEMENTS.currentStatusInfo = document.getElementById("currentStatusInfo");
     ELEMENTS.modalCurrentStatus = document.getElementById("modalCurrentStatus");
     ELEMENTS.paymentErrorAlert = document.getElementById("paymentErrorAlert");
     ELEMENTS.paymentErrorMessage = document.getElementById(
-      "paymentErrorMessage"
+      "paymentErrorMessage",
     );
     ELEMENTS.btnSavePayment = document.getElementById("btnSavePayment");
 
     // Toast Container
     ELEMENTS.toastContainer = document.getElementById("toastContainer");
+
+    // Invoice Modal
+    ELEMENTS.invoiceModal = document.getElementById("invoiceModal");
+    ELEMENTS.invoiceSignatory = document.getElementById("invoiceSignatory");
+    ELEMENTS.invoiceRequestDate = document.getElementById("invoiceRequestDate");
+    ELEMENTS.invoiceSampleId = document.getElementById("invoiceSampleId");
+    ELEMENTS.btnPreviewInvoice = document.getElementById("btnPreviewInvoice");
+    ELEMENTS.btnGenerateInvoice = document.getElementById("btnGenerateInvoice");
+    ELEMENTS.invoiceErrorAlert = document.getElementById("invoiceErrorAlert");
 
     // Verify critical elements
     const criticalElements = [
@@ -237,7 +260,7 @@ const SampleRecords = (function () {
     // Payment modal - status change listener
     ELEMENTS.modalPaymentStatus.addEventListener(
       "change",
-      handlePaymentStatusChange
+      handlePaymentStatusChange,
     );
 
     // Payment modal - save button
@@ -246,7 +269,7 @@ const SampleRecords = (function () {
     // Payment modal - reset on close
     ELEMENTS.paymentModal.addEventListener(
       "hidden.bs.modal",
-      resetPaymentModal
+      resetPaymentModal,
     );
 
     // Prevent modal close on backdrop click if form has data
@@ -259,6 +282,14 @@ const SampleRecords = (function () {
       //   e.preventDefault();
       // }
     });
+
+    // Invoice modal bindings
+    if (ELEMENTS.btnPreviewInvoice) {
+      ELEMENTS.btnPreviewInvoice.addEventListener("click", previewInvoice);
+    }
+    if (ELEMENTS.btnGenerateInvoice) {
+      ELEMENTS.btnGenerateInvoice.addEventListener("click", generateInvoice);
+    }
   }
 
   /**
@@ -267,8 +298,13 @@ const SampleRecords = (function () {
   function initializeModal() {
     if (typeof bootstrap !== "undefined" && ELEMENTS.paymentModal) {
       ELEMENTS.paymentModalInstance = new bootstrap.Modal(
-        ELEMENTS.paymentModal
+        ELEMENTS.paymentModal,
       );
+      if (ELEMENTS.invoiceModal) {
+        ELEMENTS.invoiceModalInstance = new bootstrap.Modal(
+          ELEMENTS.invoiceModal,
+        );
+      }
       console.log("✅ Bootstrap Modal: Initialized");
     } else {
       console.error("❌ Bootstrap not loaded or modal element missing");
@@ -333,7 +369,7 @@ const SampleRecords = (function () {
   function showLoadingState() {
     ELEMENTS.tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-5">
+                <td colspan="6" class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -353,7 +389,7 @@ const SampleRecords = (function () {
   function showEmptyState() {
     ELEMENTS.tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-5">
+                <td colspan="6" class="text-center py-5">
                     <i class="fas fa-inbox fa-3x text-muted mb-3" style="display: block;"></i>
                     <h5 class="text-muted">No samples found</h5>
                     <p class="text-muted small">Try adjusting your search filters</p>
@@ -380,6 +416,7 @@ const SampleRecords = (function () {
     attachStatusBadgeListeners();
     attachPaymentBadgeListeners();
     attachEyeIconListeners(); // Eye icon listeners
+    attachInvoiceBadgeListeners();
   }
 
   /**
@@ -402,27 +439,22 @@ const SampleRecords = (function () {
 
     return `
             <tr data-sample-id="${sample.sample_id}">
-                <td class="px-3 py-3">
+                <td class="px-3 py-3" data-label="Sample Code:">
                     <span class="fw-semibold text-primary">${sampleCode}</span>
                 </td>
-                <td class="px-3 py-3 client-name-column">
-                    <span class="fw-medium">${clientName}</span>
-                    ${
-                      sample.city
-                        ? `<br><small class="text-muted">${escapeHtml(
-                            sample.city
-                          )}</small>`
-                        : ""
-                    }
+                <td class="px-3 py-3 client-name-column" data-label="Client:">
+                    <div class="client-info-wrapper">
+                        <span class="fw-medium">${clientName}</span>
+                    </div>
                 </td>
-                <td class="px-3 py-3">
+                <td class="px-3 py-3" data-label="Status:">
                     <span class="badge ${statusBadgeClass} status-badge" 
                           data-sample-id="${sample.sample_id}" 
                           data-current-status="${status}">
                         ${status}
                     </span>
                 </td>
-                <td class="px-3 py-3">
+                <td class="px-3 py-3" data-label="Payment:">
                     <span class="badge ${paymentBadgeClass} payment-badge ${paymentClickable}" 
                           data-sample-id="${sample.sample_id}" 
                           data-payment-status="${paymentStatus}"
@@ -434,19 +466,11 @@ const SampleRecords = (function () {
                         ${getPaymentBadgeIcon(paymentStatus)} ${paymentStatus}
                     </span>
                 </td>
-                <td class="px-3 py-3">
+                <td class="px-3 py-3" data-label="Received Date:">
                     <span class="text-muted">${receivedDate}</span>
                 </td>
-                <td class="px-3 py-3 text-end">
+                <td class="px-3 py-3 text-end" data-label="Amount (LKR):">
                     <span class="fw-semibold text-success">${amount}</span>
-                </td>
-                <td class="px-3 py-3 text-center">
-                    <button class="btn btn-sm btn-outline-primary eye-icon-btn" 
-                            data-sample-id="${sample.sample_id}"
-                            title="View Details"
-                            style="padding: 4px 10px; border-radius: 6px;">
-                        <i class="fas fa-eye"></i>
-                    </button>
                 </td>
             </tr>
         `;
@@ -501,7 +525,7 @@ const SampleRecords = (function () {
     }
     if (ELEMENTS.unpaidTotal) {
       ELEMENTS.unpaidTotal.textContent = formatCurrency(
-        totals.unpaid_total || 0
+        totals.unpaid_total || 0,
       );
     }
   }
@@ -537,9 +561,6 @@ const SampleRecords = (function () {
             <option value="In Progress" ${
               currentStatus === "In Progress" ? "selected" : ""
             }>In Progress</option>
-            <option value="Completed" ${
-              currentStatus === "Completed" ? "selected" : ""
-            }>Completed</option>
             <option value="Cancelled" ${
               currentStatus === "Cancelled" ? "selected" : ""
             }>Cancelled</option>
@@ -635,25 +656,202 @@ const SampleRecords = (function () {
    * Attach click listeners to eye icon buttons
    * Clickable but does nothing
    */
- function attachEyeIconListeners() {
-  const eyeButtons = document.querySelectorAll(".eye-icon-btn");
+  function attachEyeIconListeners() {
+    const eyeButtons = document.querySelectorAll(".eye-icon-btn");
 
-  eyeButtons.forEach((button) => {
-    button.addEventListener("click", function (e) {
-      e.preventDefault();
-      
-      const sampleId = this.dataset.sampleId; // Get the sample ID from data attribute
-      
-      console.log("👁️ Eye icon clicked for sample ID:", sampleId);
-      
-      window.open(
-        "/src/Controllers/forms-controller.php?action=view&sample_id=" + sampleId,
-        "_blank",
-        "width=1400,height=900,scrollbars=yes,resizable=yes"
-      );
+    eyeButtons.forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const sampleId = this.dataset.sampleId; // Get the sample ID from data attribute
+
+        console.log("👁️ Eye icon clicked for sample ID:", sampleId);
+
+        const url =
+          "src/Controllers/FormsController.php?action=view&sample_id=" +
+          sampleId;
+        const w = window.screen.availWidth;
+        const h = window.screen.availHeight;
+        window.open(
+          url,
+          "_blank",
+          `width=${w},height=${h},left=0,top=0,scrollbars=yes,resizable=yes`,
+        );
+      });
     });
-  });
-}
+  }
+
+  // ==================== INVOICE GENERATION HANDLING ====================
+
+  /**
+   * Attach click listeners to invoice buttons
+   */
+  function attachInvoiceBadgeListeners() {
+    const invoiceButtons = document.querySelectorAll(".invoice-icon-btn");
+    invoiceButtons.forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const sampleId = this.dataset.sampleId;
+        openInvoiceModal(sampleId);
+      });
+    });
+  }
+
+  /**
+   * Open the invoice generation modal and fetch signatories
+   */
+  function openInvoiceModal(sampleId) {
+    if (ELEMENTS.invoiceErrorAlert)
+      ELEMENTS.invoiceErrorAlert.style.display = "none";
+    ELEMENTS.invoiceSampleId.value = sampleId;
+
+    // Set default date to sample's received date if available in state
+    const sample = STATE.samples.find((s) => s.sample_id == sampleId);
+    if (sample && sample.received_date && ELEMENTS.invoiceRequestDate) {
+      ELEMENTS.invoiceRequestDate.value = sample.received_date;
+    } else if (ELEMENTS.invoiceRequestDate) {
+      const todayStr = formatDateForInput(new Date());
+      ELEMENTS.invoiceRequestDate.value = todayStr;
+      ELEMENTS.invoiceRequestDate.setAttribute("max", todayStr);
+    }
+
+    ELEMENTS.invoiceSignatory.innerHTML =
+      '<option value="">Loading signatories...</option>';
+
+    if (ELEMENTS.invoiceModalInstance) {
+      ELEMENTS.invoiceModalInstance.show();
+    }
+
+    const formData = new FormData();
+    formData.append("action", "getSignatories");
+
+    fetch(CONFIG.INVOICE_URL, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          let options = '<option value="">Select Signatory</option>';
+          data.signatories.forEach((sig) => {
+            options += `<option value="${sig.signatory_id}">${escapeHtml(sig.full_name)} - ${escapeHtml(sig.title)}</option>`;
+          });
+          ELEMENTS.invoiceSignatory.innerHTML = options;
+        } else {
+          throw new Error(data.message || "Failed to load signatories");
+        }
+      })
+      .catch((error) => {
+        ELEMENTS.invoiceSignatory.innerHTML =
+          '<option value="">Error loading signatories</option>';
+        if (ELEMENTS.invoiceErrorAlert) {
+          ELEMENTS.invoiceErrorAlert.style.display = "block";
+          ELEMENTS.invoiceErrorAlert.textContent =
+            "Failed to load signatories: " + error.message;
+        }
+      });
+  }
+
+  /**
+   * Preview Invoice without saving
+   */
+  function previewInvoice() {
+    const sampleId = ELEMENTS.invoiceSampleId.value;
+    if (!sampleId) return;
+    const dateRequest = ELEMENTS.invoiceRequestDate
+      ? ELEMENTS.invoiceRequestDate.value
+      : "";
+    const w = window.screen.availWidth;
+    const h = window.screen.availHeight;
+    window.open(
+      `../../src/Views/invoice-print-template.php?sample_id=${sampleId}&request_date=${dateRequest}`,
+      "_blank",
+      `width=${w},height=${h},left=0,top=0,scrollbars=yes,resizable=yes`,
+    );
+  }
+
+  /**
+   * Generate Invoice (Freezes Snapshot and Saves)
+   */
+  function generateInvoice() {
+    const sampleId = ELEMENTS.invoiceSampleId.value;
+    const signatoryId = ELEMENTS.invoiceSignatory.value;
+
+    if (!signatoryId) {
+      if (ELEMENTS.invoiceErrorAlert) {
+        ELEMENTS.invoiceErrorAlert.style.display = "block";
+        ELEMENTS.invoiceErrorAlert.textContent =
+          "Please select a signatory first.";
+      }
+      return;
+    }
+
+    const dateRequest = ELEMENTS.invoiceRequestDate
+      ? ELEMENTS.invoiceRequestDate.value
+      : "";
+
+    if (dateRequest) {
+      const todayStr = formatDateForInput(new Date());
+      if (dateRequest > todayStr) {
+        if (ELEMENTS.invoiceErrorAlert) {
+          ELEMENTS.invoiceErrorAlert.style.display = "block";
+          ELEMENTS.invoiceErrorAlert.textContent =
+            "Date of Request cannot be in the future.";
+        }
+        return;
+      }
+    }
+
+    if (ELEMENTS.invoiceErrorAlert)
+      ELEMENTS.invoiceErrorAlert.style.display = "none";
+
+    const btn = ELEMENTS.btnGenerateInvoice;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
+
+    const formData = new FormData();
+    formData.append("action", "generate");
+    formData.append("sample_id", sampleId);
+    formData.append("signatory_id", signatoryId);
+    formData.append(
+      "request_date",
+      ELEMENTS.invoiceRequestDate ? ELEMENTS.invoiceRequestDate.value : "",
+    );
+
+    fetch(CONFIG.INVOICE_URL, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          if (ELEMENTS.invoiceModalInstance)
+            ELEMENTS.invoiceModalInstance.hide();
+          showSuccess("Invoice generated successfully!");
+          // Open the generated invoice using the saved ID
+          const w = window.screen.availWidth;
+          const h = window.screen.availHeight;
+          window.open(
+            `../../src/Views/invoice-print-template.php?invoice_id=${data.invoice_id}`,
+            "_blank",
+            `width=${w},height=${h},left=0,top=0,scrollbars=yes,resizable=yes`,
+          );
+          loadSamples(); // Refresh data table
+        } else {
+          throw new Error(data.message || "Failed to generate invoice");
+        }
+      })
+      .catch((error) => {
+        if (ELEMENTS.invoiceErrorAlert) {
+          ELEMENTS.invoiceErrorAlert.style.display = "block";
+          ELEMENTS.invoiceErrorAlert.textContent = error.message;
+        }
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      });
+  }
 
   /**
    * Open payment modal for a sample
@@ -728,12 +926,17 @@ const SampleRecords = (function () {
     ELEMENTS.currentStatusInfo.style.display = "block";
     ELEMENTS.modalCurrentStatus.textContent = currentPaymentStatus;
     ELEMENTS.modalCurrentStatus.className = `badge ${getPaymentBadgeClass(
-      currentPaymentStatus
+      currentPaymentStatus,
     )}`;
 
-    // Hide reference number field initially
+    // Hide reference number and date field initially
     ELEMENTS.referenceNumberGroup.style.display = "none";
-    ELEMENTS.modalReferenceNumber.value = "";
+    ELEMENTS.modalReferenceNumber.value = sampleData.payment_reference || "";
+
+    ELEMENTS.paymentDateGroup.style.display = "none";
+    ELEMENTS.modalPaymentDate.value = sampleData.payment_date
+      ? sampleData.payment_date.split(" ")[0]
+      : "";
 
     // Enable save button
     ELEMENTS.btnSavePayment.disabled = false;
@@ -756,15 +959,25 @@ const SampleRecords = (function () {
 
     console.log(`📋 Payment status changed to: ${selectedStatus}`);
 
-    // Show/hide reference number field
+    // Show/hide reference number and date field
     if (selectedStatus === "Paid") {
       ELEMENTS.referenceNumberGroup.style.display = "block";
       ELEMENTS.modalReferenceNumber.required = true;
       ELEMENTS.modalReferenceNumber.focus();
+
+      ELEMENTS.paymentDateGroup.style.display = "block";
+      ELEMENTS.modalPaymentDate.required = true;
+      if (!ELEMENTS.modalPaymentDate.value) {
+        // Default to today if empty
+        ELEMENTS.modalPaymentDate.value = formatDateForInput(new Date());
+      }
     } else {
       ELEMENTS.referenceNumberGroup.style.display = "none";
       ELEMENTS.modalReferenceNumber.required = false;
-      ELEMENTS.modalReferenceNumber.value = "";
+      // Do not clear the value, they might switch back
+
+      ELEMENTS.paymentDateGroup.style.display = "none";
+      ELEMENTS.modalPaymentDate.required = false;
     }
 
     hideModalError();
@@ -779,6 +992,7 @@ const SampleRecords = (function () {
     const sampleId = ELEMENTS.modalSampleId.value;
     const paymentStatus = ELEMENTS.modalPaymentStatus.value;
     const referenceNumber = ELEMENTS.modalReferenceNumber.value.trim();
+    const paymentDate = ELEMENTS.modalPaymentDate.value;
 
     // Validation
     if (!paymentStatus) {
@@ -786,10 +1000,17 @@ const SampleRecords = (function () {
       return;
     }
 
-    if (paymentStatus === "Paid" && !referenceNumber) {
-      showModalError("Reference number is required when marking as Paid");
-      ELEMENTS.modalReferenceNumber.focus();
-      return;
+    if (paymentStatus === "Paid") {
+      if (!referenceNumber) {
+        showModalError("Reference number is required when marking as Paid");
+        ELEMENTS.modalReferenceNumber.focus();
+        return;
+      }
+      if (!paymentDate) {
+        showModalError("Payment date is required when marking as Paid");
+        ELEMENTS.modalPaymentDate.focus();
+        return;
+      }
     }
 
     // Disable button to prevent double-submit
@@ -797,12 +1018,12 @@ const SampleRecords = (function () {
     ELEMENTS.btnSavePayment.innerHTML =
       '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
 
-    // Send update request
     const formData = new FormData();
     formData.append("action", "updatePayment");
     formData.append("sample_id", sampleId);
     formData.append("payment_status", paymentStatus);
     formData.append("reference_number", referenceNumber);
+    formData.append("payment_date", paymentDate);
 
     fetch(CONFIG.CONTROLLER_URL, {
       method: "POST",
@@ -851,9 +1072,11 @@ const SampleRecords = (function () {
     ELEMENTS.modalSampleId.value = "";
     ELEMENTS.modalPaymentStatus.value = "";
     ELEMENTS.modalReferenceNumber.value = "";
+    ELEMENTS.modalPaymentDate.value = "";
 
     // Hide conditional fields
     ELEMENTS.referenceNumberGroup.style.display = "none";
+    ELEMENTS.paymentDateGroup.style.display = "none";
     ELEMENTS.currentStatusInfo.style.display = "none";
 
     // Hide error
