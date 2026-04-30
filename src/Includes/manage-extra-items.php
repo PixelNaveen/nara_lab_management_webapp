@@ -46,7 +46,7 @@
     </div> -->
 
     <!-- Filter Card -->
-    <div class="items-card-filter">
+    <div class="items-card-filter items-filters">
         <input type="text" class="form-control" id="searchInput" 
                placeholder="Search items..." style="max-width: 250px;">
 
@@ -132,11 +132,11 @@
                     <select class="form-select items-form-select" 
                             id="itemUnit" name="itemUnit" required>
                         <option value="">Select</option>
-                        <option value="ml">ml</option>
-                        <option value="l">l</option>
+                        <option value="mL">mL</option>
+                        <option value="L">L</option>
                         <option value="g">g</option>
                         <option value="kg">kg</option>
-                        <option value="piece">piece</option>
+                        <option value="Piece">Piece</option>
                     </select>
                 </div>
             </div>
@@ -204,6 +204,12 @@ const btnUpdate = document.getElementById('btnUpdate');
 const formTitle = document.getElementById('formTitle');
 const deleteModal = document.getElementById('deleteModal');
 const toastContainer = document.getElementById('toastContainer');
+const itemNameInput = document.getElementById('itemName');
+
+// === REAL-TIME FILTERING ===
+itemNameInput.addEventListener('input', () => {
+    itemNameInput.value = itemNameInput.value.replace(/[^a-zA-Z\s]/g, "");
+});
 
 let deleteItemId = null;
 const CONTROLLER_PATH = '../../src/Controllers/ExtraItemsController.php';
@@ -302,12 +308,12 @@ function loadItems() {
                         data-unit="${item.item_unit}"
                         data-price="${item.item_price}"
                         data-description="${item.item_description || ''}">
-                        <td><strong>${item.item_name}</strong></td>
-                        <td><span class="badge bg-info">${displayValue}</span></td>
-                        <td><strong>${displayPrice}</strong></td>
-                        <td>${description}</td>
-                        <td>${statusLabel}</td>
-                        <td style="text-align: center;">
+                        <td data-label="Item Name:"><strong>${item.item_name}</strong></td>
+                        <td data-label="Value:"><span class="badge bg-info">${displayValue}</span></td>
+                        <td data-label="Price:"><strong>${displayPrice}</strong></td>
+                        <td data-label="Description:">${description}</td>
+                        <td data-label="Status:">${statusLabel}</td>
+                        <td data-label="Actions:" style="text-align: center;">
                             <button class="btn btn-items-edit btn-edit" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -389,11 +395,13 @@ itemForm.addEventListener('submit', e => {
     }
     
     sendAjax('insert', data).then(res => {
-        if (res.status === 'success') {
-            showToast(res.message || 'Item added successfully!', 'success');
-            loadItems();
-            loadStatistics();
-            closeModal();
+        if (res.status === 'success' || res.status === 'warning') {
+            showToast(res.message || 'Item added successfully!', res.status);
+            if (res.status === 'success') {
+                loadItems();
+                loadStatistics();
+                closeModal();
+            }
         } else {
             showToast(res.message || 'Failed to add item', 'error');
         }
@@ -477,11 +485,13 @@ btnUpdate.onclick = () => {
     }
     
     sendAjax('update', data).then(res => {
-        if (res.status === 'success') {
-            showToast('Item updated successfully!', 'success');
-            loadItems();
-            loadStatistics();
-            closeModal();
+        if (res.status === 'success' || res.status === 'warning') {
+            showToast(res.message || 'Item updated successfully!', res.status);
+            if (res.status === 'success') {
+                loadItems();
+                loadStatistics();
+                closeModal();
+            }
         } else {
             showToast(res.message || 'Update failed', 'error');
         }

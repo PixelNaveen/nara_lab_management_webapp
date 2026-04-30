@@ -89,16 +89,40 @@
     }
 
     .variants-table thead {
-      background-color: var(--primary-blue);
-      color: #fff;
-    }
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--border-color);
+}
 
-    .variants-table th,
-    .variants-table td {
-      padding: 12px;
-      font-size: 0.9rem;
-      vertical-align: middle;
-    }
+.variants-table th {
+  padding: 16px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Column Padding */
+.variants-table th:first-child,
+.variants-table td:first-child {
+  padding-left: 25px !important;
+}
+
+.variants-table th:last-child,
+.variants-table td:last-child {
+  padding-right: 25px !important;
+}
+
+/* Actions Column Alignment */
+.variants-table td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
+}
 
     .variants-table tbody tr {
       background: #fff;
@@ -339,10 +363,22 @@
       
       .variants-card-filter input,
       .variants-card-filter select,
+      .variants-card-filter .btn,
+      .variants-card-filter button,
       .btn-variants-filter,
       .btn-variants-new {
-        max-width: 100%;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin-right: 0 !important;
+        margin-bottom: 5px;
+      }
+
+      .variants-card-filter .ms-auto {
+        margin-left: 0 !important;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
       
       .variants-container {
@@ -369,5 +405,64 @@
       
       .variants-modal-header {
         padding: 15px 20px;
+      }
+    }
+
+    /* =============================================
+       RESPONSIVE - TABLE TO CARD TRANSFORMATION
+       Threshold: 992px (Large Mobile / Tablet)
+       ============================================= */
+    @media (max-width: 991.98px) {
+      .variants-table thead {
+        display: none !important;
+      }
+
+      .variants-table-container {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+
+      .variants-table {
+        border-spacing: 0 16px;
+      }
+
+      .variants-table tbody tr {
+        display: block;
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border-color);
+        position: relative;
+      }
+
+      .variants-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 8px !important;
+        border-bottom: 1px solid #f8fafc;
+        width: 100% !important;
+        font-size: 0.95rem !important;
+      }
+
+      .variants-table td:last-child {
+        border-bottom: none;
+        justify-content: center;
+        padding-top: 15px !important;
+      }
+
+      .variants-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-right: 15px;
       }
     }

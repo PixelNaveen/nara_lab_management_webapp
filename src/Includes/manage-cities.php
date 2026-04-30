@@ -46,7 +46,7 @@
     </div>
 
     <!-- Filter Card -->
-    <div class="cities-card-filter">
+    <div class="cities-card-filter cities-filters">
         <input type="text" class="form-control" id="searchInput" 
                placeholder="Search cities..." style="max-width: 250px;">
 
@@ -254,12 +254,12 @@ function loadCities() {
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr data-id="${city.city_id}"
                         data-name="${city.city_name}">
-                        <td><strong>${city.city_name}</strong></td>
-                        <td><span class="badge bg-info">${city.usage_count}</span></td>
-                        <td>${statusLabel}</td>
-                        <td>${city.created_at}</td>
-                        <td>${addedByBadge}</td>
-                        <td style="text-align: center;">
+                        <td data-label="City Name:"><strong>${city.city_name}</strong></td>
+                        <td data-label="Usage Count:"><span class="badge bg-info">${city.usage_count}</span></td>
+                        <td data-label="Status:">${statusLabel}</td>
+                        <td data-label="Added Date:">${city.created_at}</td>
+                        <td data-label="Added By:">${addedByBadge}</td>
+                        <td data-label="Actions:" style="text-align: center;">
                             <button class="btn btn-cities-edit btn-edit" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -322,11 +322,13 @@ cityForm.addEventListener('submit', e => {
     }
     
     sendAjax('insert', data).then(res => {
-        if (res.status === 'success') {
-            showToast(res.message || 'City added successfully!', 'success');
-            loadCities();
-            loadStatistics();
-            closeModal();
+        if (res.status === 'success' || res.status === 'warning') {
+            showToast(res.message || 'City added successfully!', res.status);
+            if (res.status === 'success') {
+                loadCities();
+                loadStatistics();
+                closeModal();
+            }
         } else {
             showToast(res.message || 'Failed to add city', 'error');
         }
@@ -387,11 +389,13 @@ btnUpdate.onclick = () => {
     }
     
     sendAjax('update', data).then(res => {
-        if (res.status === 'success') {
-            showToast('City updated successfully!', 'success');
-            loadCities();
-            loadStatistics();
-            closeModal();
+        if (res.status === 'success' || res.status === 'warning') {
+            showToast(res.message || 'City updated successfully!', res.status);
+            if (res.status === 'success') {
+                loadCities();
+                loadStatistics();
+                closeModal();
+            }
         } else {
             showToast(res.message || 'Update failed', 'error');
         }

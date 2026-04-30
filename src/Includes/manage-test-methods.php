@@ -1,6 +1,6 @@
 <div class="container-fluide">
 
-  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <div class="card-filter d-flex flex-wrap gap-2 align-items-center mb-3">
     <input type="text" class="form-control" id="searchInput" placeholder="Search by method name or standard body" style="max-width: 250px;" />
 
     <select class="form-select" id="standardBodyFilter" style="max-width: 160px;">
@@ -11,12 +11,12 @@
     </select>
 
     <select class="form-select" id="statusFilter" style="max-width: 120px;">
-        <option value="All Status">All Status</option>
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-      </select>
+      <option value="All Status">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
 
-    <button id="btnFilter" class="btn btn-outline-secondary btn-sm" style="min-width: 80px;">Filter</button> 
+    <button id="btnFilter" class="btn btn-outline-secondary btn-sm" style="min-width: 80px;">Filter</button>
 
     <div class="ms-auto">
       <button class="btn btn-primary btn-sm" id="btnNewTestMethod">+ New Test Method</button>
@@ -53,21 +53,24 @@
       <button class="btn-close-modal" id="btnCloseModal"><i class="fas fa-times"></i></button>
     </div>
 
-    <form id="testMethodForm" method="post">
-      <input type="hidden" id="testMethodId">
+    <form id="testMethodForm" method="post" autocomplete="off">
+      <input type="hidden" id="csrfToken" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+      <input type="hidden" id="testMethodId" name="method_id">
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Method Name <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="methodName" placeholder="Enter method name" name="methodName" required>
+          <div class="invalid-feedback" id="methodNameError"></div>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Standard Body <span class="text-danger">*</span></label>
-          <select class="form-select" id="standardBody" name="standardBody" >
+          <select class="form-select" id="standardBody" name="standardBody" required>
             <option value="">Select Standard Body</option>
             <option value="ISO">ISO</option>
             <option value="SLS">SLS</option>
             <option value="APHA">APHA</option>
           </select>
+          <div class="invalid-feedback" id="standardBodyError"></div>
         </div>
       </div>
       <div class="row">
@@ -78,6 +81,7 @@
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
+          <div class="invalid-feedback" id="statusError"></div>
         </div>
       </div>
 
@@ -110,7 +114,7 @@
 </div>
 
 <!-- Toast Container -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:99999;">
   <div id="toastContainer"></div>
 </div>
 
@@ -135,14 +139,15 @@
   let deleteTestMethodId = null;
   let originalData = {};
 
-const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
+  const CONTROLLER_PATH = '/src/Controllers/TestMethodController.php';
 
   // === TOAST FUNCTION ===
   function showToast(message, type = 'success') {
     const colors = {
       success: 'bg-success text-white',
       warning: 'bg-warning text-dark',
-      danger: 'bg-danger text-white'
+      danger: 'bg-danger text-white',
+      info: 'bg-warning text-dark'
     };
     const toastEl = document.createElement('div');
     toastEl.className = `toast align-items-center ${colors[type] || 'bg-success text-white'} border-0 mb-2`;
@@ -168,6 +173,7 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
         },
         body: new URLSearchParams({
           action,
+          csrf_token: document.getElementById('csrfToken').value,
           ...data
         })
       })
@@ -186,29 +192,29 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
 
       if (res.status === 'success' && Array.isArray(res.data)) {
         res.data.forEach(testMethod => {
-  const statusBadge = testMethod.status === 'active'
-    ? '<span class="badge bg-success">Active</span>'
-    : '<span class="badge bg-secondary">Inactive</span>';
+          const statusBadge = testMethod.status === 'active' ?
+            '<span class="badge bg-success">Active</span>' :
+            '<span class="badge bg-secondary">Inactive</span>';
 
-  tbody.insertAdjacentHTML('beforeend', `
-<tr data-id="${testMethod.method_id}"
-    data-name="${testMethod.method_name}"
-    data-standard-body="${testMethod.standard_body}"
-    data-status="${testMethod.status}">
-  <td class="d-none">${testMethod.method_id}</td>
-  <td>${testMethod.method_name || '<em class="text-muted">--</em>'}</td>
-  <td>${testMethod.standard_body}</td>
-  <td>${statusBadge}</td>
-  <td>
-    <button class="btn btn-sm btn-warning btn-edit"><i class="fas fa-edit"></i></button>
-    <button class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash"></i></button>
-  </td>
-</tr>
+          tbody.insertAdjacentHTML('beforeend', `
+          <tr data-id="${testMethod.method_id}"
+              data-name="${testMethod.method_name}"
+              data-standard-body="${testMethod.standard_body}"
+              data-status="${testMethod.status}">
+              <td class="d-none">${testMethod.method_id}</td>
+              <td data-label="Method Name:">${testMethod.method_name || '<em class="text-muted">--</em>'}</td>
+              <td data-label="Standard Body:">${testMethod.standard_body}</td>
+              <td data-label="Status:">${statusBadge}</td>
+                <td data-label="Actions:">
+                <button class="btn btn-sm btn-warning btn-edit"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
   `);
-});
+        });
 
         attachRowEvents();
-        filterTable();  // Apply filters after loading
+        filterTable(); // Apply filters after loading
       } else {
         tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No test methods found</td></tr>`;
       }
@@ -231,7 +237,41 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
       btnUpdate.classList.remove('d-none');
       formTitle.textContent = 'Update Test Method';
     }
+    clearValidations();
   }
+
+  function clearValidations() {
+    ['methodName', 'standardBody', 'status'].forEach(id => {
+      const el = document.getElementById(id);
+      const err = document.getElementById(id + 'Error');
+      if (el) el.classList.remove('is-invalid', 'is-valid');
+      if (err) err.style.display = 'none';
+    });
+  }
+
+  function validateInput(inputEl, errorEl) {
+    if (inputEl.value.trim() === '') {
+      inputEl.classList.add('is-invalid');
+      errorEl.textContent = 'This field is required.';
+      errorEl.style.display = 'block';
+      return false;
+    } else {
+      inputEl.classList.remove('is-invalid');
+      inputEl.classList.add('is-valid');
+      errorEl.style.display = 'none';
+      return true;
+    }
+  }
+
+  document.getElementById('methodName').addEventListener('input', function() {
+    validateInput(this, document.getElementById('methodNameError'));
+  });
+  document.getElementById('standardBody').addEventListener('change', function() {
+    validateInput(this, document.getElementById('standardBodyError'));
+  });
+  document.getElementById('status').addEventListener('change', function() {
+    validateInput(this, document.getElementById('statusError'));
+  });
 
   function closeModal() {
     modalOverlay.classList.remove('active');
@@ -251,6 +291,15 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
   testMethodForm.addEventListener('submit', e => {
     e.preventDefault();
 
+    const vName = validateInput(testMethodForm.methodName, document.getElementById('methodNameError'));
+    const vBody = validateInput(testMethodForm.standardBody, document.getElementById('standardBodyError'));
+    const vStat = validateInput(testMethodForm.status, document.getElementById('statusError'));
+
+    if (!vName || !vBody || !vStat) {
+      showToast('Please correct the highlighted errors.', 'danger');
+      return;
+    }
+
     const data = {
       method_name: testMethodForm.methodName.value.trim(),
       standard_body: testMethodForm.standardBody.value,
@@ -264,7 +313,6 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
         closeModal();
       } else {
         showToast(res.message || 'Failed to create test method', 'danger');
-        closeModal();
       }
     });
   });
@@ -318,6 +366,15 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
 
   // === UPDATE TEST METHOD ===
   btnUpdate.onclick = () => {
+    const vName = validateInput(testMethodForm.methodName, document.getElementById('methodNameError'));
+    const vBody = validateInput(testMethodForm.standardBody, document.getElementById('standardBodyError'));
+    const vStat = validateInput(testMethodForm.status, document.getElementById('statusError'));
+
+    if (!vName || !vBody || !vStat) {
+      showToast('Please correct the highlighted errors.', 'danger');
+      return;
+    }
+
     const id = document.getElementById('testMethodId').value;
     const data = {
       method_id: id,
@@ -326,19 +383,13 @@ const CONTROLLER_PATH = '/src/Controllers/test-method-controller.php';
       status: testMethodForm.status.value
     };
 
-    const changed = data.method_name !== originalData.method_name ||
-                    data.standard_body !== originalData.standard_body ||
-                    data.status !== originalData.status;
-    if (!changed) {
-      showToast('No changes detected', 'warning');
-      return;
-    }
-
     sendAjax('update', data).then(res => {
       if (res.status === 'success') {
         showToast('Test method updated successfully!', 'success');
         loadTestMethods();
         closeModal();
+      } else if (res.status === 'info') {
+        showToast(res.message || 'No update detected.', 'info');
       } else {
         showToast(res.message || 'Update failed', 'danger');
       }

@@ -157,24 +157,40 @@ body {
 }
 
 .cities-table thead {
-  background-color: var(--primary-blue);
-  color: #fff;
+  background-color: #fff !important;
+  color: var(--text-dark) !important;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .cities-table thead th {
-  padding: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 16px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
   text-align: left;
   border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Column Padding */
+.cities-table th:first-child,
+.cities-table td:first-child {
+  padding-left: 25px !important;
+}
+
+.cities-table th:last-child,
+.cities-table td:last-child {
+  padding-right: 25px !important;
 }
 
 .cities-table thead th:first-child {
-  border-radius: 8px 0 0 8px;
+  border-radius: 12px 0 0 0;
 }
 
 .cities-table thead th:last-child {
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 12px 0 0;
 }
 
 .cities-table tbody tr {
@@ -200,6 +216,8 @@ body {
 .cities-table tbody td:last-child {
   text-align: center !important;
   padding: 12px 8px !important;
+  white-space: nowrap !important;
+  min-width: 120px;
 }
 
 .cities-table thead th:last-child {
@@ -428,56 +446,146 @@ body {
   background-color: #475569;
 }
 
-/* Responsive */
+/* ===== Responsive Overhaul for Enterprise Look ===== */
 @media (max-width: 991.98px) {
-  .cities-modal-form {
-    width: 95%;
-  }
-
-  .cities-modal-footer-btns {
-    flex-direction: column;
-  }
-
-  .cities-modal-footer-btns button {
-    width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .cities-card-filter {
-    flex-direction: column;
-    align-items: stretch;
+  .cities-filters {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 18px !important;
+    gap: 12px !important;
+    background: #fff !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04) !important;
+    margin-bottom: 25px !important;
   }
 
   .cities-card-filter input,
   .cities-card-filter select,
   .btn-cities-filter,
   .btn-cities-new {
+    width: 100% !important;
     max-width: 100% !important;
+    height: 40px !important;
+    font-size: 0.9rem !important;
+    margin: 0 !important;
+  }
+
+  .ms-auto {
+    margin-left: 0 !important;
     width: 100%;
   }
 
-  .cities-container {
-    padding: 15px;
+  /* Table to Card Transformation */
+  .cities-table-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .cities-table {
+    display: block !important;
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .cities-table thead {
+    display: none !important;
+  }
+
+  .cities-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .cities-table tbody tr {
+    display: block !important;
+    background: #fff !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-left: 5px solid var(--primary-blue-light) !important;
+    transition: all 0.2s ease-in-out !important;
+  }
+
+  /* Status Colors for Strip */
+  .cities-table tbody tr:has(.bg-success) { border-left-color: var(--success-green) !important; }
+  .cities-table tbody tr:has(.bg-secondary) { border-left-color: #94a3b8 !important; }
+
+  .cities-table td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: right !important;
+    padding: 12px 10px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    width: 100% !important;
+    background: #fff !important;
+    min-height: 45px !important;
+  }
+
+  .cities-table td:last-child {
+    border-bottom: none !important;
+    padding-top: 15px !important;
+    justify-content: center !important;
+  }
+
+  /* Label Styling */
+  .cities-table td::before {
+    content: attr(data-label);
+    float: left !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    text-align: left !important;
+    margin-right: 15px !important;
+    min-width: 110px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Action Buttons in Cards */
+  .btn-cities-edit, 
+  .btn-cities-delete {
+    min-width: 100px !important;
+    height: 32px !important;
+    font-size: 0.8rem !important;
+    margin: 0 5px !important;
   }
 }
 
-@media (max-width: 576px) {
-  .cities-container {
-    padding: 10px;
+/* Extra small screen adjustments */
+@media (max-width: 480px) {
+  .cities-table tbody tr {
+    padding: 12px !important;
   }
 
-  .stat-card {
-    padding: 15px;
+  .cities-table td {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 5px !important;
   }
 
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
+  .cities-table td::before {
+    margin-bottom: 2px !important;
+    min-width: 0 !important;
   }
 
-  .stat-value {
-    font-size: 1.5rem;
+  .btn-cities-edit, 
+  .btn-cities-delete {
+    width: 100% !important;
+    margin: 5px 0 !important;
   }
+}
+
+/* ===== Smooth Transitions ===== */
+button, input, select, .badge, tr {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }

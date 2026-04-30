@@ -1,4 +1,7 @@
-/* public/assets/css/manage-extra-items.css - FINAL COMPLETE VERSION */
+/* ============================================================
+   MANAGE SIGNATORIES CSS
+   Mirrors manage-param.css / manage-cities.css design system
+   ============================================================ */
 
 :root {
   --primary-blue: #1e3a8a;
@@ -19,7 +22,7 @@ body {
 }
 
 /* Container */
-.items-container {
+.signatories-container {
   padding: 20px;
 }
 
@@ -60,8 +63,8 @@ body {
   background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
 }
 
-.stat-icon.bg-secondary {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+.stat-icon.bg-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 }
 
 .stat-details {
@@ -83,7 +86,7 @@ body {
 }
 
 /* Filter Card */
-.items-card-filter {
+.signatories-card-filter {
   border: 1px solid var(--border-color);
   background: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -96,31 +99,33 @@ body {
   gap: 10px;
 }
 
-.items-card-filter input,
-.items-card-filter select {
+.signatories-card-filter input,
+.signatories-card-filter select {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 0.9rem;
   height: 38px;
 }
 
-.btn-items-filter {
-  border: 1px solid var(--primary-blue);
+.btn-signatories-filter {
+  border-color: var(--primary-blue);
   color: var(--primary-blue);
-  background: transparent;
   min-width: 90px;
   height: 38px;
+  background: transparent;
+  border: 1px solid var(--primary-blue);
   border-radius: 8px;
   font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
 
-.btn-items-filter:hover {
+.btn-signatories-filter:hover {
   background: var(--primary-blue);
   color: #fff;
 }
 
-.btn-items-new {
+.btn-signatories-new {
   background: var(--primary-blue);
   border: none;
   font-weight: 500;
@@ -129,18 +134,15 @@ body {
   height: 38px;
   color: #fff;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 5px;
 }
 
-.btn-items-new:hover {
+.btn-signatories-new:hover {
   background: var(--primary-blue-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(30, 58, 138, 0.3);
-  color: white;
 }
 
 /* Table */
-.items-table-container {
+.signatories-table-container {
   background: #fff;
   border-radius: 12px;
   border: 1px solid var(--border-color);
@@ -149,20 +151,19 @@ body {
   padding: 10px;
 }
 
-.items-table {
+.signatories-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 8px;
-  margin-bottom: 0;
 }
 
-.items-table thead {
+.signatories-table thead {
   background-color: #fff !important;
   color: var(--text-dark) !important;
   border-bottom: 2px solid var(--border-color);
 }
 
-.items-table thead th {
+.signatories-table th {
   padding: 16px 12px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -175,53 +176,44 @@ body {
 }
 
 /* Column Padding */
-.items-table th:first-child,
-.items-table td:first-child {
+.signatories-table th:first-child,
+.signatories-table td:first-child {
   padding-left: 25px !important;
 }
 
-.items-table th:last-child,
-.items-table td:last-child {
+.signatories-table th:last-child,
+.signatories-table td:last-child {
   padding-right: 25px !important;
 }
 
-.items-table thead th:first-child {
+/* Actions Column Alignment */
+.signatories-table td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
+}
+
+.signatories-table thead th:first-child {
   border-radius: 12px 0 0 0;
 }
 
-.items-table thead th:last-child {
+.signatories-table thead th:last-child {
   border-radius: 0 12px 0 0;
 }
 
-.items-table tbody tr {
+.signatories-table tbody tr {
   background: #fff;
   transition: all 0.15s ease-in-out;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.items-table tbody tr:hover {
+.signatories-table tbody tr:hover {
   background: rgba(59, 130, 246, 0.08);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
 }
 
-.items-table tbody td {
-  padding: 12px;
-  font-size: 0.9rem;
-  vertical-align: middle;
+.signatories-table tbody td {
   border: none;
-}
-
-/* Table cell alignment for actions */
-.items-table tbody td:last-child {
-  text-align: center !important;
-  padding: 12px 8px !important;
-  white-space: nowrap !important;
-  min-width: 120px;
-}
-
-.items-table thead th:last-child {
-  text-align: center !important;
 }
 
 /* Badges */
@@ -242,42 +234,35 @@ body {
 }
 
 /* Action Buttons */
-.btn-items-edit,
-.btn-items-delete {
+.btn-signatories-edit,
+.btn-signatories-delete {
   padding: 6px 10px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
-  margin-right: 4px;
+  margin-right: 6px;
   transition: all 0.2s ease-in-out;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.btn-items-delete {
-  margin-right: 0;
-}
-
-.btn-items-edit {
+.btn-signatories-edit {
   background-color: rgba(59, 130, 246, 0.1);
   color: var(--primary-blue);
 }
 
-.btn-items-edit:hover {
+.btn-signatories-edit:hover {
   background-color: var(--primary-blue);
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
-.btn-items-delete {
+.btn-signatories-delete {
   background-color: rgba(220, 38, 38, 0.1);
   color: var(--danger-red);
 }
 
-.btn-items-delete:hover {
+.btn-signatories-delete:hover {
   background-color: var(--danger-red);
   color: #fff;
   transform: translateY(-2px);
@@ -285,7 +270,7 @@ body {
 }
 
 /* Modal */
-.items-modal-overlay {
+.signatories-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -302,29 +287,27 @@ body {
   transition: all 0.3s ease-in-out;
 }
 
-.items-modal-overlay.active {
+.signatories-modal-overlay.active {
   opacity: 1;
   visibility: visible;
 }
 
-.items-modal-form {
+.signatories-modal-form {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 90%;
-  max-width: 700px;
+  max-width: 600px;
   padding: 0;
   transform: scale(0.9);
   transition: all 0.3s ease-in-out;
-  max-height: 90vh;
-  overflow-y: auto;
 }
 
-.items-modal-overlay.active .items-modal-form {
+.signatories-modal-overlay.active .signatories-modal-form {
   transform: scale(1);
 }
 
-.items-modal-header {
+.signatories-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -334,7 +317,7 @@ body {
   border-radius: 16px 16px 0 0;
 }
 
-.items-modal-header h5 {
+.signatories-modal-header h5 {
   color: #fff;
   font-weight: 600;
   margin: 0;
@@ -361,11 +344,11 @@ body {
   transform: rotate(90deg);
 }
 
-.items-modal-form form {
+.signatories-modal-form form {
   padding: 24px;
 }
 
-.items-form-label {
+.signatories-form-label {
   font-weight: 500;
   color: var(--primary-blue-dark);
   margin-bottom: 0.5rem;
@@ -373,8 +356,8 @@ body {
   display: inline-block;
 }
 
-.items-form-control,
-.items-form-select {
+.signatories-form-control,
+.signatories-form-select {
   border-radius: 8px;
   border: 1px solid var(--border-color);
   font-size: 0.9rem;
@@ -384,14 +367,14 @@ body {
   transition: all 0.2s ease-in-out;
 }
 
-.items-form-control:focus,
-.items-form-select:focus {
+.signatories-form-control:focus,
+.signatories-form-select:focus {
   border-color: var(--primary-blue-light);
   box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
   outline: none;
 }
 
-.items-modal-footer-btns {
+.signatories-modal-footer-btns {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -400,7 +383,7 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
-.items-modal-footer-btns button {
+.signatories-modal-footer-btns button {
   padding: 10px 24px;
   font-weight: 500;
   border-radius: 8px;
@@ -409,40 +392,34 @@ body {
   cursor: pointer;
 }
 
-.btn-success {
+.signatories-modal-footer-btns .btn-success {
   background-color: var(--success-green);
   color: #fff;
 }
 
-.btn-success:hover {
+.signatories-modal-footer-btns .btn-success:hover {
   background-color: #15803d;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
 }
 
-.btn-warning {
-  background-color: var(--warning-yellow);
-  color: #fff;
-}
-
-.btn-warning:hover {
-  background-color: #d97706;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-.btn-secondary {
+.signatories-modal-footer-btns .btn-secondary {
   background-color: #64748b;
   color: #fff;
 }
 
-.btn-secondary:hover {
+.signatories-modal-footer-btns .btn-secondary:hover {
   background-color: #475569;
+}
+
+/* Validation */
+.invalid-feedback {
+  font-size: 0.8rem;
 }
 
 /* ===== Responsive Overhaul for Enterprise Look ===== */
 @media (max-width: 991.98px) {
-  .items-filters {
+  .sig-filters {
     flex-direction: column !important;
     align-items: stretch !important;
     padding: 18px !important;
@@ -454,10 +431,10 @@ body {
     margin-bottom: 25px !important;
   }
 
-  .items-card-filter input,
-  .items-card-filter select,
-  .btn-items-filter,
-  .btn-items-new {
+  .signatories-card-filter input,
+  .signatories-card-filter select,
+  .btn-signatories-filter,
+  .btn-signatories-new {
     width: 100% !important;
     max-width: 100% !important;
     height: 40px !important;
@@ -471,30 +448,30 @@ body {
   }
 
   /* Table to Card Transformation */
-  .items-table-container {
+  .signatories-table-container {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
   }
 
-  .items-table {
+  .signatories-table {
     display: block !important;
     width: 100% !important;
     background: transparent !important;
     border: none !important;
   }
 
-  .items-table thead {
+  .signatories-table thead {
     display: none !important;
   }
 
-  .items-table tbody {
+  .signatories-table tbody {
     display: block !important;
     width: 100% !important;
   }
 
-  .items-table tbody tr {
+  .signatories-table tbody tr {
     display: block !important;
     background: #fff !important;
     border-radius: 12px !important;
@@ -508,11 +485,11 @@ body {
     transition: all 0.2s ease-in-out !important;
   }
 
-  /* Status Colors for Strip */
-  .items-table tbody tr:has(.bg-success) { border-left-color: var(--success-green) !important; }
-  .items-table tbody tr:has(.bg-secondary) { border-left-color: #94a3b8 !important; }
+  /* Role Colors for Strip */
+  .signatories-table tbody tr:has(.text-success) { border-left-color: var(--success-green) !important; }
+  .signatories-table tbody tr:has(.text-danger) { border-left-color: var(--danger-red) !important; }
 
-  .items-table td {
+  .signatories-table td {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -524,14 +501,14 @@ body {
     min-height: 45px !important;
   }
 
-  .items-table td:last-child {
+  .signatories-table td:last-child {
     border-bottom: none !important;
     padding-top: 15px !important;
     justify-content: center !important;
   }
 
   /* Label Styling */
-  .items-table td::before {
+  .signatories-table td::before {
     content: attr(data-label);
     float: left !important;
     font-weight: 700 !important;
@@ -545,8 +522,8 @@ body {
   }
 
   /* Action Buttons in Cards */
-  .btn-items-edit, 
-  .btn-items-delete {
+  .btn-signatories-edit, 
+  .btn-signatories-delete {
     min-width: 100px !important;
     height: 32px !important;
     font-size: 0.8rem !important;
@@ -556,24 +533,24 @@ body {
 
 /* Extra small screen adjustments */
 @media (max-width: 480px) {
-  .items-table tbody tr {
+  .signatories-table tbody tr {
     padding: 12px !important;
   }
 
-  .items-table td {
+  .signatories-table td {
     flex-direction: column !important;
     align-items: flex-start !important;
     text-align: left !important;
     gap: 5px !important;
   }
 
-  .items-table td::before {
+  .signatories-table td::before {
     margin-bottom: 2px !important;
     min-width: 0 !important;
   }
 
-  .btn-items-edit, 
-  .btn-items-delete {
+  .btn-signatories-edit, 
+  .btn-signatories-delete {
     width: 100% !important;
     margin: 5px 0 !important;
   }

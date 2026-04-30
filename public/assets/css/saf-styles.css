@@ -15,129 +15,129 @@
    RESET & BASE
    ============================================= */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: 'Times New Roman', Times, serif;
-    background: #f5f5f5;
-    padding: 20pt;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  font-family: "Times New Roman", Times, serif;
+  background: #f5f5f5;
+  padding: 20pt;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 /* =============================================
    CONTROLS PANEL (Screen Only)
    ============================================= */
 .controls {
-    max-width: 600pt;
-    margin: 0 auto 20pt;
-    background: white;
-    padding: 20pt;
-    border-radius: 6pt;
-    box-shadow: 0 2pt 8pt rgba(0,0,0,0.1);
+  max-width: 600pt;
+  margin: 0 auto 20pt;
+  background: white;
+  padding: 20pt;
+  border-radius: 6pt;
+  box-shadow: 0 2pt 8pt rgba(0, 0, 0, 0.1);
 }
 
 .controls h3 {
-    margin-bottom: 15pt;
-    color: #333;
-    font-size: 14pt;
+  margin-bottom: 15pt;
+  color: #333;
+  font-size: 14pt;
 }
 
 /* Multi-page notice */
 .multi-page-notice {
-    background: #fff3cd;
-    border: 1pt solid #ffc107;
-    border-radius: 4pt;
-    padding: 10pt 12pt;
-    margin-bottom: 15pt;
-    font-size: 10pt;
-    color: #856404;
+  background: #fff3cd;
+  border: 1pt solid #ffc107;
+  border-radius: 4pt;
+  padding: 10pt 12pt;
+  margin-bottom: 15pt;
+  font-size: 10pt;
+  color: #856404;
 }
 
 .size-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 12pt;
-    margin-bottom: 20pt;
+  display: flex;
+  flex-direction: column;
+  gap: 12pt;
+  margin-bottom: 20pt;
 }
 
 .size-selector label {
-    display: flex;
-    align-items: flex-start;
-    gap: 10pt;
-    cursor: pointer;
-    padding: 12pt;
-    border: 2pt solid #e0e0e0;
-    border-radius: 6pt;
-    transition: all 0.3s;
+  display: flex;
+  align-items: flex-start;
+  gap: 10pt;
+  cursor: pointer;
+  padding: 12pt;
+  border: 2pt solid #e0e0e0;
+  border-radius: 6pt;
+  transition: all 0.3s;
 }
 
 .size-selector label:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
+  border-color: #007bff;
+  background: #f8f9fa;
 }
 
 .size-selector input[type="radio"]:checked + .option-content {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .size-selector label:has(input:checked) {
-    border-color: #007bff;
-    background: #e7f3ff;
+  border-color: #007bff;
+  background: #e7f3ff;
 }
 
 .size-selector input[type="radio"] {
-    cursor: pointer;
-    margin-top: 3pt;
+  cursor: pointer;
+  margin-top: 3pt;
 }
 
 .option-content {
-    flex: 1;
+  flex: 1;
 }
 
 .option-title {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 4pt;
-    font-size: 11pt;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4pt;
+  font-size: 11pt;
 }
 
 .option-desc {
-    font-size: 10pt;
-    color: #666;
+  font-size: 10pt;
+  color: #666;
 }
 
 .btn-print {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 12pt 28pt;
-    font-size: 12pt;
-    border-radius: 5pt;
-    cursor: pointer;
-    transition: background 0.3s;
-    width: 100%;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12pt 28pt;
+  font-size: 12pt;
+  border-radius: 5pt;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 100%;
 }
 
 .btn-print:hover {
-    background: #0056b3;
+  background: #0056b3;
 }
 
 .btn-print:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
 /* =============================================
    FORM CONTAINER - BASE
    ============================================= */
 .form-container {
-    background: white;
-    margin: 0 auto;
-    box-shadow: 0 3pt 12pt rgba(0,0,0,0.15);
+  background: white;
+  margin: 0 auto;
+  box-shadow: 0 3pt 12pt rgba(0, 0, 0, 0.15);
 }
 
 /* =============================================
@@ -145,101 +145,101 @@ body {
    (Primary format for official use)
    ============================================= */
 .form-container.a4-natural {
-    width: 210mm;
-    padding: 12mm;
+  width: 210mm;
+  padding: 12mm;
 }
 
 /* TITLE - Government Standard */
 .a4-natural .form-title {
-    font-size: 11pt;                /* ✅ Government title standard */
-    font-weight: bold;
-    margin-bottom: 12pt;
-    color: #000;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    line-height: 1.4;
+  font-size: 11pt; /* ✅ Government title standard */
+  font-weight: bold;
+  margin-bottom: 12pt;
+  color: #000;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+  line-height: 1.4;
 }
 
 /* TABLE HEADERS & CELLS - Government Standard */
 .a4-natural th,
 .a4-natural td {
-    border: 1pt solid #000;         /* ✅ Thicker for official docs */
-    padding: 7pt 8pt;               /* ✅ Converted to pt */
-    text-align: left;
-    font-size: 10pt;                /* ✅ Government body text */
-    vertical-align: middle;
-    color: #000;
-    line-height: 1.4;
+  border: 1pt solid #000; /* ✅ Thicker for official docs */
+  padding: 8pt 9pt; /* ✅ Loosened for perfect balance */
+  text-align: left;
+  font-size: 10pt; /* ✅ Government body text */
+  vertical-align: middle;
+  color: #000;
+  line-height: 1.4;
 }
 
 .a4-natural th {
-    font-weight: bold;
-    background: transparent;
+  font-weight: bold;
+  background: transparent;
 }
 
 /* HEADER ROW - Adjusted Height */
 .a4-natural .header-row td {
-    height: 36pt;                   /* ✅ Increased from 34px */
-    font-weight: normal;
+  height: 38pt; /* ✅ Increased for breathing room */
+  font-weight: normal;
 }
 
 /* SAMPLE ROW - Adjusted Height */
 .a4-natural .sample-row {
-    height: 34pt;                   /* ✅ Increased from 32px */
+  height: 36pt; /* ✅ Increased for breathing room */
 }
 
 /* PAYMENT ROW - Adjusted Height */
 .a4-natural .payment-row td {
-    height: 38pt;                   /* ✅ Increased from 36px */
+  height: 40pt; /* ✅ Increased for breathing room */
 }
 
 /* DECISION SECTION */
 .a4-natural .decision-section {
-    border: 1pt solid #000;
-    border-top: none;
-    padding: 12pt 10pt;             /* ✅ Converted to pt */
-    margin: 0;
-    font-size: 10pt;                /* ✅ Government body text */
-    line-height: 1.6;
-    background: transparent;
-    color: #000;
+  border: 1pt solid #000;
+  border-top: none;
+  padding: 12pt 10pt; /* ✅ Converted to pt */
+  margin: 0;
+  font-size: 10pt; /* ✅ Government body text */
+  line-height: 1.6;
+  background: transparent;
+  color: #000;
 }
 
 /* REMARKS SECTION */
 .a4-natural .remarks-section {
-    border: 1pt solid #000;
-    border-top: none;
-    padding: 10pt;                  /* ✅ Converted to pt */
-    min-height: 72pt;               /* ✅ Increased from 70px */
-    font-size: 10pt;                /* ✅ Government body text */
-    background: transparent;
-    color: #000;
-    line-height: 1.5;
+  border: 1pt solid #000;
+  border-top: none;
+  padding: 10pt; /* ✅ Converted to pt */
+  min-height: 72pt; /* ✅ Increased from 70px */
+  font-size: 10pt; /* ✅ Government body text */
+  background: transparent;
+  color: #000;
+  line-height: 1.5;
 }
 
 /* SIGNATURE SECTION */
 .a4-natural .signature-section {
-    border: 1pt solid #000;
-    border-top: none;
-    padding: 10pt;                  /* ✅ Converted to pt */
-    min-height: 54pt;               /* ✅ Increased from 52px */
-    font-size: 10pt;                /* ✅ Government body text */
-    background: transparent;
-    color: #000;
+  border: 1pt solid #000;
+  border-top: none;
+  padding: 10pt; /* ✅ Converted to pt */
+  min-height: 54pt; /* ✅ Increased from 52px */
+  font-size: 10pt; /* ✅ Government body text */
+  background: transparent;
+  color: #000;
 }
 
 /* FOOTER TABLE - Government Metadata */
 .a4-natural .footer-table {
-    margin-top: 10pt;
-    font-size: 8.5pt;               /* ✅ Government footer standard */
+  margin-top: 10pt;
+  font-size: 8.5pt; /* ✅ Government footer standard */
 }
 
 .a4-natural .footer-table td {
-    padding: 6pt 8pt;               /* ✅ Converted to pt */
-    height: auto;
-    font-weight: normal;
-    line-height: 1.3;
+  padding: 7pt 9pt; /* ✅ Loosened */
+  height: auto;
+  font-weight: normal;
+  line-height: 1.3;
 }
 
 /* =============================================
@@ -247,262 +247,264 @@ body {
    (For forms with limited content)
    ============================================= */
 .form-container.half-a4 {
-    width: 210mm;
-    min-height: 148mm;
-    padding: 7mm 9mm;
+  width: 210mm;
+  min-height: 148mm;
+  padding: 7mm 9mm;
 }
 
 .half-a4 .form-title {
-    font-size: 11pt;                /* ✅ Consistent title size */
-    font-weight: bold;
-    margin-bottom: 8pt;
-    color: #000;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.4pt;
+  font-size: 11pt; /* ✅ Consistent title size */
+  font-weight: bold;
+  margin-bottom: 8pt;
+  color: #000;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.4pt;
 }
 
-.half-a4 th, .half-a4 td {
-    border: 0.75pt solid #000;
-    padding: 4pt 5pt;
-    text-align: left;
-    font-size: 9pt;                 /* ✅ Compact format uses 9pt */
-    vertical-align: middle;
-    color: #000;
-    line-height: 1.3;
+.half-a4 th,
+.half-a4 td {
+  border: 0.75pt solid #000;
+  padding: 5pt 6pt; /* ✅ Loosened for balance */
+  font-size: 9pt; /* ✅ Compact format uses 9pt */
+  vertical-align: middle;
+  color: #000;
+  line-height: 1.3;
 }
 
 .half-a4 .header-row td {
-    height: 28pt;
-    font-weight: normal;
+  height: 28pt;
+  font-weight: normal;
 }
 
 .half-a4 .sample-row {
-    height: 26pt;
+  height: 26pt;
 }
 
 .half-a4 .payment-row td {
-    height: 30pt;
+  height: 30pt;
 }
 
 .half-a4 .decision-section {
-    border: 0.75pt solid #000;
-    border-top: none;
-    padding: 8pt 6pt;
-    margin: 0;
-    font-size: 9pt;
-    line-height: 1.5;
-    background: transparent;
-    color: #000;
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 8pt 6pt;
+  margin: 0;
+  font-size: 9pt;
+  line-height: 1.5;
+  background: transparent;
+  color: #000;
 }
 
 .half-a4 .remarks-section {
-    border: 0.75pt solid #000;
-    border-top: none;
-    padding: 6pt;
-    min-height: 50pt;
-    font-size: 9pt;
-    background: transparent;
-    color: #000;
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 6pt;
+  min-height: 50pt;
+  font-size: 9pt;
+  background: transparent;
+  color: #000;
 }
 
 .half-a4 .signature-section {
-    border: 0.75pt solid #000;
-    border-top: none;
-    padding: 6pt;
-    min-height: 40pt;
-    font-size: 9pt;
-    background: transparent;
-    color: #000;
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 6pt;
+  min-height: 40pt;
+  font-size: 9pt;
+  background: transparent;
+  color: #000;
 }
 
 .half-a4 .footer-table {
-    margin-top: 8pt;
-    font-size: 8pt;
+  margin-top: 8pt;
+  font-size: 8pt;
 }
 
 .half-a4 .footer-table td {
-    padding: 4pt 5pt;
-    height: auto;
-    font-weight: normal;
+  padding: 4pt 5pt;
+  height: auto;
+  font-weight: normal;
 }
 
 /* =============================================
    FULL A5 LANDSCAPE - ALTERNATIVE COMPACT
    ============================================= */
 .form-container.full-a5 {
-    width: 210mm;
-    min-height: 148mm;
-    padding: 7mm 9mm;
+  width: 210mm;
+  min-height: 148mm;
+  padding: 7mm 9mm;
 }
 
 .full-a5 .form-title {
-    font-size: 11pt;                /* ✅ Consistent title size */
-    font-weight: bold;
-    margin-bottom: 8pt;
-    color: #000;
-    text-align: center;
-    text-transform: uppercase;
+  font-size: 11pt; /* ✅ Consistent title size */
+  font-weight: bold;
+  margin-bottom: 8pt;
+  color: #000;
+  text-align: center;
+  text-transform: uppercase;
 }
 
-.full-a5 th, .full-a5 td {
-    border: 0.75pt solid #000;
-    padding: 4pt 5pt;
-    text-align: left;
-    font-size: 9pt;                 /* ✅ Compact format */
-    vertical-align: middle;
-    color: #000;
-    line-height: 1.3;
+.full-a5 th,
+.full-a5 td {
+  border: 0.75pt solid #000;
+  padding: 5pt 6pt; /* ✅ Loosened for balance */
+  font-size: 9pt; /* ✅ Compact format */
+  vertical-align: middle;
+  color: #000;
+  line-height: 1.3;
 }
 
 .full-a5 .header-row td {
-    height: 28pt;
-    font-weight: normal;
+  height: 28pt;
+  font-weight: normal;
 }
 
 .full-a5 .sample-row {
-    height: 26pt;
+  height: 26pt;
 }
 
 .full-a5 .payment-row td {
-    height: 30pt;
+  height: 30pt;
 }
 
 .full-a5 .decision-section {
-    border: 0.75pt solid #000;
-    border-top: none;
-    padding: 8pt 6pt;
-    margin: 0;
-    font-size: 9pt;
-    line-height: 1.5;
-    background: transparent;
-    color: #000;
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 8pt 6pt;
+  margin: 0;
+  font-size: 9pt;
+  line-height: 1.5;
+  background: transparent;
+  color: #000;
 }
 
 .full-a5 .remarks-section {
-    border: 0.75pt solid #000;
-    border-top: none;
-    padding: 6pt;
-    min-height: 50pt;
-    font-size: 9pt;
-    background: transparent;
-    color: #000;
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 6pt;
+  min-height: 50pt;
+  font-size: 9pt;
+  background: transparent;
+  color: #000;
 }
 
 .full-a5 .signature-section {
-    border: 0.75pt solid #000;
-    border-top: none;
-    padding: 6pt;
-    min-height: 40pt;
-    font-size: 9pt;
-    background: transparent;
-    color: #000;
+  border: 0.75pt solid #000;
+  border-top: none;
+  padding: 6pt;
+  min-height: 40pt;
+  font-size: 9pt;
+  background: transparent;
+  color: #000;
 }
 
 .full-a5 .footer-table {
-    margin-top: 8pt;
-    font-size: 8pt;
+  margin-top: 8pt;
+  font-size: 8pt;
 }
 
 .full-a5 .footer-table td {
-    padding: 4pt 5pt;
-    height: auto;
-    font-weight: normal;
+  padding: 4pt 5pt;
+  height: auto;
+  font-weight: normal;
 }
 
 /* =============================================
    COMMON TABLE STYLES
    ============================================= */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 0;
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
 }
 
 th {
-    font-weight: bold;
-    background: transparent;
+  font-weight: bold;
+  background: transparent;
 }
 
 strong {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 /* =============================================
    PRINT STYLES - GOVERNMENT STANDARD
    ============================================= */
 @page {
-    margin: 0;
-    size: A4 portrait;
+  margin: 0;
+  size: A4 portrait;
 }
 
 @media print {
-    /* Hide controls */
-    .controls {
-        display: none !important;
-    }
+  /* Hide controls */
+  .controls {
+    display: none !important;
+  }
 
-    /* Reset body */
-    body {
-        background: white;
-        padding: 0;
-        margin: 0;
-    }
+  /* Reset body */
+  body {
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
 
-    /* Form container */
-    .form-container {
-        box-shadow: none;
-        margin: 0;
-        width: 100% !important;
-    }
+  /* Form container */
+  .form-container {
+    box-shadow: none;
+    margin: 0;
+    width: 100% !important;
+  }
 
-    /* Ensure borders print */
-    table, th, td {
-        border-color: #000 !important;
-    }
+  /* Ensure borders print */
+  table,
+  th,
+  td {
+    border-color: #000 !important;
+  }
 
-    /* Multi-page support */
-    .form-container + .form-container {
-        page-break-before: always;
-        break-before: page;
-    }
-    
-    /* Format-specific padding */
-    body.print-half-a4 .form-container,
-    body.print-full-a5 .form-container {
-        padding: 7mm 9mm;
-    }
+  /* Multi-page support */
+  .form-container + .form-container {
+    page-break-before: always;
+    break-before: page;
+  }
 
-    body.print-a4-natural .form-container {
-        padding: 12mm;
-    }
-    
-    /* Ensure exact font sizes in print */
-    .a4-natural .form-title {
-        font-size: 11pt !important;
-    }
-    
-    .a4-natural th,
-    .a4-natural td {
-        font-size: 10pt !important;
-    }
-    
-    .a4-natural .footer-table {
-        font-size: 8.5pt !important;
-    }
-    
-    /* Prevent page breaks inside forms */
-    .form-container {
-        page-break-inside: avoid;
-    }
-    
-    /* Ensure tables don't break poorly */
-    table {
-        page-break-inside: auto;
-    }
-    
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-    }
+  /* Format-specific padding */
+  body.print-half-a4 .form-container,
+  body.print-full-a5 .form-container {
+    padding: 7mm 9mm;
+  }
+
+  body.print-a4-natural .form-container {
+    padding: 12mm;
+  }
+
+  /* Ensure exact font sizes in print */
+  .a4-natural .form-title {
+    font-size: 11pt !important;
+  }
+
+  .a4-natural th,
+  .a4-natural td {
+    font-size: 10pt !important;
+  }
+
+  .a4-natural .footer-table {
+    font-size: 8.5pt !important;
+  }
+
+  /* Prevent page breaks inside forms */
+  .form-container {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure tables don't break poorly */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
 }

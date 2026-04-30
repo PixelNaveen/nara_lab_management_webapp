@@ -286,17 +286,39 @@ body {
 }
 
 .testMethodsTable thead {
-  background-color: var(--primary-blue) !important;
-  color: #fff;
-  border-radius: 8px;
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .table thead th {
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
-  padding: 12px;
+  padding: 16px 12px;
   text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Column Padding */
+.testMethodsTable th:first-child,
+.testMethodsTable td:first-child {
+  padding-left: 25px !important;
+}
+
+.testMethodsTable th:last-child,
+.testMethodsTable td:last-child {
+  padding-right: 25px !important;
+}
+
+/* Actions Column Alignment */
+.testMethodsTable td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
 }
 
 .table tbody tr {
@@ -393,12 +415,92 @@ body {
     max-width: 95%;
   }
 
-  .modal-footer-btns {
-    flex-direction: column;
-  }
-
   .modal-footer-btns .btn {
     width: 100%;
+  }
+
+  .card-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-filter input,
+  .card-filter select,
+  .card-filter .btn,
+  .card-filter button,
+  #btnFilter,
+  #btnNewTestMethod {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 5px;
+  }
+
+  .card-filter .ms-auto {
+    margin-left: 0 !important;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* =============================================
+   RESPONSIVE - TABLE TO CARD TRANSFORMATION
+   Threshold: 992px (Large Mobile / Tablet)
+   ============================================= */
+@media (max-width: 991.98px) {
+  .testMethodsTable thead {
+    display: none !important;
+  }
+
+  .table-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .testMethodsTable {
+    border-spacing: 0 16px;
+  }
+
+  .testMethodsTable tbody tr {
+    display: block;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    position: relative;
+  }
+
+  .testMethodsTable td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid #f8fafc;
+    width: 100% !important;
+    font-size: 0.95rem !important;
+  }
+
+  .testMethodsTable td:last-child {
+    border-bottom: none;
+    justify-content: center;
+    padding-top: 15px !important;
+  }
+
+  .testMethodsTable td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-right: 15px;
   }
 }
 

@@ -123,7 +123,11 @@ body {
   align-items: center;
   padding: 20px 24px;
   border-bottom: 2px solid var(--border-color);
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-blue) 0%,
+    var(--primary-blue-dark) 100%
+  );
   border-radius: 16px 16px 0 0;
 }
 
@@ -217,8 +221,7 @@ body {
   cursor: pointer;
 }
 
-
-.toggle-password{
+.toggle-password {
   border: 1px solid rgb(243, 243, 243);
 }
 /* ===== Buttons ===== */
@@ -285,18 +288,40 @@ body {
 }
 
 .manage-users-table thead {
-  background-color: var(--primary-blue);
-  color: #fff;
-  border-radius: 8px;
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .manage-users-table thead th {
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
-  padding: 12px;
+  padding: 16px 12px;
   text-align: left;
   vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Column Padding */
+.manage-users-table th:first-child,
+.manage-users-table td:first-child {
+  padding-left: 25px !important;
+}
+
+.manage-users-table th:last-child,
+.manage-users-table td:last-child {
+  padding-right: 25px !important;
+}
+
+/* Actions Column Alignment */
+.manage-users-table td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
 }
 
 .manage-users-table tbody tr {
@@ -315,6 +340,8 @@ body {
   font-size: 0.9rem;
   padding: 12px;
   border: none;
+  white-space: normal !important; /* Minimal fix to prevent horizontal scroll */
+  word-break: break-word;
 }
 
 /* ===== Action Buttons in Table ===== */
@@ -373,76 +400,105 @@ body {
   color: #fff;
 }
 
-/* ===== Bootstrap Utility Classes (Scoped) ===== */
-/* These ensure Bootstrap utilities work within manage-users context */
-.manage-users-container .d-flex {
-  display: flex !important;
-}
-
-.manage-users-container .flex-wrap {
-  flex-wrap: wrap !important;
-}
-
-.manage-users-container .gap-2 {
-  gap: 0.5rem !important;
-}
-
-.manage-users-container .align-items-center {
-  align-items: center !important;
-}
-
-.manage-users-container .mb-3 {
-  margin-bottom: 1rem !important;
-}
-
-.manage-users-container .ms-auto {
-  margin-left: auto !important;
-}
-
-.manage-users-container .row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-right: -0.75rem;
-  margin-left: -0.75rem;
-}
-
-.manage-users-container .col-lg-12 {
-  flex: 0 0 auto;
-  width: 100%;
-}
-
-.manage-users-container .col-md-6 {
-  flex: 0 0 auto;
-  width: 50%;
-  padding-right: 0.75rem;
-  padding-left: 0.75rem;
-}
-
-.manage-users-container .col-md-12 {
-  flex: 0 0 auto;
-  width: 100%;
-  padding-right: 0.75rem;
-  padding-left: 0.75rem;
-}
-
-.manage-users-container .g-4 {
-  --bs-gutter-x: 1.5rem;
-  --bs-gutter-y: 1.5rem;
-}
+/* Removed destructive Bootstrap overrides to allow native grid responsiveness */
 
 .manage-users-modal-form .d-none {
   display: none !important;
 }
 
 /* ===== Responsive ===== */
+/* =============================================
+   RESPONSIVE - TABLE TO CARD TRANSFORMATION
+   Threshold: 992px (Large Mobile / Tablet)
+   ============================================= */
 @media (max-width: 991.98px) {
   .manage-users-btn-new {
     font-size: 0.9rem;
     padding: 6px 12px;
   }
 
+  /* Hide the desktop header entirely */
+  .manage-users-table thead {
+    display: none !important;
+  }
+
+  /* Remove table borders that interfere with card look */
   .manage-users-table-container {
-    overflow-x: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .manage-users-table {
+    border-spacing: 0 16px; /* Vertical gap between cards */
+  }
+
+  /* Each Row becomes a Card */
+  .manage-users-table tbody tr {
+    display: block;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+
+  .manage-users-table tbody tr:hover {
+    transform: translateY(-3px);
+    background: #fff; /* Keep white on hover for mobile */
+  }
+
+  /* Each Cell becomes a row inside the Card */
+  .manage-users-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid #f8fafc;
+    width: 100% !important;
+  }
+
+  .manage-users-table td:last-child {
+    border-bottom: none;
+    justify-content: center; /* Center action buttons */
+    padding-top: 15px !important;
+  }
+
+  /* Use the data-label we added for the left-side text */
+  .manage-users-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--primary-blue);
+    text-align: left;
+    margin-right: 15px;
+    flex-shrink: 0;
+  }
+
+  /* Make the main value look better */
+  .manage-users-table td {
+    font-weight: 500;
+    color: var(--text-dark);
+  }
+
+  /* Special handling for ID (if shown) and Actions */
+  .manage-users-table td.d-none {
+    display: none !important;
+  }
+
+  /* Button alignment in cards */
+  .manage-users-btn-edit,
+  .manage-users-btn-delete {
+    flex: 1;
+    max-width: 120px;
+    padding: 8px !important;
+    font-size: 0.9rem;
   }
 
   .manage-users-modal-form {
@@ -463,7 +519,7 @@ body {
   .manage-users-container .col-md-6 {
     width: 100%;
   }
-  
+
   .manage-users-container .col-md-12 {
     width: 100%;
   }
@@ -480,11 +536,11 @@ body {
     font-size: 0.85rem;
     padding: 8px;
   }
-  
+
   .manage-users-container .d-flex {
     flex-direction: column;
   }
-  
+
   .manage-users-container .ms-auto {
     margin-left: 0 !important;
     width: 100%;

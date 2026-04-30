@@ -783,3 +783,205 @@
 .city-autocomplete.show {
   animation: slideDown 0.2s ease-out;
 }
+
+/* ==========================================
+   EXTRA ITEMS SECTION
+   ========================================== */
+
+.extra-items-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.extra-item-card {
+  background: #ffffff;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.extra-item-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #0d6efd !important;
+}
+
+.extra-item-qty {
+  font-size: 1.1rem;
+  color: #0d6efd;
+}
+
+.extra-items-total {
+  font-size: 1rem;
+  color: #198754;
+}
+
+/* ==========================================
+   TEMPERATURE SLIDER - ENHANCED
+   ========================================== */
+
+.temp-slider-wrapper {
+  background: linear-gradient(135deg, #eef6ff 0%, #f0f8ff 100%);
+  border: 1px solid #d0e3f5;
+  border-radius: 8px;
+  padding: 8px 12px; /* Reduced from 10px 14px for compact look */
+}
+
+.temp-slider-value {
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
+}
+
+.temp-slider-col {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ========================================
+   CUSTOM RANGE SLIDER STYLING
+   Make slider highly visible and professional
+   ======================================== */
+
+.sample-temp-value {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+  outline: none;
+  opacity: 1;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sample-temp-value:hover {
+  background: linear-gradient(to right, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+}
+
+.sample-temp-value:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Slider Thumb - WebKit (Chrome, Safari, Edge) */
+.sample-temp-value::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #2563eb;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.sample-temp-value::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.5);
+  border-color: #1d4ed8;
+}
+
+.sample-temp-value::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Slider Thumb - Firefox */
+.sample-temp-value::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #2563eb;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+}
+
+.sample-temp-value::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.5);
+  border-color: #1d4ed8;
+}
+
+.sample-temp-value::-moz-range-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Slider Track - Firefox */
+.sample-temp-value::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+}
+
+/* Slider Track - IE/Edge Legacy */
+.sample-temp-value::-ms-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+.sample-temp-value::-ms-fill-lower {
+  background: #2563eb;
+  border-radius: 3px;
+}
+
+.sample-temp-value::-ms-fill-upper {
+  background: #60a5fa;
+  border-radius: 3px;
+}
+
+.sample-temp-value::-ms-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #2563eb;
+  cursor: pointer;
+}
+
+/* Sample card bottom section divider */
+.sample-submission-page .sample-card hr {
+  border-color: var(--border-color, #e2e8f0);
+}
+
+/* Align label styling in sample cards */
+.sample-submission-page .sample-card label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+/* ==========================================
+   CATEGORY INTERCEPTOR MODAL
+   ========================================== */
+
+.new-name-row {
+  background: #fffbeb;
+  border-color: #ffc107 !important;
+}
+
+.new-name-row .form-select-sm {
+  border-color: #ffc107;
+}
+
+#newSampleNamesModal .modal-header {
+  border-bottom: 2px solid #ffc107;
+}

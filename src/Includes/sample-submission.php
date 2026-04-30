@@ -16,6 +16,7 @@ $userId = $_SESSION['user_id'] ?? 0;
 
     <!-- Main Container -->
     <div class="container-fluid py-4">
+
         <div class="card shadow">
             <!-- Card Header -->
             <div class="card-header">
@@ -182,7 +183,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                         </div>
 
                         <div class="row g-3">
-                            <!-- ✅ RECEIVED DATE -->
+                            <!-- RECEIVED DATE -->
                             <div class="col-md-6">
                                 <label class="form-label">
                                     Received Date <span class="text-danger">*</span>
@@ -192,7 +193,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 <span class="error-label" id="receivedDateError"></span>
                             </div>
 
-                            <!-- ✅ RECEIVED TIME -->
+                            <!-- RECEIVED TIME -->
                             <div class="col-md-6">
                                 <label class="form-label">
                                     Received Time <span class="text-danger">*</span>
@@ -202,7 +203,21 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 <span class="error-label" id="receivedTimeError"></span>
                             </div>
 
-                            <!-- ✅ TENTATIVE DATE -->
+                            <!-- COLLECTED DATE -->
+                            <div class="col-md-6">
+                                <label class="form-label">Sample Collected Date</label>
+                                <input type="date" class="form-control" id="collectedDate">
+                                <small class="text-muted">When the sample was originally collected by client</small>
+                            </div>
+
+                            <!-- COLLECTED TIME -->
+                            <div class="col-md-6">
+                                <label class="form-label">Sample Collected Time</label>
+                                <input type="time" class="form-control" id="collectedTime">
+                                <small class="text-muted">Time of original sample collection</small>
+                            </div>
+
+                            <!-- TENTATIVE DATE -->
                             <div class="col-md-6">
                                 <label class="form-label">
                                     Tentative Date <span class="text-danger">*</span>
@@ -214,18 +229,20 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 <span class="error-label" id="tentativeDateError"></span>
                             </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Additional Charges (Rs.)</label>
-                                <input type="number" class="form-control" id="additionalCharges"
-                                    min="0" step="0.01" value="0.00">
-                                <small class="text-muted">Any extra charges beyond test fees</small>
-                                <span class="error-label" id="additionalChargesError"></span>
-                            </div>
-
+                            <!-- EXTRA ITEMS SECTION -->
                             <div class="col-12">
-                                <label class="form-label">Additional Notes</label>
-                                <textarea class="form-control" id="additionalNotes" rows="3"
-                                    placeholder="Enter any additional notes or special instructions..."></textarea>
+                                <label class="form-label">
+                                    <i class="fas fa-box-open"></i> Additional Items / Charges
+                                </label>
+                                <div id="extraItemsContainer" class="extra-items-section">
+                                    <div class="text-center text-muted p-3">
+                                        <div class="spinner-border spinner-border-sm"></div> Loading extra items...
+                                    </div>
+                                </div>
+                                <input type="hidden" id="additionalCharges" value="0">
+                                <div class="extra-items-total mt-2 d-flex justify-content-end">
+                                    <strong>Additional Charges Total: <span id="extraItemsTotalDisplay">Rs. 0.00</span></strong>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -258,6 +275,24 @@ $userId = $_SESSION['user_id'] ?? 0;
                         </div>
 
                         <div id="testsContainer"></div>
+
+                        <!-- Live Price Summary Bar (Step 5) -->
+                        <div id="step5PriceSummary" class="mt-4 p-3 border rounded bg-light" style="display:none;">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <span class="text-muted small"><i class="fas fa-flask"></i> Test Charges:</span>
+                                    <strong id="testChargesTotal" class="ms-1 text-primary">Rs. 0.00</strong>
+                                </div>
+                                <div class="col-md-4" id="swabChargeSummary" style="display:none;">
+                                    <span class="text-muted small"><i class="fas fa-tint"></i> Swab Surcharges:</span>
+                                    <strong id="swabChargesTotal" class="ms-1" style="color:#6f42c1;">Rs. 0.00</strong>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <span class="text-muted small">Grand Total:</span>
+                                    <strong id="grandTotalDisplay" class="ms-1 text-success fs-5">Rs. 0.00</strong>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- STEP 6: REVIEW & SUBMIT -->
@@ -307,6 +342,39 @@ $userId = $_SESSION['user_id'] ?? 0;
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW SAMPLE NAME CATEGORY INTERCEPTOR MODAL -->
+    <div class="modal fade" id="newSampleNamesModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> New Sample Names Detected
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        The following sample names are new to the system. Please assign a category and SLAB accreditation to each.
+                    </p>
+                    <div class="row fw-bold mb-2">
+                        <div class="col-5">Sample Name</div>
+                        <div class="col-4">Category</div>
+                        <div class="col-3 text-center">SLAB Accredited</div>
+                    </div>
+                    <div id="newNamesListContainer"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveNewNamesBtn">
+                        <i class="fas fa-check"></i> Save & Continue
+                    </button>
+                </div>
             </div>
         </div>
     </div>

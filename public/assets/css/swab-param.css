@@ -89,15 +89,49 @@
     }
 
     .swab-parameters-table thead {
-      background-color: var(--primary-blue);
-      color: #fff;
-    }
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--border-color);
+}
 
-    .swab-parameters-table th,
-    .swab-parameters-table td {
-      padding: 12px;
-      font-size: 0.9rem;
-      vertical-align: middle;
+.swab-parameters-table th {
+  padding: 16px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Column Padding */
+.swab-parameters-table th:first-child,
+.swab-parameters-table td:first-child {
+  padding-left: 25px !important;
+}
+
+.swab-parameters-table th:last-child,
+.swab-parameters-table td:last-child {
+  padding-right: 25px !important;
+}
+
+/* Actions Column Alignment */
+.swab-parameters-table td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
+}
+
+    /* Constrain the first column (Parameter Name) to wrap long text */
+    .swab-parameters-table th:nth-child(1),
+    .swab-parameters-table td:nth-child(1) {
+      width: 50%;
+      max-width: 400px;
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
     }
 
     .swab-parameters-table tbody tr {
@@ -350,10 +384,22 @@
       
       .swab-parameters-card-filter input,
       .swab-parameters-card-filter select,
+      .swab-parameters-card-filter .btn,
+      .swab-parameters-card-filter button,
       .btn-swab-parameters-filter,
       .btn-swab-parameters-new {
-        max-width: 100%;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin-right: 0 !important;
+        margin-bottom: 5px;
+      }
+
+      .swab-parameters-card-filter .ms-auto {
+        margin-left: 0 !important;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
       
       .swab-parameters-container {
@@ -380,5 +426,70 @@
       
       .swab-parameters-modal-header {
         padding: 15px 20px;
+      }
+    }
+
+    /* =============================================
+       RESPONSIVE - TABLE TO CARD TRANSFORMATION
+       Threshold: 992px (Large Mobile / Tablet)
+       ============================================= */
+    @media (max-width: 991.98px) {
+      .swab-parameters-table thead {
+        display: none !important;
+      }
+
+      .swab-parameters-table-container {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+
+      .swab-parameters-table {
+        border-spacing: 0 16px;
+      }
+
+      .swab-parameters-table tbody tr {
+        display: block;
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border-color);
+        position: relative;
+      }
+
+      .swab-parameters-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 8px !important;
+        border-bottom: 1px solid #f8fafc;
+        width: 100% !important;
+        font-size: 0.95rem !important;
+      }
+
+      .swab-parameters-table td:last-child {
+        border-bottom: none;
+        justify-content: center;
+        padding-top: 15px !important;
+      }
+
+      .swab-parameters-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-right: 15px;
+      }
+      
+      /* Reset specific width for first column on mobile */
+      .swab-parameters-table td:nth-child(1) {
+        width: 100% !important;
+        max-width: none !important;
       }
     }

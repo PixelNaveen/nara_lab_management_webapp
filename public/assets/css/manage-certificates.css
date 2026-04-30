@@ -1,7 +1,6 @@
 /* ======================================================
-   Manage Clients Page Styles
-   Theme: Lab Management System
-   Author: naveen_the_dev
+   Manage Certificates Page Styles
+   Theme: Lab Management System - SLAB Accreditation
    ====================================================== */
 
 /* ===== Root Theme Variables ===== */
@@ -25,10 +24,78 @@ body {
 }
 
 /* ===== Section Layout ===== */
-.client-manage-container {
+.certificates-container {
   padding: 20px;
 }
 
+/* ===== Statistics Cards ===== */
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: #fff;
+}
+
+.stat-icon.bg-primary {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+}
+
+.stat-icon.bg-success {
+  background: linear-gradient(135deg, var(--success-green) 0%, #15803d 100%);
+}
+
+.stat-icon.bg-warning {
+  background: linear-gradient(135deg, var(--warning-yellow) 0%, #d97706 100%);
+}
+
+.stat-icon.bg-danger {
+  background: linear-gradient(135deg, var(--danger-red) 0%, #b91c1c 100%);
+}
+
+.stat-icon.bg-info {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+}
+
+.stat-details {
+  flex: 1;
+}
+
+.stat-label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-value {
+  margin: 5px 0 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* ===== Filter Card ===== */
 .card-filter {
   border: 1px solid var(--border-color);
   background: #fff;
@@ -59,8 +126,8 @@ body {
   color: #fff;
 }
 
-/* ===== New Client Button ===== */
-#btnNewClient {
+/* ===== New Certificate Button ===== */
+#btnNewCertificate {
   background: var(--primary-blue);
   border: none;
   font-weight: 500;
@@ -69,7 +136,7 @@ body {
   height: 38px;
 }
 
-#btnNewClient:hover {
+#btnNewCertificate:hover {
   background: var(--primary-blue-dark);
 }
 
@@ -102,11 +169,13 @@ body {
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 90%;
-  max-width: 700px;
+  max-width: 800px;
   padding: 0;
   transform: scale(0.9);
   transition: all 0.3s ease-in-out;
-  overflow: hidden; /* Added to prevent corner gaps */
+  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-overlay.active .modal-form {
@@ -119,12 +188,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: none; /* Removed border to eliminate potential white/gray line */
-  background: linear-gradient(
-    135deg,
-    var(--primary-blue) 0%,
-    var(--primary-blue-dark) 100%
-  );
+  border-bottom: none;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
   border-radius: 16px 16px 0 0;
 }
 
@@ -157,25 +222,21 @@ body {
 
 /* ===== Bootstrap Modal Overrides (for Delete Confirmation) ===== */
 .modal-content {
-  overflow: hidden; /* Added to prevent corner gaps */
-  border: none; /* Remove any borders causing issues */
-  border-radius: 16px; /* Match custom modal radius */
+  overflow: hidden;
+  border: none;
+  border-radius: 16px;
 }
 
 .modal-header {
-  border-bottom: none; /* Remove bottom border */
-  border-top-left-radius: 16px; /* Ensure consistent radius */
+  border-bottom: none;
+  border-top-left-radius: 16px;
   border-top-right-radius: 16px;
-  background: linear-gradient(
-    135deg,
-    var(--primary-blue) 0%,
-    var(--primary-blue-dark) 100%
-  ) !important; /* Override to blue gradient */
-  color: #fff !important; /* White text */
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%) !important;
+  color: #fff !important;
 }
 
 .modal-header .btn-close {
-  filter: invert(1) grayscale(1); /* Make close button white */
+  filter: invert(1) grayscale(1);
   opacity: 0.8;
 }
 
@@ -276,7 +337,7 @@ body {
   background-color: #475569;
 }
 
-/* ===== Client Table ===== */
+/* ===== Certificate Table ===== */
 .table-container {
   background: #fff;
   border-radius: 12px;
@@ -292,9 +353,9 @@ body {
   border-spacing: 0 8px;
 }
 
-.clientsTable thead {
+.certificatesTable thead {
   background-color: #fff !important;
-  color: #000 !important;
+  color: var(--text-dark) !important;
   border-bottom: 2px solid var(--border-color);
 }
 
@@ -311,21 +372,22 @@ body {
 }
 
 /* Column Padding */
-.clientsTable th:first-child,
-.clientsTable td:first-child {
+.certificatesTable th:first-child,
+.certificatesTable td:first-child {
   padding-left: 25px !important;
 }
 
-.clientsTable th:last-child,
-.clientsTable td:last-child {
+.certificatesTable th:last-child,
+.certificatesTable td:last-child {
   padding-right: 25px !important;
 }
 
-/* Actions Column Alignment */
-.clientsTable td:last-child {
-  white-space: nowrap !important;
-  text-align: center !important;
-  min-width: 120px;
+.certificatesTable thead th:first-child {
+  border-radius: 12px 0 0 0;
+}
+
+.certificatesTable thead th:last-child {
+  border-radius: 0 12px 0 0;
 }
 
 .table tbody tr {
@@ -343,8 +405,13 @@ body {
   vertical-align: middle;
   font-size: 0.9rem;
   padding: 12px;
-  white-space: normal !important; /* Force text to wrap instead of stretching table */
-  word-break: break-word;
+}
+
+/* Actions Column Alignment */
+.certificatesTable td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
 }
 
 /* ===== Action Buttons in Table ===== */
@@ -375,11 +442,16 @@ body {
   color: var(--danger-red);
 }
 
-.btn-delete:hover {
+.btn-delete:hover:not(:disabled) {
   background-color: var(--danger-red);
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+.btn-delete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ===== Status Badges ===== */
@@ -408,120 +480,189 @@ body {
   color: #fff !important;
 }
 
-/* ===== Responsive ===== */
-/* =============================================
-   RESPONSIVE - TABLE TO CARD TRANSFORMATION
-   Threshold: 992px (Large Mobile / Tablet)
-   ============================================= */
+.badge.bg-primary {
+  background-color: var(--primary-blue) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--danger-red) !important;
+}
+
+/* ===== Set Current Button ===== */
+.set-current-btn {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.set-current-btn:hover {
+  background-color: var(--primary-blue) !important;
+  color: #fff !important;
+  border-color: var(--primary-blue) !important;
+}
+
+/* ===== Form Check (Checkbox) ===== */
+.form-check-input:checked {
+  background-color: var(--primary-blue);
+  border-color: var(--primary-blue);
+}
+
+.form-check-input:focus {
+  border-color: var(--primary-blue-light);
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+.form-check-label {
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* ===== Responsive Overhaul for Enterprise Look ===== */
 @media (max-width: 991.98px) {
-  /* Hide the desktop header entirely */
-  .clientsTable thead {
+  .cert-filters {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 18px !important;
+    gap: 12px !important;
+    background: #fff !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04) !important;
+    margin-bottom: 25px !important;
+  }
+
+  .card-filter input,
+  .card-filter select,
+  .btn-outline-primary,
+  .btn-primary {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 40px !important;
+    font-size: 0.9rem !important;
+    margin: 0 !important;
+  }
+
+  .ms-auto {
+    margin-left: 0 !important;
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  /* Table to Card Transformation */
+  .table-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .certificatesTable {
+    display: block !important;
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .certificatesTable thead {
     display: none !important;
   }
 
-  /* Remove table borders that interfere with card look */
-  .table-container {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-  }
-
-  .table {
-    border-spacing: 0 16px; /* Vertical gap between cards */
-  }
-
-  /* Each Row becomes a Card */
-  .table tbody tr {
-    display: block;
-    background: #fff;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border: 1px solid var(--border-color);
-    position: relative;
-    transition: transform 0.2s ease;
-  }
-
-  .table tbody tr:hover {
-    transform: translateY(-3px);
-    background: #fff; /* Keep white on hover for mobile */
-  }
-
-  /* Each Cell becomes a row inside the Card */
-  .table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: right;
-    padding: 10px 8px !important;
-    border-bottom: 1px solid #f8fafc;
+  .certificatesTable tbody {
+    display: block !important;
     width: 100% !important;
   }
 
-  .table td:last-child {
-    border-bottom: none;
-    justify-content: center; /* Center action buttons */
+  .certificatesTable tbody tr {
+    display: block !important;
+    background: #fff !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-left: 5px solid var(--primary-blue-light) !important;
+    transition: all 0.2s ease-in-out !important;
+  }
+
+  /* Status Colors for Strip */
+  .certificatesTable tbody tr:has(.bg-success) { border-left-color: var(--success-green) !important; }
+  .certificatesTable tbody tr:has(.bg-danger) { border-left-color: var(--danger-red) !important; }
+  .certificatesTable tbody tr:has(.bg-warning) { border-left-color: var(--warning-yellow) !important; }
+
+  .certificatesTable td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: right !important;
+    padding: 12px 10px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    width: 100% !important;
+    background: #fff !important;
+    min-height: 45px !important;
+  }
+
+  .certificatesTable td:last-child {
+    border-bottom: none !important;
     padding-top: 15px !important;
+    justify-content: center !important;
   }
 
-  /* Use the data-label we added for the left-side text */
-  .table td::before {
+  /* Label Styling */
+  .certificatesTable td::before {
     content: attr(data-label);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    color: var(--primary-blue);
-    text-align: left;
-    margin-right: 15px;
-    flex-shrink: 0;
+    float: left !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    text-align: left !important;
+    margin-right: 15px !important;
+    min-width: 110px !important;
+    flex-shrink: 0 !important;
   }
 
-  /* Make the main value look better */
-  .table td {
-    font-weight: 500;
-    color: var(--text-dark);
-  }
-
-  /* Special handling for ID (if shown) and Actions */
-  .table td.d-none {
-    display: none !important;
-  }
-
-  /* Button alignment in cards */
-  .btn-edit,
+  /* Action Buttons in Cards */
+  .btn-edit, 
   .btn-delete {
-    flex: 1;
-    max-width: 120px;
-    padding: 8px !important;
-    font-size: 0.9rem;
+    min-width: 100px !important;
+    height: 32px !important;
+    font-size: 0.8rem !important;
+    margin: 0 5px !important;
+  }
+}
+
+/* Extra small screen adjustments */
+@media (max-width: 480px) {
+  .certificatesTable tbody tr {
+    padding: 12px !important;
   }
 
-  .modal-form {
-    width: 95%;
-    max-width: 95%;
+  .certificatesTable td {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 5px !important;
   }
 
-  .modal-footer-btns {
-    flex-direction: column;
+  .certificatesTable td::before {
+    margin-bottom: 2px !important;
+    min-width: 0 !important;
   }
 
-  .modal-footer-btns .btn {
-    width: 100%;
+  .btn-edit, 
+  .btn-delete {
+    width: 100% !important;
+    margin: 5px 0 !important;
   }
 }
 
 /* ===== Smooth Transitions ===== */
-button,
-input,
-select,
-.table tbody tr {
-  transition: all 0.2s ease-in-out;
+button, input, select, .badge, tr {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* ===== Scrollbar Styling ===== */
-/* Scrollbar removed for cleaner look */
 
 /* ===== Additional Utility Classes ===== */
 .text-muted {

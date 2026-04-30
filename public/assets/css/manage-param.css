@@ -89,15 +89,39 @@ body {
 }
 
 .parameters-table thead {
-  background-color: var(--primary-blue);
-  color: #fff;
+  background-color: #fff !important;
+  color: #000 !important;
+  border-bottom: 2px solid var(--border-color);
 }
 
-.parameters-table th,
-.parameters-table td {
-  padding: 12px;
-  font-size: 0.9rem;
-  vertical-align: middle;
+.parameters-table th {
+  padding: 16px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Column Padding */
+.parameters-table th:first-child,
+.parameters-table td:first-child {
+  padding-left: 25px !important;
+}
+
+.parameters-table th:last-child,
+.parameters-table td:last-child {
+  padding-right: 25px !important;
+}
+
+/* Actions Column Alignment */
+.parameters-table td:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
+  min-width: 120px;
 }
 
 .parameters-table tbody tr {
@@ -354,10 +378,22 @@ body {
 
   .parameters-card-filter input,
   .parameters-card-filter select,
+  .parameters-card-filter .btn,
+  .parameters-card-filter button,
   .btn-parameters-filter,
   .btn-parameters-new {
-    max-width: 100%;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 5px;
+  }
+
+  .parameters-card-filter .ms-auto {
+    margin-left: 0 !important;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .parameters-container {
@@ -384,6 +420,81 @@ body {
 
   .parameters-modal-header {
     padding: 15px 20px;
+  }
+}
+
+/* =============================================
+   RESPONSIVE - TABLE TO CARD TRANSFORMATION
+   Threshold: 992px (Large Mobile / Tablet)
+   ============================================= */
+@media (max-width: 991.98px) {
+  /* Hide the desktop header entirely */
+  .parameters-table thead {
+    display: none !important;
+  }
+
+  /* Remove table borders that interfere with card look */
+  .parameters-table-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .parameters-table {
+    border-spacing: 0 16px; /* Vertical gap between cards */
+  }
+
+  /* Each Row becomes a Card */
+  .parameters-table tbody tr {
+    display: block;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+
+  .parameters-table tbody tr:hover {
+    transform: translateY(-3px);
+    background: #fff; /* Keep white on hover for mobile */
+  }
+
+  /* Each Cell becomes a row inside the Card */
+  .parameters-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid #f8fafc;
+    width: 100% !important;
+    font-size: 0.95rem !important;
+  }
+
+  .parameters-table td:last-child {
+    border-bottom: none;
+    justify-content: center; /* Center action buttons */
+    padding-top: 15px !important;
+  }
+
+  /* Use the data-label we added for the left-side text */
+  .parameters-table td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-right: 15px;
+  }
+
+  /* Specific Alignment for centered columns in desktop */
+  .parameters-table td.text-center {
+    text-align: right !important;
   }
 }
 
@@ -456,7 +567,7 @@ body {
 }
 
 .overlay-table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-blue);
   color: white;
 }
 
@@ -489,4 +600,364 @@ body {
   text-align: center;
   padding: 40px;
   color: #6c757d;
+}
+
+/* ============================================================ */
+/* MULTI-STEP WIZARD STYLES */
+/* ============================================================ */
+
+/* Wider modal for multi-step */
+.parameters-modal-form--multistep {
+  max-width: 820px;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+/* Step Indicator */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px 10px;
+  gap: 0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  position: relative;
+}
+
+.step-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: all 0.35s ease;
+  border: 2px solid transparent;
+}
+
+.step-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  transition: color 0.35s ease;
+  white-space: nowrap;
+}
+
+.step-item.active .step-number {
+  background: var(--primary-blue);
+  color: #fff;
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.step-item.active .step-label {
+  color: var(--primary-blue);
+  font-weight: 600;
+}
+
+.step-item.completed .step-number {
+  background: var(--success-green);
+  color: #fff;
+}
+
+.step-item.completed .step-label {
+  color: var(--success-green);
+}
+
+.step-connector {
+  width: 60px;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 8px;
+  margin-bottom: 22px;
+  transition: background 0.35s ease;
+}
+
+.step-item.completed + .step-connector,
+.step-item.completed ~ .step-connector {
+  background: var(--success-green);
+}
+
+/* Step Content */
+.step-content {
+  display: none;
+}
+
+.step-content.active {
+  display: block;
+  animation: stepFadeIn 0.3s ease;
+}
+
+@keyframes stepFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.step-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.15);
+}
+
+.step-section-title i {
+  margin-right: 6px;
+}
+
+/* ============================================================ */
+/* CONFIG MODE TOGGLE (Universal vs Category-Specific) */
+/* ============================================================ */
+
+.config-mode-toggle {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.config-mode-option {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.25s ease;
+  background: #fff;
+}
+
+.config-mode-option:hover {
+  border-color: var(--primary-blue-light);
+  background: rgba(59, 130, 246, 0.03);
+}
+
+.config-mode-option.active {
+  border-color: var(--primary-blue);
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.config-mode-option i {
+  font-size: 1.3rem;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--primary-blue-light);
+}
+
+.config-mode-option.active i {
+  color: var(--primary-blue);
+}
+
+.config-mode-option span {
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: block;
+  color: var(--text-dark);
+}
+
+.config-mode-option small {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 2px;
+}
+
+/* ============================================================ */
+/* CATEGORY PANELS */
+/* ============================================================ */
+
+.category-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.category-panel {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.category-panel:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.category-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fafbfc;
+  border-left: 4px solid #6b7280;
+  cursor: default;
+}
+
+.category-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-icon {
+  font-size: 1.2rem;
+}
+
+.cat-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+
+.cat-code {
+  font-size: 0.7rem;
+  background: #e2e8f0;
+  color: #64748b;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.category-panel-body {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-color);
+  background: #fff;
+  animation: panelSlideDown 0.25s ease;
+}
+
+@keyframes panelSlideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
+
+.category-panel-body .parameters-form-label {
+  font-size: 0.8rem;
+}
+
+.category-panel-body .parameters-form-control,
+.category-panel-body .parameters-form-select {
+  font-size: 0.85rem;
+  padding: 0.45rem 0.65rem;
+}
+
+/* ============================================================ */
+/* SLAB SECTION */
+/* ============================================================ */
+
+.slab-section {
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #fffbeb;
+  margin-top: 16px;
+}
+
+.slab-toggle-row {
+  display: flex;
+  align-items: center;
+}
+
+.slab-toggle-row .form-check-input:checked {
+  background-color: var(--warning-yellow);
+  border-color: var(--warning-yellow);
+}
+
+/* ============================================================ */
+/* SUMMARY PREVIEW */
+/* ============================================================ */
+
+.summary-preview {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.summary-preview .step-section-title {
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: #fafbfc;
+  border-radius: 10px 10px 0 0;
+}
+
+.summary-content {
+  padding: 12px 16px;
+}
+
+.summary-row {
+  padding: 6px 0;
+  font-size: 0.88rem;
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+/* ============================================================ */
+/* FOOTER BUTTONS - MULTI-STEP */
+/* ============================================================ */
+
+.parameters-modal-footer-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ============================================================ */
+/* RESPONSIVE ADJUSTMENTS */
+/* ============================================================ */
+
+@media (max-width: 768px) {
+  .parameters-modal-form--multistep {
+    max-width: 98%;
+  }
+
+  .config-mode-toggle {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .step-connector {
+    width: 30px;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+  }
+}
+
+/* Table param-name-cell */
+.param-name-cell small {
+  font-size: 0.75rem;
+  line-height: 1.2;
 }

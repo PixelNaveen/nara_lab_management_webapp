@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SAF Template - Sample Acceptance Form
  * FIXED: Hides controls when inside carousel
@@ -19,60 +20,65 @@ $totalSamples = $data['total_samples'];
 $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] === true;
 ?>
 <?php if (!$insideCarousel): ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample Acceptance Form - <?= htmlspecialchars($data['acceptance']['report_ref']) ?></title>
-    <link rel="stylesheet" href="/public/assets/css/saf-styles.css">
-</head>
-<body>
-    <!-- Controls Panel (ONLY when standalone, NOT in carousel) -->
-    <div class="controls">
-        <h3>📄 Select Format & Download PDF</h3>
+    <!DOCTYPE html>
+    <html lang="en">
 
-        <?php if ($totalPages > 1): ?>
-            <div class="multi-page-notice">
-                <strong>Multi-Page Form:</strong> This SAF has <?= $totalSamples ?> samples across <?= $totalPages ?> pages.
-                All pages will be printed/downloaded together.
-            </div>
-        <?php endif; ?>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sample Acceptance Form - <?= htmlspecialchars($data['acceptance']['report_ref']) ?></title>
+        <link rel="stylesheet" href="/public/assets/css/saf-styles.css">
+    </head>
 
-        <div class="size-selector">
-            <label>
-                <input type="radio" name="pageSize" value="a4-natural" checked onchange="changePageSize(this.value)">
-                <div class="option-content">
-                    <div class="option-title">A4 Natural Portrait</div>
-                    <div class="option-desc">210mm width on A4 paper • Comfortable spacing • Professional format</div>
+    <body>
+        <!-- Controls Panel (ONLY when standalone, NOT in carousel) -->
+        <div class="controls">
+            <h3>📄 Select Format & Download PDF</h3>
+
+            <?php if ($totalPages > 1): ?>
+                <div class="multi-page-notice">
+                    <strong>Multi-Page Form:</strong> This SAF has <?= $totalSamples ?> samples across <?= $totalPages ?> pages.
+                    All pages will be printed/downloaded together.
                 </div>
-            </label>
+            <?php endif; ?>
+
+            <div class="size-selector">
+                <label>
+                    <input type="radio" name="pageSize" value="a4-natural" checked onchange="changePageSize(this.value)">
+                    <div class="option-content">
+                        <div class="option-title">A4 Natural Portrait</div>
+                        <div class="option-desc">210mm width on A4 paper • Comfortable spacing • Professional format</div>
+                    </div>
+                </label>
+            </div>
+
+            <button class="btn-print" onclick="downloadPDF()">📥 Download as PDF</button>
+            <p style="font-size: 12px; color: #666; margin-top: 12px; text-align: center;">
+                💡 <?= $totalPages > 1 ? "PDF will include all $totalPages pages automatically" : "Click button above to download PDF" ?>
+            </p>
         </div>
 
-        <button class="btn-print" onclick="downloadPDF()">📥 Download as PDF</button>
-        <p style="font-size: 12px; color: #666; margin-top: 12px; text-align: center;">
-            💡 <?= $totalPages > 1 ? "PDF will include all $totalPages pages automatically" : "Click button above to download PDF" ?>
-        </p>
-    </div>
-
-    <!-- SAF Form Container (All Pages) -->
-    <div id="formContainer">
-<?php endif; ?>
+        <!-- SAF Form Container (All Pages) -->
+        <div id="formContainer">
+        <?php endif; ?>
 
         <?php
         // Loop through each page
-        foreach ($data['pages'] as $pageIndex => $pageItems):
+        $pages = isset($data['pages']) && is_array($data['pages']) ? $data['pages'] : [];
+        foreach ($pages as $pageIndex => $pageItems): 
             $currentPage = $pageIndex + 1;
             $isFirstPage = ($pageIndex === 0);
         ?>
 
+            <?php if ($insideCarousel): ?>
+            <!-- SAF Page <?= $currentPage ?> -->
+            <div class="saf-page-wrapper" id="saf-page-<?= $currentPage ?>" style="margin-bottom: 20px;">
+            <?php endif; ?>
+            
             <!-- Page <?= $currentPage ?> -->
-            <div class="form-container a4-natural" style="<?= !$isFirstPage ? 'margin-top: 30px;' : '' ?>">
+            <div class="form-container a4-natural" style="<?= (!$insideCarousel && !$isFirstPage) ? 'margin-top: 30px;' : '' ?>">
                 <div class="form-title">
                     Sample Acceptance Form
-                    <?php if ($totalPages > 1): ?>
-                        - Page <?= $currentPage ?> of <?= $totalPages ?>
-                    <?php endif; ?>
                 </div>
 
                 <!-- Header Table -->
@@ -80,7 +86,7 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                     <tr class="header-row">
                         <td style="width: 35%;">Received by: <?= htmlspecialchars($data['acceptance']['received_by']) ?></td>
                         <td style="width: 25%;">Date: <?= htmlspecialchars($data['acceptance']['date']) ?></td>
-                        <td style="width: 40%;">Time arrived at the lab:</td>
+                        <td style="width: 40%;">Time arrived at the lab: <?= htmlspecialchars($data['acceptance']['time'] ?? '') ?></td>
                     </tr>
                     <tr class="header-row">
                         <td colspan="3">Client / address: <?= htmlspecialchars($data['client']['full_address']) ?></td>
@@ -98,7 +104,10 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                         <th style="width: 12%;">Validity</th>
                     </tr>
 
-                    <?php foreach ($pageItems as $item): ?>
+                    <?php
+                    $currentItems = isset($pageItems) && is_array($pageItems) ? $pageItems : [];
+                    foreach ($currentItems as $item):
+                    ?>
                         <tr class="sample-row">
                             <td><?= $item['display_number'] . '. ' . htmlspecialchars($item['sample_name']) ?></td>
                             <td><?= htmlspecialchars($item['sample_code']) ?></td>
@@ -119,12 +128,12 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                                 ? ' + ' . number_format($data['acknowledgement']['additional_charges'], 2)
                                 : '' ?>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            <br/>Total charge: Rs. <?= number_format($data['acknowledgement']['total_charges'], 2) ?>
+                            <br />Total charge: Rs. <?= number_format($data['acknowledgement']['total_charges'], 2) ?>
                         </td>
                         <td colspan="2" style="width: 28%;">
                             Tentative date of issuing: <?= htmlspecialchars($data['acceptance']['tentative_date']) ?>
                         </td>
-                        <td style="width: 12%;"colspan="3">
+                        <td style="width: 12%;" colspan="3">
                             Test report reference number: <?= htmlspecialchars($data['acceptance']['report_ref']) ?>
                         </td>
                     </tr>
@@ -165,14 +174,23 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                 </table>
             </div>
             <!-- End Page <?= $currentPage ?> -->
+            
+            <?php if ($insideCarousel): ?>
+            </div> <!-- End SAF Page Wrapper -->
+            <?php endif; ?>
+            
+            <?php if (!$insideCarousel && $currentPage < $totalPages): ?>
+                <div class="html2pdf__page-break"></div>
+            <?php endif; ?>
 
         <?php endforeach; ?>
 
-<?php if (!$insideCarousel): ?>
-    </div>
-    <!-- JavaScript Libraries (ONLY when standalone) -->
-    <script src="/public/assets/libs/html2pdf.bundle.min.js"></script>
-    <script src="/public/assets/js/saf-handler.js"></script>
-</body>
-</html>
+        <?php if (!$insideCarousel): ?>
+        </div>
+        <!-- JavaScript Libraries (ONLY when standalone) -->
+        <script src="/public/assets/libs/html2pdf.bundle.min.js"></script>
+        <script src="/public/assets/js/saf-handler.js"></script>
+    </body>
+
+    </html>
 <?php endif; ?>
