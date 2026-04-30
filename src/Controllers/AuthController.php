@@ -17,6 +17,18 @@ header('Content-Type: application/json');
 $authModel = new AuthModel();
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+// CSRF Protection for state-changing actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_POST['csrf_token'] ?? '';
+    if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid or missing CSRF token'
+        ]);
+        exit;
+    }
+}
+
 switch ($action) {
     case 'login':
         handleLogin($authModel);
