@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Header Section
  * Laboratory Management System
@@ -19,7 +20,7 @@ $pageTitles = [
     'test-assignment' => 'Assign Tests',
     'test-results' => 'Enter Results',
     'test-status' => 'Test Status Tracking',
-    'manage-parameter' => 'Manage Parameters',
+    'manage-parameter' => 'Manage Parameter',
     'param-variants' => 'Parameter Variants',
     'swab-parameter' => 'Swab Parameter',
     'methods' => 'Test Methods',
@@ -32,7 +33,16 @@ $pageTitles = [
     'settings-backup' => 'Backup & Restore',
     'settings-notifications' => 'Notifications',
     'manage-cities' => 'Manage Cities',
-    'manage-extra-items' => 'Manage Extra Items'
+    'manage-extra-items' => 'Manage Extra Items',
+    'certificates' => 'Certificates',
+    'manage-sample-names' => 'Sample Names',
+    'sample-records-view' => 'Sample Records',
+    'test-reports' => 'Test Reports',
+    'manage-signatories' => 'Report Signatories',
+    'report-daily' => 'Daily Summary',
+    'report-client' => 'Client Reports',
+    'report-revenue' => 'Revenue Analysis',
+    'report-turnaround' => 'Turnaround Time'
 ];
 
 $currentPage = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
@@ -50,15 +60,15 @@ $pageTitle = isset($pageTitles[$currentPage]) ? $pageTitles[$currentPage] : 'Das
             <button class="btn btn-link text-secondary p-0 d-lg-none" id="sidebarToggle" type="button">
                 <i class="bi bi-list" style="font-size: 1.5rem;"></i>
             </button>
-            
+
             <!-- Desktop Sidebar Toggle -->
             <button class="btn btn-link text-secondary p-0 d-none d-lg-block" id="sidebarToggleDesktop" type="button">
                 <i class="bi bi-layout-sidebar-inset" style="font-size: 1.25rem;"></i>
             </button>
-            
+
             <h2 class="h4 mb-0 fw-bold text-gray-800 d-none d-sm-block"><?php echo htmlspecialchars($pageTitle); ?></h2>
         </div>
-        
+
         <div class="d-flex align-items-center gap-3">
             <!-- Notifications (Optional - can be enabled later) -->
             <!-- <div class="dropdown d-none d-md-block">
@@ -83,7 +93,7 @@ $pageTitle = isset($pageTitles[$currentPage]) ? $pageTitles[$currentPage] : 'Das
                     </a></li>
                 </ul>
             </div> -->
-            
+
             <!-- Lab Info -->
             <div>
                 <img src="public/images/Nara logo.png" alt="NARA Logo" style="height: 50px;">
@@ -92,7 +102,7 @@ $pageTitle = isset($pageTitles[$currentPage]) ? $pageTitles[$currentPage] : 'Das
                 <p class="mb-0 small text-secondary">National Aquatic Resources</p>
                 <p class="mb-0 text-muted" style="font-size: 0.75rem;">Research & Development Agency</p>
             </div>
-            
+
             <!-- User Dropdown -->
             <div class="dropdown">
                 <button class="btn btn-link text-decoration-none p-0" type="button" id="userDropdown" data-bs-toggle="dropdown">
@@ -114,7 +124,9 @@ $pageTitle = isset($pageTitles[$currentPage]) ? $pageTitles[$currentPage] : 'Das
                     </li>
                     <li><a class="dropdown-item" href="index.php?page=profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
                     <li><a class="dropdown-item" href="index.php?page=settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><a class="dropdown-item text-danger" href="src/Views/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                 </ul>
             </div>

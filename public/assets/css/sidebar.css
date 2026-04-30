@@ -1,248 +1,249 @@
-/* assets/css/sidebar.css - COMPLETE FILE - REPLACE ENTIRE FILE WITH THIS */
+/* =============================================
+   SIDEBAR CSS - SINGLE SOURCE OF TRUTH
+   Version: 3.0 - Zero Conflict Responsive
+   ============================================= */
 
-/* Root Variables for Sidebar */
+/* ===== ROOT VARIABLES ===== */
 :root {
-    --sidebar-width: 280px;
-    --sidebar-collapsed-width: 0px;
-    --primary-blue: #1e3a8a;
-    --primary-blue-dark: #1e40af;
-    --primary-blue-light: #3b82f6;
+  --sidebar-width: 280px;
+  --sidebar-bg-start: #1e3a8a;
+  --sidebar-bg-end: #1e40af;
+  --sidebar-active-bg: #ffffff;
+  --sidebar-active-color: #1e3a8a;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.12);
+  --sidebar-text: rgba(255, 255, 255, 0.92);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.55);
+  --sidebar-submenu-active: rgba(59, 130, 246, 0.85);
+  --transition-speed: 0.3s;
 }
 
-/* Sidebar Styles */
+/* ===== SIDEBAR SHELL ===== */
 .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: var(--sidebar-width);
-    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease-in-out;
-    z-index: 1050;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  background: linear-gradient(
+    180deg,
+    var(--sidebar-bg-start) 0%,
+    var(--sidebar-bg-end) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  z-index: 1050;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  /* Default: visible on desktop */
+  transform: translateX(0);
+  transition: transform var(--transition-speed) ease-in-out;
 }
 
-/* Sidebar Navigation */
+/* ===== SCROLLABLE NAV ===== */
 .sidebar-nav {
-    overflow-y: auto;
-    overflow-x: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
 }
 
 .sidebar-nav::-webkit-scrollbar {
-    width: 6px;
+  width: 4px;
 }
-
 .sidebar-nav::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+  background: transparent;
 }
-
 .sidebar-nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
 }
-
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.45);
 }
 
-/* Navigation Links */
+/* ===== NAV LINKS ===== */
 .nav-link {
-    color: rgba(255, 255, 255, 0.9);
-    text-decoration: none;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    transition: all 0.2s;
-    border: none;
-    background: transparent;
-    font-size: 0.9rem;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  padding: 0.65rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background var(--transition-speed) ease,
+    color var(--transition-speed) ease;
+  width: 100%;
 }
 
 .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+  background: var(--sidebar-hover-bg);
+  color: #ffffff;
 }
 
 .nav-link.active {
-    background: white;
-    color: var(--primary-blue);
-    font-weight: 600;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-color);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .nav-link i {
-    font-size: 1.1rem;
-    min-width: 20px;
+  font-size: 1.05rem;
+  min-width: 20px;
+  flex-shrink: 0;
 }
 
-/* Submenu Styles */
+/* ===== SUBMENU ===== */
 .submenu-link {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.825rem;
+  font-weight: 400;
 }
 
 .submenu-link.active {
-    background: rgba(59, 130, 246, 0.8);
-    color: white;
+  background: var(--sidebar-submenu-active);
+  color: #ffffff;
+  border-radius: 0.4rem;
+  font-weight: 600;
 }
 
+/* Chevron arrow rotation */
 .submenu-arrow {
-    transition: transform 0.2s;
-    font-size: 0.75rem;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  transition: transform var(--transition-speed) ease;
 }
 
 .nav-link[aria-expanded="true"] .submenu-arrow {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
-/* ==================== SIDEBAR OVERLAY - FIXED ==================== */
-
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1045;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+/* ===== COLLAPSE / SUBMENU VISIBILITY FIX ===== */
+/* Override Bootstrap collapse inside sidebar only */
+#sidebar .collapse {
+  transition: none; /* Bootstrap handles the animation */
 }
 
-.sidebar-overlay.show {
-    display: block;
-    opacity: 1;
+#sidebar .collapse.show {
+  display: block !important;
+  visibility: visible !important;
+  height: auto !important;
 }
 
-/* ==================== MOBILE STYLES - FIXED ==================== */
-
-@media (max-width: 991.98px) {
-    .sidebar {
-        transform: translateX(-100%) !important;
-    }
-    
-    .sidebar.show {
-        transform: translateX(0) !important;
-    }
-
-    .sidebar-close-btn {
-        display: flex !important;
-    }
-}
-
-/* ==================== DESKTOP STYLES - FIXED ==================== */
-
-@media (min-width: 992px) {
-    .sidebar {
-        transform: translateX(0);
-    }
-
-    .sidebar-overlay {
-        display: none !important;
-    }
-    
-    body.sidebar-collapsed .sidebar {
-        transform: translateX(-100%);
-    }
-
-    .sidebar-close-btn {
-        display: none !important;
-    }
-}
-
-/* Focus Styles for Sidebar Elements */
-.sidebar a:focus,
-.sidebar button:focus {
-    outline: 2px solid var(--primary-blue-light);
-    outline-offset: 2px;
-}
-
-.logout-link {
-    font-weight: bold;
-    font-size: 13pt;
-    font-family: serif;
-}
-
-.sidebar-footer {
-   background-color: white;
-}
-
-/* ==================== CLOSE BUTTON STYLES ==================== */
-
-.sidebar-close-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    width: 36px;
-    height: 36px;
-    border-radius: 0.375rem;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s;
-    z-index: 10;
-}
-
-.sidebar-close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.sidebar-close-btn:active {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-/* =====================================================
-   COLLAPSE FIX - CRITICAL
-   ===================================================== */
-
-.collapse {
-    transition: height 0.35s ease;
-}
-
-.collapsing {
-    height: 0;
-    overflow: hidden;
-    transition: height 0.35s ease;
-}
-
-.collapse.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.submenu {
-    display: block !important;
+#sidebar .collapse:not(.show) {
+  display: none !important;
+  visibility: hidden !important;
 }
 
 .submenu .submenu-link {
+  display: flex !important;
+}
+
+/* ===== CLOSE BUTTON (Mobile Only) ===== */
+.sidebar-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 34px;
+  height: 34px;
+  border-radius: 0.375rem;
+  display: none; /* hidden by default, shown on mobile */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-speed);
+  z-index: 10;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.sidebar-close-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ===== OVERLAY (Mobile Only) ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0; /* top/right/bottom/left: 0 */
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1045;
+  opacity: 0;
+  transition: opacity var(--transition-speed) ease;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+/* ===== FOCUS STYLES (Accessibility) ===== */
+.sidebar a:focus,
+.sidebar button:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+/* ===== FOOTER / LOGOUT ===== */
+.sidebar-footer {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.logout-link {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* =============================================
+   MOBILE (< 992px) - Off-Canvas Sidebar
+   ============================================= */
+@media (max-width: 991.98px) {
+  /* Sidebar slides off to the left by default */
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  /* Sidebar visible when .show is added by JS */
+  .sidebar.show {
+    transform: translateX(0);
+  }
+
+  /* Show close button on mobile */
+  .sidebar-close-btn {
     display: flex !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+  }
+
+  /* Overlay visible on mobile when sidebar is open */
+  /* (already handled by .sidebar-overlay.show) */
 }
 
-.collapse.show .submenu {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
+/* =============================================
+   DESKTOP (>= 992px) - Persistent Sidebar
+   ============================================= */
+@media (min-width: 992px) {
+  /* Always visible */
+  .sidebar {
+    transform: translateX(0) !important;
+  }
 
-.collapse.show .submenu-link {
-    display: flex !important;
-    opacity: 1 !important;
-}
+  /* When body has .sidebar-collapsed, slide it away */
+  body.sidebar-collapsed .sidebar {
+    transform: translateX(-100%) !important;
+  }
 
-.collapse:not(.show) {
-    display: none;
-}
+  /* Overlay never shows on desktop */
+  .sidebar-overlay {
+    display: none !important;
+  }
 
-.collapse:not(.show) .submenu,
-.collapse:not(.show) .submenu-link {
-    display: none;
+  /* Close button never shows on desktop */
+  .sidebar-close-btn {
+    display: none !important;
+  }
 }

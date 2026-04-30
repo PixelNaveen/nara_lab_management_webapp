@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Main Index File
  * Laboratory Management System
@@ -39,9 +40,11 @@ if ($showAccessDenied) {
 // Map "page" IDs to actual file names in src/Includes
 $pageMap = [
     'dashboard' => 'dashboard-page.php',
-    'form-info' => 'form-info.php',
+    'form-info' => 'manage-info.php',
+    'form-acceptance' => 'manage-saf.php',
+    'form-acknowledgement' => 'manage-sacf.php',
+    'form-analyst' => 'manage-aif.php',
     'sample-submission' => 'sample-submission.php',
-    'header-section' => 'header-section.php',
     'users' => 'manage-users.php',
     'clients' => 'manage-clients.php',
     'manage-parameter' => 'manage-param.php',
@@ -51,7 +54,16 @@ $pageMap = [
     'methods' => 'manage-test-methods.php',
     'sample-records-view' => 'sample-records-view.php',
     'manage-cities' => 'manage-cities.php',
-    'manage-extra-items' => 'manage-extra-items.php'
+    'manage-extra-items' => 'manage-extra-items.php',
+    'certificates' => 'manage-certificates.php',
+    'manage-sample-names' => 'manage-sample-names.php',
+    'test-results' => 'result-entry.php',
+    'test-reports' => 'test-report.php',
+    'manage-signatories' => 'manage-signatories.php',
+    'report-turnaround' => 'report-turnaround.php',
+    'report-client' => 'report-client.php',
+    'report-daily' => 'report-daily.php',
+    'report-revenue' => 'report-revenue.php'
 ];
 
 // Resolve the file path safely
@@ -70,7 +82,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -92,13 +104,18 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <link rel="stylesheet" href="public/assets/css/param-prices.css">
     <link rel="stylesheet" href="public/assets/css/manage-test-methods.css">
     <link rel="stylesheet" href="public/assets/css/sample-submission.css">
+    <link rel="stylesheet" href="public/assets/css/manage-sample-names.css">
+    <link rel="stylesheet" href="public/assets/css/result-entry.css">
+    <link rel="stylesheet" href="public/assets/css/test-report.css">
 
     <?php if (isset($_GET['from'])): ?>
         <script>
             if (window.history.replaceState) {
                 const url = new URL(window.location);
                 url.searchParams.delete('from');
-                window.history.replaceState({path: url.toString()}, '', url.toString());
+                window.history.replaceState({
+                    path: url.toString()
+                }, '', url.toString());
             }
         </script>
     <?php endif; ?>
@@ -145,6 +162,7 @@ $pageFile = __DIR__ . '/src/Includes/' . ($pageMap[$page] ?? 'dashboard-page.php
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="public/assets/js/script.js"></script>
     <script src="public/assets/js/load.js"></script>
