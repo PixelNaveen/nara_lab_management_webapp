@@ -12,7 +12,7 @@
  */
 
 session_start();
-require_once __DIR__ . '/../Models/print-history-model.php';
+require_once __DIR__ . '/../Models/PrintHistoryModel.php';
 header('Content-Type: application/json');
 
 // Authentication check
