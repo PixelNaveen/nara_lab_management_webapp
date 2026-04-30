@@ -119,7 +119,7 @@ class ExtraItemsModel
     public function insertItem($itemName, $itemValue, $itemUnit, $itemPrice, $itemDescription, $createdBy = 'admin')
     {
         try {
-            $itemName = trim($itemName);
+            $itemName = $this->sanitizeItemName($itemName);
             $itemDescription = trim($itemDescription);
             
             $stmt = $this->conn->prepare(
@@ -147,7 +147,7 @@ class ExtraItemsModel
     public function updateItem($itemId, $itemName, $itemValue, $itemUnit, $itemPrice, $itemDescription)
     {
         try {
-            $itemName = trim($itemName);
+            $itemName = $this->sanitizeItemName($itemName);
             $itemDescription = trim($itemDescription);
             
             $stmt = $this->conn->prepare(
@@ -271,6 +271,16 @@ class ExtraItemsModel
             error_log("ExtraItemsModel::reactivateItem Error: " . $e->getMessage());
             return false;
         }
+    }
+    /**
+     * Sanitize item name (letters and spaces only)
+     */
+    private function sanitizeItemName($name)
+    {
+        $name = trim($name);
+        $name = preg_replace('/\s+/', ' ', $name);
+        // Keep only letters and spaces
+        return preg_replace('/[^a-zA-Z\s]/', '', $name);
     }
 }
 ?>

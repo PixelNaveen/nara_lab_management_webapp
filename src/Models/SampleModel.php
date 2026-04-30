@@ -8,11 +8,11 @@
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/../Helpers/functions.php';
+require_once __DIR__ . '/../Helpers/Functions.php';
 
 class SampleModel
 {
-    private $conn;
+    public $conn;
 
     public function __construct()
     {
@@ -170,6 +170,7 @@ class SampleModel
                         tp.swab_enabled,
                         tp.base_unit,
                         tp.parameter_category,
+                        tp.display_format,
                         pp.test_charge AS parameter_price,
                         COALESCE(sp.swab_price, 0) AS swab_price,
                         pv.variant_id, 
@@ -201,31 +202,38 @@ class SampleModel
                 $paramId = $row['parameter_id'];
 
                 if (!isset($parameters[$paramId])) {
-                    $basePrice = (float)($row['parameter_price'] ?? 0);
+                    $testCharge  = (float)($row['parameter_price'] ?? 0);
+                    $swabCharge  = (float)($row['swab_price'] ?? 0);
 
-                    if ($submissionType === 'swab' && $row['swab_enabled'] == 1) {
-                        $basePrice += (float)$row['swab_price'];
-                    }
+                    // For swab submissions: keep test_charge and swab_charge SEPARATE
+                    // price = ONLY the test charge (swab charge handled separately in UI)
+                    // For regular submissions: price = test charge only (no swab charge)
+                    $displayPrice = $testCharge;
 
                     $parameters[$paramId] = [
-                        'parameter_id' => $paramId,
+                        'parameter_id'   => $paramId,
                         'parameter_code' => $row['parameter_code'],
                         'parameter_name' => $row['parameter_name'],
-                        'base_unit' => $row['base_unit'],
-                        'category' => $row['parameter_category'],
-                        'price' => $basePrice,
-                        'has_variants' => (bool)$row['has_variants'],
-                        'swab_enabled' => (bool)$row['swab_enabled'],
-                        'variants' => []
+                        'base_unit'      => $row['base_unit'],
+                        'category'       => $row['parameter_category'],
+                        'display_format' => $row['display_format'] ?? 'normal',
+                        'price'          => $displayPrice,      // Always the test charge only
+                        'test_charge'    => $testCharge,        // Explicit test charge field
+                        'swab_charge'    => $swabCharge,        // Explicit swab charge field
+                        'has_variants'   => (bool)$row['has_variants'],
+                        'swab_enabled'   => (bool)$row['swab_enabled'],
+                        'variants'       => []
                     ];
                 }
 
                 if ($row['variant_id']) {
                     $parameters[$paramId]['variants'][] = [
-                        'variant_id' => $row['variant_id'],
-                        'variant_name' => $row['variant_name'],
+                        'variant_id'       => $row['variant_id'],
+                        'variant_name'     => $row['variant_name'],
                         'full_display_name' => $row['full_display_name'],
-                        'price' => $parameters[$paramId]['price']
+                        'price'            => $parameters[$paramId]['price'],
+                        'test_charge'      => $parameters[$paramId]['test_charge'],
+                        'swab_charge'      => $parameters[$paramId]['swab_charge'],
                     ];
                 }
             }
@@ -307,22 +315,83 @@ class SampleModel
         }
     }
 
-    public function searchSampleNames($query)
+    /**
+     * Get all active swab combo groups (for frontend partial-match detection)
+     * Returns each group's parameter IDs and fixed surcharge price.
+     */
+    public function getSwabCombos()
+    {
+        try {
+            $sql = "SELECT sc.combo_id, sc.combo_name, sc.price AS combo_price,
+                           GROUP_CONCAT(sci.param_id ORDER BY sci.param_id) AS parameter_ids,
+                           COUNT(sci.param_id) AS param_count
+                    FROM swab_combos sc
+                    JOIN swab_combo_items sci ON sc.combo_id = sci.combo_id
+                    WHERE sc.is_active = 1 AND sc.is_deleted = 0
+                    GROUP BY sc.combo_id
+                    ORDER BY param_count DESC, sc.combo_id ASC";
+
+            $result = $this->conn->query($sql);
+            if (!$result) {
+                throw new Exception("Query failed: " . $this->conn->error);
+            }
+
+            $combos = [];
+            while ($row = $result->fetch_assoc()) {
+                $combos[] = [
+                    'combo_id'      => (int)$row['combo_id'],
+                    'combo_name'    => $row['combo_name'],
+                    'combo_price'   => (float)$row['combo_price'],
+                    'parameter_ids' => array_map('intval', explode(',', $row['parameter_ids'])),
+                    'param_count'   => (int)$row['param_count'],
+                ];
+            }
+
+            return [
+                'success' => true,
+                'swab_combos' => $combos,
+                'count' => count($combos)
+            ];
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::getSwabCombos');
+            return [
+                'success' => false,
+                'message' => 'Failed to load swab combos',
+                'swab_combos' => []
+            ];
+        }
+    }
+
+    public function searchSampleNames($query, $submissionType = 'regular')
     {
         try {
             $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
 
+            // ✅ FIX: Filter by category based on submission type
+            // Regular submission: Water (1) + Food (2) samples
+            // Swab submission: Swab (3) samples only
+            $categoryFilter = '';
+            if ($submissionType === 'swab') {
+                $categoryFilter = "AND sn.category_id = 3"; // Only Swab samples
+            } else {
+                $categoryFilter = "AND sn.category_id IN (1, 2)"; // Water + Food samples
+            }
+
             $sql = "SELECT 
-                        sample_name, 
-                        usage_count,
+                        sn.sample_name, 
+                        sn.usage_count,
+                        sn.category_id,
+                        COALESCE(stc.category_name, 'Other') AS category_name,
                         CASE 
-                            WHEN LOWER(sample_name) = LOWER(?) THEN 3
-                            WHEN LOWER(sample_name) LIKE LOWER(CONCAT(?, '%')) THEN 2
+                            WHEN LOWER(sn.sample_name) = LOWER(?) THEN 3
+                            WHEN LOWER(sn.sample_name) LIKE LOWER(CONCAT(?, '%')) THEN 2
                             ELSE 1
                         END as relevance
-                    FROM sample_names 
-                    WHERE LOWER(sample_name) LIKE LOWER(?)
-                    ORDER BY relevance DESC, usage_count DESC, sample_name ASC 
+                    FROM sample_names sn
+                    LEFT JOIN sample_type_categories stc ON sn.category_id = stc.category_id
+                    WHERE LOWER(sn.sample_name) LIKE LOWER(?)
+                    $categoryFilter
+                    ORDER BY relevance DESC, sn.usage_count DESC, sn.sample_name ASC 
                     LIMIT 10";
 
             $stmt = $this->conn->prepare($sql);
@@ -341,7 +410,9 @@ class SampleModel
             while ($row = $result->fetch_assoc()) {
                 $names[] = [
                     'sample_name' => $row['sample_name'],
-                    'usage_count' => $row['usage_count']
+                    'usage_count' => $row['usage_count'],
+                    'category_id' => $row['category_id'] ? (int)$row['category_id'] : null,
+                    'category_name' => $row['category_name']
                 ];
             }
 
@@ -491,7 +562,7 @@ class SampleModel
             $reportRef = $formGen['base_number'];
             $acReference = generateQCReference($formNumber);
 
-            $sampleId = $this->insertSample($data, $formNumber, $reportRef);
+            $sampleId = $this->insertSample($data, $formNumber, $reportRef, $acReference);
 
             $sampleItemIds = [];
             foreach ($samplesData as $index => $item) {
@@ -519,6 +590,12 @@ class SampleModel
                 $data
             );
 
+            // Insert extra items if any
+            $extraItemsData = $data['extra_items'] ?? [];
+            if (!empty($extraItemsData)) {
+                $this->insertSampleExtraItems($sampleId, $extraItemsData);
+            }
+
             $this->conn->commit();
 
             return [
@@ -542,29 +619,34 @@ class SampleModel
     /**
      * ✅ CRITICAL FIX: bind_param now includes received_time
      */
-    private function insertSample($data, $formNumber, $reportRef)
+    private function insertSample($data, $formNumber, $reportRef, $acReference)
     {
         $sql = "INSERT INTO samples (
-                    client_id, sample_code, form_number, report_ref, submission_type,
-                    received_date, received_time, tentative_date, submitted_by, additional_notes,
+                    client_id, sample_code, form_number, report_ref, city_id, submission_type,
+                    received_date, received_time, tentative_date,
+                    analysis_start_date,
+                    sample_collected_date, sample_collected_time,
+                    submitted_by,
                     additional_charges, test_charges_total, grand_total,
                     payment_status, payment_reference, status, status_updated_at, status_updated_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
             throw new Exception("Prepare failed (samples): " . $this->conn->error);
         }
 
-        // ✅ EXTRACT received_time WITH DEFAULT
         $clientId = $data['client_id'];
-        $sampleCode = $formNumber;
+        $sampleCode = $acReference;
+        $cityId = $data['city_id'] ?? null;
         $submissionType = $data['submission_type'];
         $receivedDate = $data['received_date'];
-        $receivedTime = $data['received_time'] ?? '00:00:00'; // ✅ ADD DEFAULT
+        $receivedTime = $data['received_time'] ?? '00:00:00';
         $tentativeDate = $data['tentative_date'];
+        $analysisStartDate = $data['received_date']; // Sync Analysis Start Date with Received Date
+        $collectedDate = !empty($data['sample_collected_date']) ? $data['sample_collected_date'] : null;
+        $collectedTime = !empty($data['sample_collected_time']) ? $data['sample_collected_time'] : null;
         $submittedBy = $data['submitted_by'];
-        $additionalNotes = $data['additional_notes'];
         $additionalCharges = $data['additional_charges'];
         $testChargesTotal = $data['test_charges_total'];
         $grandTotal = $data['grand_total'];
@@ -574,25 +656,27 @@ class SampleModel
             : null;
         $statusUpdatedBy = $submittedBy;
 
-        // ✅ CRITICAL FIX: Now binding 16 parameters (was 15)
         $stmt->bind_param(
-            "isssssssssdddsss", // ✅ 16 's' characters (added one for received_time)
-            $clientId,          // 1. client_id (i)
-            $sampleCode,        // 2. sample_code (s)
-            $formNumber,        // 3. form_number (s)
-            $reportRef,         // 4. report_ref (s)
-            $submissionType,    // 5. submission_type (s)
-            $receivedDate,      // 6. received_date (s)
-            $receivedTime,      // 7. received_time (s) ✅ ADDED
-            $tentativeDate,     // 8. tentative_date (s)
-            $submittedBy,       // 9. submitted_by (s)
-            $additionalNotes,   // 10. additional_notes (s)
-            $additionalCharges, // 11. additional_charges (d)
-            $testChargesTotal,  // 12. test_charges_total (d)
-            $grandTotal,        // 13. grand_total (d)
-            $paymentStatus,     // 14. payment_status (s)
-            $paymentReference,  // 15. payment_reference (s)
-            $statusUpdatedBy    // 16. status_updated_by (s)
+            "isssissssssssdddsss",
+            $clientId,
+            $sampleCode,
+            $formNumber,
+            $reportRef,
+            $cityId,
+            $submissionType,
+            $receivedDate,
+            $receivedTime,
+            $tentativeDate,
+            $analysisStartDate,
+            $collectedDate,
+            $collectedTime,
+            $submittedBy,
+            $additionalCharges,
+            $testChargesTotal,
+            $grandTotal,
+            $paymentStatus,
+            $paymentReference,
+            $statusUpdatedBy
         );
 
         if (!$stmt->execute()) {
@@ -607,8 +691,9 @@ class SampleModel
         $sql = "INSERT INTO sample_items (
                     sample_id, sample_name, value, unit, client_sample_code,
                     sampling_location, reason_for_analysis, container_damage,
-                    temperature_condition, validity_status, sequence_number
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    temperature_condition, temperature_value, container_item_id,
+                    sample_category_id, validity_status, sequence_number
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
@@ -623,10 +708,14 @@ class SampleModel
         $reasonForAnalysis = $item['reason_for_analysis'] ?? null;
         $containerDamage = $item['container_damage'] ?? 'No';
         $temperatureCondition = $item['temperature_condition'] ?? 'Ambient';
+        $temperatureValue = isset($item['temperature_value']) && $item['temperature_value'] !== ''
+            ? (float)$item['temperature_value'] : null;
+        $containerItemId = !empty($item['container_item_id']) ? (int)$item['container_item_id'] : null;
+        $sampleCategoryId = !empty($item['sample_category_id']) ? (int)$item['sample_category_id'] : null;
         $validityStatus = $item['validity_status'] ?? 'OK';
 
         $stmt->bind_param(
-            "isssssssssi",
+            "issssssssdiisi",
             $sampleId,
             $sampleName,
             $value,
@@ -636,6 +725,9 @@ class SampleModel
             $reasonForAnalysis,
             $containerDamage,
             $temperatureCondition,
+            $temperatureValue,
+            $containerItemId,
+            $sampleCategoryId,
             $validityStatus,
             $sequenceNumber
         );
@@ -788,7 +880,7 @@ class SampleModel
             ? $data['payment_reference']
             : null;
         $acknowledgedBy = $data['submitted_by'];
-        $notes = $data['additional_notes'];
+        $notes = $data['additional_notes'] ?? null;
 
         $stmt->bind_param(
             "isdddssss",
@@ -805,6 +897,133 @@ class SampleModel
 
         if (!$stmt->execute()) {
             throw new Exception("Insert failed (sample_acknowledgement): " . $stmt->error);
+        }
+    }
+
+    /**
+     * Insert extra items purchased with the submission
+     */
+    private function insertSampleExtraItems($sampleId, $extraItems)
+    {
+        if (empty($extraItems)) return;
+
+        $sql = "INSERT INTO sample_extra_items (sample_id, item_id, quantity, unit_price, line_total)
+                VALUES (?, ?, ?, ?, ?)";
+
+        $stmt = $this->conn->prepare($sql);
+        if ($stmt === false) {
+            throw new Exception("Prepare failed (sample_extra_items): " . $this->conn->error);
+        }
+
+        foreach ($extraItems as $extra) {
+            $itemId = (int)$extra['item_id'];
+            $quantity = (int)$extra['quantity'];
+            $unitPrice = (float)$extra['unit_price'];
+            $lineTotal = $unitPrice * $quantity;
+
+            $stmt->bind_param("iiidd", $sampleId, $itemId, $quantity, $unitPrice, $lineTotal);
+            if (!$stmt->execute()) {
+                throw new Exception("Insert failed (sample_extra_items): " . $stmt->error);
+            }
+        }
+    }
+
+    /**
+     * Get all active extra items for the submission form
+     */
+    public function getExtraItems()
+    {
+        try {
+            $sql = "SELECT item_id, item_name, item_value, item_unit, item_price, item_description
+                    FROM extra_items
+                    WHERE is_active = 1 AND is_deleted = 0
+                    ORDER BY display_order ASC, item_name ASC";
+
+            $result = $this->conn->query($sql);
+            if ($result === false) {
+                throw new Exception("Query failed: " . $this->conn->error);
+            }
+
+            $items = [];
+            while ($row = $result->fetch_assoc()) {
+                $items[] = [
+                    'item_id' => (int)$row['item_id'],
+                    'item_name' => $row['item_name'],
+                    'item_value' => $row['item_value'],
+                    'item_unit' => $row['item_unit'],
+                    'item_price' => (float)$row['item_price'],
+                    'item_description' => $row['item_description']
+                ];
+            }
+
+            return [
+                'success' => true,
+                'items' => $items,
+                'count' => count($items)
+            ];
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::getExtraItems');
+            return [
+                'success' => false,
+                'message' => 'Error fetching extra items',
+                'items' => []
+            ];
+        }
+    }
+
+    /**
+     * Bulk create new sample names with categories (from interceptor modal)
+     */
+    public function bulkCreateSampleNames($names)
+    {
+        try {
+            $created = [];
+
+            $checkStmt = $this->conn->prepare(
+                "SELECT sample_name_id FROM sample_names WHERE LOWER(sample_name) = LOWER(?)"
+            );
+
+            $insertStmt = $this->conn->prepare(
+                "INSERT INTO sample_names (sample_name, category_id, is_slab_accredited, usage_count, created_at) VALUES (?, ?, ?, 0, NOW())"
+            );
+
+            foreach ($names as $entry) {
+                $name = trim($entry['name'] ?? '');
+                $categoryId = !empty($entry['category_id']) ? (int)$entry['category_id'] : 4;
+                $isSlabAccredited = isset($entry['is_slab_accredited']) ? (int)$entry['is_slab_accredited'] : 0;
+
+                if (empty($name)) continue;
+
+                // Check if exists
+                $checkStmt->bind_param("s", $name);
+                $checkStmt->execute();
+                $checkResult = $checkStmt->get_result();
+
+                if ($checkResult->num_rows === 0) {
+                    $insertStmt->bind_param("sii", $name, $categoryId, $isSlabAccredited);
+                    if ($insertStmt->execute()) {
+                        $created[] = [
+                            'name' => $name,
+                            'category_id' => $categoryId,
+                            'is_slab_accredited' => $isSlabAccredited,
+                            'id' => $this->conn->insert_id
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'success' => true,
+                'created' => $created,
+                'count' => count($created),
+                'message' => count($created) . ' sample name(s) created'
+            ];
+        } catch (Exception $e) {
+            logError($e->getMessage(), 'SampleModel::bulkCreateSampleNames');
+            return [
+                'success' => false,
+                'message' => 'Error creating sample names: ' . $e->getMessage()
+            ];
         }
     }
 }

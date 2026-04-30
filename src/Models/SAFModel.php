@@ -16,7 +16,7 @@
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/../Helpers/functions.php';
+require_once __DIR__ . '/../Helpers/Functions.php';
 
 class SAFModel
 {
@@ -55,6 +55,7 @@ class SAFModel
                         si.unit,
                         si.container_damage,
                         si.temperature_condition,
+                        si.temperature_value,
                         si.validity_status,
                         si.sequence_number,
                         
@@ -63,6 +64,7 @@ class SAFModel
                         DATE(sa.created_at) as acceptance_date,
                         sa.remarks,
                         sa.validity_ok,
+                        s.received_time,
                         
                         sack.test_charges,
                         sack.total_charges
@@ -126,6 +128,7 @@ class SAFModel
                         'report_ref' => $row['report_ref'],
                         'received_by' => $row['received_by'] ?? '',
                         'date' => $row['acceptance_date'] ? date('d/m/Y', strtotime($row['acceptance_date'])) : '',
+                        'time' => $row['received_time'] ? date('h:i A', strtotime($row['received_time'])) : '',
                         'remarks' => $row['remarks'] ?? '',
                         'validity_ok' => $row['validity_ok']
                     ];
@@ -155,6 +158,15 @@ class SAFModel
                     // Then adds 3-digit sequence: "25/0001/001", "25/0001/002", etc.
                     $sampleCode = $this->generateSampleCode($row['form_number'], $sequenceNumber);
 
+                    $tempCondition = $row['temperature_condition'] ?? '';
+                    $tempValue = isset($row['temperature_value']) ? $row['temperature_value'] : null;
+                    
+                    $displayTemp = $tempCondition;
+                    // Only append temperature if it is strictly not 0 and not null/empty
+                    if ($tempValue !== null && $tempValue !== '' && (float)$tempValue !== 0.0) {
+                        $displayTemp .= ' (' . floatval($tempValue) . '°C)';
+                    }
+
                     $safData['items'][] = [
                         'sample_item_id' => $row['sample_item_id'],
                         'sample_name' => $row['sample_name'],
@@ -162,7 +174,7 @@ class SAFModel
                         'client_sample_code' => $row['client_sample_code'] ?? '',  // Client's own code (if any)
                         'weight_volume' => trim($row['value'] . ' ' . $row['unit']),
                         'container_damage' => $row['container_damage'] ?? '',
-                        'temperature' => $row['temperature_condition'] ?? '',
+                        'temperature' => $displayTemp,
                         'validity' => $row['validity_status'] ?? '',
                         'sequence_number' => $sequenceNumber
                     ];

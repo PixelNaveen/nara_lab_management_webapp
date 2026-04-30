@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sample Acknowledgement Form (SAcF) Model
  * Fetches data for Sample Acknowledgement Form
@@ -13,8 +14,8 @@
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/consolidated-params-model.php';
-require_once __DIR__ . '/print-history-model.php';
+require_once __DIR__ . '/ConsolidatedParamsModel.php';
+require_once __DIR__ . '/PrintHistoryModel.php';
 
 class AcknowledgementModel
 {
@@ -46,12 +47,14 @@ class AcknowledgementModel
                         s.tentative_date,
                         s.payment_status,
                         s.payment_reference as receipt_no,
+                        s.payment_date,
                         
                         c.client_name,
                         
                         sa.report_ref,
                         sa.received_by,
                         DATE(sa.created_at) as received_date,
+                        s.received_time,
                         
                         sack.test_charges,
                         sack.additional_charges,
@@ -80,6 +83,31 @@ class AcknowledgementModel
 
             // Get ALL consolidated parameters (dynamic, not limited)
             $parameters = $this->paramsModel->getAllConsolidatedParams();
+            $selectedParams = $this->paramsModel->getSelectedParamsForSample($sampleId);
+
+            // Add highlighting flag and variant info to parameters
+            foreach ($parameters as &$param) {
+                $baseName = $param['base_name'];
+                $isSelected = false;
+                $selectedVariants = [];
+
+                foreach ($selectedParams as $s) {
+                    if (strpos($s, '|') !== false) {
+                        list($sBase, $sVar) = explode('|', $s);
+                        if ($sBase === $baseName) {
+                            $isSelected = true;
+                            $selectedVariants[] = $sVar;
+                        }
+                    } else {
+                        if ($s === $baseName) {
+                            $isSelected = true;
+                        }
+                    }
+                }
+
+                $param['is_selected'] = $isSelected;
+                $param['selected_variants'] = $selectedVariants;
+            }
 
             // Get last print info (for "Issued By" field)
             $lastPrint = $this->printHistory->getLastPrintInfo($sampleId, 'ACKNOWLEDGEMENT');
@@ -91,18 +119,19 @@ class AcknowledgementModel
                 'client_name' => $row['client_name'],
                 'received_by' => $row['received_by'] ?? '',
                 'received_date' => $row['received_date'] ? date('d/m/Y', strtotime($row['received_date'])) : '',
+                'received_time' => $row['received_time'] ? date('h:i A', strtotime($row['received_time'])) : '',
                 'tentative_date' => $row['tentative_date'] ? date('d/m/Y', strtotime($row['tentative_date'])) : '',
                 'test_charges' => floatval($row['test_charges'] ?? 0),
                 'additional_charges' => floatval($row['additional_charges'] ?? 0),
                 'total_charges' => floatval($row['total_charges'] ?? 0),
                 'payment_status' => $row['payment_status'] ?? 'Pending',
+                'payment_date' => $row['payment_date'] ?? null,
                 'receipt_no' => $this->formatReceiptNumber($row),
                 'sample_information' => $sampleNames,
                 'parameters' => $parameters, // ALL parameters (dynamic)
                 'issued_by' => $lastPrint ? $lastPrint['printed_by'] : null,
                 'issued_at' => $lastPrint ? $lastPrint['printed_at'] : null
             ];
-            
         } catch (Exception $e) {
             error_log("Acknowledgement Data Error: " . $e->getMessage());
             return null;
@@ -130,11 +159,13 @@ class AcknowledgementModel
 
             $names = [];
             while ($row = $result->fetch_assoc()) {
-                $names[] = $row['sample_name'];
+                $names[] = trim($row['sample_name']); // Trim to ensure accurate matching
             }
 
-            return implode(', ', $names);
-            
+            // Deduplicate names (e.g. "Water", "Water", "Ice" -> "Water", "Ice")
+            $uniqueNames = array_unique(array_filter($names));
+
+            return implode(', ', $uniqueNames);
         } catch (Exception $e) {
             error_log("Get Sample Names Error: " . $e->getMessage());
             return '';
@@ -192,17 +223,17 @@ class AcknowledgementModel
         if (empty($reportRef)) {
             return '';
         }
-        
+
         // If already QC format, return as-is
         if (strpos($reportRef, 'QC/') === 0) {
             return $reportRef;
         }
-        
+
         // If AC format, convert to QC
         if (strpos($reportRef, 'AC/') === 0) {
             return str_replace('AC/', 'QC/', $reportRef);
         }
-        
+
         // If no prefix, add QC
         return 'QC/' . $reportRef;
     }

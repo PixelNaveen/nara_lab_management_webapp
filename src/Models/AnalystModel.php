@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Analyst Information Form (AIF) Model
  * Fetches data for Analyst Information Form
@@ -14,8 +15,8 @@
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
-require_once __DIR__ . '/consolidated-params-model.php';
-require_once __DIR__ . '/print-history-model.php';
+require_once __DIR__ . '/ConsolidatedParamsModel.php';
+require_once __DIR__ . '/PrintHistoryModel.php';
 
 class AnalystModel
 {
@@ -45,6 +46,7 @@ class AnalystModel
                         s.sample_id,
                         s.form_number,
                         s.tentative_date,
+                        s.received_time,
                         
                         sa.received_by,
                         DATE(sa.created_at) as received_date
@@ -72,9 +74,28 @@ class AnalystModel
             $parameters = $this->paramsModel->getAllConsolidatedParams();
             $selectedParams = $this->paramsModel->getSelectedParamsForSample($sampleId);
 
-            // Add highlighting flag to parameters
+            // Add highlighting flag and variant info to parameters
             foreach ($parameters as &$param) {
-                $param['is_selected'] = in_array($param['parameter_name'], $selectedParams);
+                $baseName = $param['base_name'];
+                $isSelected = false;
+                $selectedVariants = [];
+
+                foreach ($selectedParams as $s) {
+                    if (strpos($s, '|') !== false) {
+                        list($sBase, $sVar) = explode('|', $s);
+                        if ($sBase === $baseName) {
+                            $isSelected = true;
+                            $selectedVariants[] = $sVar;
+                        }
+                    } else {
+                        if ($s === $baseName) {
+                            $isSelected = true;
+                        }
+                    }
+                }
+
+                $param['is_selected'] = $isSelected;
+                $param['selected_variants'] = $selectedVariants;
             }
 
             // Get last print info
@@ -85,16 +106,17 @@ class AnalystModel
                 'form_number' => $row['form_number'],
                 'received_by' => $row['received_by'] ?? '',
                 'received_date' => $row['received_date'] ? date('d/m/Y', strtotime($row['received_date'])) : '',
+                'received_time' => $row['received_time'] ? date('h:i A', strtotime($row['received_time'])) : '',
                 // CORRECTED: Report submission date is EMPTY (not pre-filled)
                 'report_submission_date' => '', // Empty field for manual entry
                 'sample_description' => $this->formatSampleDescription($sampleItems),
                 'sample_numbers' => $this->formatSampleNumbers($row['form_number'], count($sampleItems)),
+                'sample_numbers_list' => $this->getIndividualSampleNumbers($row['form_number'], count($sampleItems)),
                 'volume_weight' => $this->formatVolumeWeight($sampleItems),
                 'parameters' => $parameters, // ALL parameters (dynamic)
                 'issued_by' => $lastPrint ? $lastPrint['printed_by'] : null,
                 'issued_at' => $lastPrint ? $lastPrint['printed_at'] : null
             ];
-            
         } catch (Exception $e) {
             error_log("Analyst Data Error: " . $e->getMessage());
             return null;
@@ -126,7 +148,6 @@ class AnalystModel
             }
 
             return $items;
-            
         } catch (Exception $e) {
             error_log("Get Sample Items Error: " . $e->getMessage());
             return [];
@@ -134,18 +155,48 @@ class AnalystModel
     }
 
     /**
-     * Format sample description (comma-separated names)
+     * Get all sample names for a sample ID.
      * 
-     * @param array $items Array of sample items
-     * @return string Comma-separated sample names
+     * @param int $sampleId Sample ID
+     * @return string Comma-separated unique sample names
      */
+    private function getSampleNames($sampleId)
+    {
+        try {
+            $sql = "SELECT sample_name 
+                    FROM sample_items 
+                    WHERE sample_id = ? 
+                    ORDER BY sequence_number ASC";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $sampleId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $names = [];
+            while ($row = $result->fetch_assoc()) {
+                $names[] = trim($row['sample_name']); // Trim to ensure accurate matching
+            }
+
+            // Deduplicate names (e.g. "Water", "Water", "Ice" -> "Water", "Ice")
+            $uniqueNames = array_unique(array_filter($names));
+
+            return implode(', ', $uniqueNames);
+        } catch (Exception $e) {
+            error_log("Get Sample Names Error: " . $e->getMessage());
+            return '';
+        }
+    }
+
     private function formatSampleDescription($items)
     {
-        $names = array_map(function($item) {
-            return $item['sample_name'];
+        $names = array_map(function ($item) {
+            return trim($item['sample_name']);
         }, $items);
 
-        return implode(', ', $names);
+        $uniqueNames = array_unique(array_filter($names));
+
+        return implode(', ', $uniqueNames);
     }
 
     /**
@@ -179,6 +230,22 @@ class AnalystModel
             $end = $base . '/' . str_pad($count, 3, '0', STR_PAD_LEFT);
             return $start . ' - ' . $end;
         }
+    }
+
+    /**
+     * Get array of all individual sample codes
+     */
+    private function getIndividualSampleNumbers($formNumber, $count)
+    {
+        $parts = explode('/', $formNumber);
+        if (count($parts) < 2) return [];
+        
+        $base = $parts[0] . '/' . $parts[1];
+        $numbers = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $numbers[] = $base . '/' . str_pad($i, 3, '0', STR_PAD_LEFT);
+        }
+        return $numbers;
     }
 
     /**

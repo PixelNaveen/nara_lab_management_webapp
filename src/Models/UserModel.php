@@ -15,7 +15,9 @@ class UserModel
     public function getAllUsers()
     {
         $sql = "SELECT user_id, fullname, username, email, role, status 
-                FROM users ORDER BY user_id DESC";
+                FROM users 
+                WHERE (is_deleted = 0 OR is_deleted IS NULL)
+                ORDER BY user_id DESC";
         $result = $this->conn->query($sql);
         $users = [];
         while ($row = $result->fetch_assoc()) {
@@ -25,10 +27,15 @@ class UserModel
     }
 
     // =================== DUPLICATE CHECK ===================
-    public function isDuplicate($username, $email)
+    public function isDuplicate($username, $email, $excludeId = null)
     {
-        $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE username = ? OR email = ?");
-        $stmt->bind_param("ss", $username, $email);
+        if ($excludeId) {
+            $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE (username = ? OR email = ?) AND is_deleted = 0 AND user_id != ?");
+            $stmt->bind_param("ssi", $username, $email, $excludeId);
+        } else {
+            $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE (username = ? OR email = ?) AND is_deleted = 0");
+            $stmt->bind_param("ss", $username, $email);
+        }
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->num_rows > 0;
@@ -45,24 +52,32 @@ class UserModel
     }
 
     // =================== UPDATE ===================
-    public function updateUser($id, $fullname, $username, $email, $role, $password = null)
+    public function updateUser($id, $fullname, $username, $email, $role, $status, $password = null)
     {
         if ($password) {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $this->conn->prepare("UPDATE users 
-                                          SET fullname = ?, username = ?, email = ?, role = ?, password_hash = ?
+                                          SET fullname = ?, username = ?, email = ?, role = ?, status = ?, password_hash = ?
                                           WHERE user_id = ?");
-            $stmt->bind_param("sssssi", $fullname, $username, $email, $role, $password_hash, $id);
+            $stmt->bind_param("ssssssi", $fullname, $username, $email, $role, $status, $password_hash, $id);
         } else {
             $stmt = $this->conn->prepare("UPDATE users 
-                                          SET fullname = ?, username = ?, email = ?, role = ?
+                                          SET fullname = ?, username = ?, email = ?, role = ?, status = ?
                                           WHERE user_id = ?");
-            $stmt->bind_param("ssssi", $fullname, $username, $email, $role, $id);
+            $stmt->bind_param("sssssi", $fullname, $username, $email, $role, $status, $id);
         }
         return $stmt->execute();
     }
 
-    // =================== DEACTIVATE (SOFT DELETE) ===================
+    // =================== SOFT DELETE ===================
+    public function softDeleteUser($id)
+    {
+        $stmt = $this->conn->prepare("UPDATE users SET is_deleted = 1, status = 'inactive' WHERE user_id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    // =================== DEACTIVATE ===================
     public function deactivateUser($id)
     {
         $stmt = $this->conn->prepare("UPDATE users SET status = 'inactive' WHERE user_id = ?");

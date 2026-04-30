@@ -94,5 +94,15 @@ public function reactivateTestMethod($id, $status)
     return $stmt->execute();
 }
 
+// Get a single test method by ID
+public function getTestMethodById($id)
+{
+    $stmt = $this->conn->prepare("SELECT method_name, standard_body, is_active FROM test_methods WHERE method_id = ? AND is_deleted = 0");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
+
 }
 ?>

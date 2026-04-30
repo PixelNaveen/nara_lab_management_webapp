@@ -22,16 +22,16 @@ class ParameterModel
                     tp.parameter_category,
                     tp.base_unit,
                     tp.has_variants,
+                    tp.short_name,
+                    tp.display_format,
+                    tp.result_mode,
+                    tp.espc_applicable,
                     tp.swab_enabled,
                     tp.is_active,
                     tp.created_at,
-                    COUNT(DISTINCT pv.variant_id) as variant_count,
-                    GROUP_CONCAT(DISTINCT tm.method_name ORDER BY pm.sequence_order, tm.method_name SEPARATOR ', ') as methods
+                    MAX(pbuc.is_slab_accredited) as is_slab_accredited
                 FROM test_parameters tp
-                LEFT JOIN parameter_variants pv ON tp.parameter_id = pv.parameter_id 
-                    AND pv.is_active = 1 AND pv.is_deleted = 0
-                LEFT JOIN parameter_methods pm ON tp.parameter_id = pm.parameter_id
-                LEFT JOIN test_methods tm ON pm.method_id = tm.method_id AND tm.is_active = 1 AND tm.is_deleted = 0
+                LEFT JOIN parameter_base_unit_config pbuc ON tp.parameter_id = pbuc.parameter_id
                 WHERE tp.is_deleted = 0";
 
         $params = [];
@@ -100,6 +100,8 @@ class ParameterModel
         $stmt = $this->conn->prepare(
             "SELECT parameter_id, parameter_code, parameter_name, 
                     parameter_category, base_unit, has_variants, 
+                    short_name, display_format,
+                    result_mode, espc_applicable,
                     swab_enabled, is_active 
             FROM test_parameters 
             WHERE parameter_id = ? AND is_deleted = 0"
@@ -110,15 +112,24 @@ class ParameterModel
         return $result->fetch_assoc();
     }
 
-    // Get array of method_ids for a parameter (ordered by sequence)
+    // Get array of method_ids for a parameter (from both old and new tables)
     public function getParameterMethodIds($id)
     {
         $stmt = $this->conn->prepare(
-            "SELECT method_id FROM parameter_methods 
-            WHERE parameter_id = ?
+            "SELECT DISTINCT method_id FROM (
+                -- Old table: parameter_methods
+                SELECT pm.method_id, pm.sequence_order 
+                FROM parameter_methods pm WHERE pm.parameter_id = ?
+                UNION
+                -- New table: parameter_category_methods
+                SELECT pcm.method_id, pcm.sequence_order
+                FROM parameter_base_unit_config pbc
+                INNER JOIN parameter_category_methods pcm ON pbc.config_id = pcm.config_id
+                WHERE pbc.parameter_id = ? AND pbc.is_active = 1
+            ) AS combined
             ORDER BY sequence_order, method_id"
         );
-        $stmt->bind_param("i", $id);
+        $stmt->bind_param("ii", $id, $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $methodIds = [];
@@ -191,18 +202,36 @@ class ParameterModel
     }
 
     // =================== INSERT PARAMETER ===================
-    public function insertParameter($name, $category, $baseUnit, $swabEnabled, $isActive = 1)
+    public function insertParameter($name, $category, $swabEnabled, $isActive = 1, $extraFields = [])
     {
         $code = $this->getNextParameterCode();
+        $shortName = $extraFields['short_name'] ?? null;
+        $displayFormat = $extraFields['display_format'] ?? 'normal';
+        $resultMode = $extraFields['result_mode'] ?? 'numeric_or_ND';
+        $espcApplicable = isset($extraFields['espc_applicable']) ? (int)$extraFields['espc_applicable'] : 0;
 
         $stmt = $this->conn->prepare(
             "INSERT INTO test_parameters 
-            (parameter_code, parameter_name, parameter_category, base_unit, 
-             swab_enabled, has_variants, is_active, is_deleted, created_at)
-            VALUES (?, ?, ?, ?, ?, 0, ?, 0, NOW())"
+            (parameter_code, parameter_name, parameter_category,
+             swab_enabled, has_variants,
+             short_name, display_format,
+             result_mode, espc_applicable,
+             is_active, is_deleted, created_at)
+            VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 0, NOW())"
         );
 
-        $stmt->bind_param("ssssii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive);
+        $stmt->bind_param(
+            "sssisssii",
+            $code,
+            $name,
+            $category,
+            $swabEnabled,
+            $shortName,
+            $displayFormat,
+            $resultMode,
+            $espcApplicable,
+            $isActive
+        );
 
         if ($stmt->execute()) {
             return $this->conn->insert_id;
@@ -229,21 +258,41 @@ class ParameterModel
     }
 
     // =================== UPDATE PARAMETER ===================
-    public function updateParameter($id, $code, $name, $category, $baseUnit, $swabEnabled, $isActive)
+    public function updateParameter($id, $code, $name, $category, $swabEnabled, $isActive, $extraFields = [])
     {
+        $shortName = $extraFields['short_name'] ?? null;
+        $displayFormat = $extraFields['display_format'] ?? 'normal';
+        $resultMode = $extraFields['result_mode'] ?? 'numeric_or_ND';
+        $espcApplicable = isset($extraFields['espc_applicable']) ? (int)$extraFields['espc_applicable'] : 0;
+
         $stmt = $this->conn->prepare(
             "UPDATE test_parameters 
             SET parameter_code = ?,
                 parameter_name = ?, 
                 parameter_category = ?,
-                base_unit = ?, 
                 swab_enabled = ?,
+                short_name = ?,
+                display_format = ?,
+                result_mode = ?,
+                espc_applicable = ?,
                 is_active = ?,
                 updated_at = NOW()
             WHERE parameter_id = ? AND is_deleted = 0"
         );
 
-        $stmt->bind_param("ssssiii", $code, $name, $category, $baseUnit, $swabEnabled, $isActive, $id);
+        $stmt->bind_param(
+            "sssisssiii",
+            $code,
+            $name,
+            $category,
+            $swabEnabled,
+            $shortName,
+            $displayFormat,
+            $resultMode,
+            $espcApplicable,
+            $isActive,
+            $id
+        );
         return $stmt->execute();
     }
 
@@ -300,7 +349,7 @@ class ParameterModel
         $sequence = 0;
         foreach ($methodIds as $methodId) {
             if (!is_numeric($methodId) || $methodId <= 0) continue;
-            
+
             $isDefault = ($sequence === 0) ? 1 : 0; // First method is default
             $stmt->bind_param("iiii", $paramId, $methodId, $isDefault, $sequence);
             $stmt->execute();
@@ -323,7 +372,7 @@ class ParameterModel
     }
 
     // =================== SWAB PRICE MANAGEMENT ===================
-    
+
     /**
      * ⚠️ DEPRECATED: No longer used after architecture fix
      * Kept for backward compatibility only
@@ -381,7 +430,7 @@ class ParameterModel
             WHERE param_id = ?"
         );
         $stmt->bind_param("i", $paramId);
-        return $stmt->execute(); 
+        return $stmt->execute();
     }
 
     /**
@@ -394,7 +443,7 @@ class ParameterModel
             "UPDATE swab_param 
             SET is_active = ?, updated_at = NOW()
             WHERE param_id = ? AND is_deleted = 0"
-        );   
+        );
         $stmt->bind_param("ii", $isActive, $paramId);
         return $stmt->execute();
     }
@@ -417,7 +466,7 @@ class ParameterModel
         );
         $stmt->bind_param("ii", $isActive, $paramId);
         $stmt->execute();
-        
+
         // Always return true - if record doesn't exist, that's OK
         // The update will affect 0 rows but won't throw an error
         return true;
@@ -458,14 +507,24 @@ class ParameterModel
     public function getMethodsByParameter($paramId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT tm.method_id, tm.method_name
-             FROM parameter_methods pm
-             INNER JOIN test_methods tm ON pm.method_id = tm.method_id
-             WHERE pm.parameter_id = ? AND tm.is_deleted = 0 AND tm.is_active = 1
-             ORDER BY pm.sequence_order ASC, tm.method_name ASC"
+            "SELECT DISTINCT tm.method_id, tm.method_name
+             FROM (
+                -- Old table: parameter_methods
+                SELECT pm.method_id, pm.sequence_order
+                FROM parameter_methods pm WHERE pm.parameter_id = ?
+                UNION
+                -- New table: parameter_category_methods
+                SELECT pcm.method_id, pcm.sequence_order
+                FROM parameter_base_unit_config pbc
+                INNER JOIN parameter_category_methods pcm ON pbc.config_id = pcm.config_id
+                WHERE pbc.parameter_id = ? AND pbc.is_active = 1
+             ) AS combined
+             INNER JOIN test_methods tm ON combined.method_id = tm.method_id
+             WHERE tm.is_deleted = 0 AND tm.is_active = 1
+             ORDER BY combined.sequence_order ASC, tm.method_name ASC"
         );
 
-        $stmt->bind_param("i", $paramId);
+        $stmt->bind_param("ii", $paramId, $paramId);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -480,25 +539,237 @@ class ParameterModel
     public function getParametersWithMethods()
     {
         $sql = "SELECT 
-                    CONCAT(tp.parameter_name, ' (', tp.base_unit, ')') AS parameter_name,
-                    GROUP_CONCAT(tm.method_name SEPARATOR ', ') AS method_names
+                    tp.parameter_name,
+                    GROUP_CONCAT(DISTINCT tm.method_name ORDER BY tm.method_name SEPARATOR ', ') AS method_names
                 FROM test_parameters AS tp
-                LEFT JOIN parameter_methods AS pm ON tp.parameter_id = pm.parameter_id
-                LEFT JOIN test_methods AS tm ON pm.method_id = tm.method_id
+                LEFT JOIN parameter_base_unit_config AS pbuc ON tp.parameter_id = pbuc.parameter_id
+                LEFT JOIN parameter_category_methods AS pcm ON pbuc.config_id = pcm.config_id
+                LEFT JOIN test_methods AS tm ON pcm.method_id = tm.method_id
                 WHERE tp.is_active = 1 AND tp.is_deleted = 0
                 GROUP BY tp.parameter_id
                 ORDER BY tp.parameter_name ASC";
-        
+
         $result = $this->conn->query($sql);
-        
+
         $tableData = [];
         if ($result) {
             while ($row = $result->fetch_assoc()) {
                 $tableData[] = $row;
             }
         }
-        
+
         return $tableData;
     }
 
+    // =================== CATEGORY CONFIG METHODS ===================
+
+    /**
+     * Get all category configurations for a parameter
+     * Returns category info + unit info + config details
+     */
+    public function getCategoryConfigs($paramId)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT 
+                pbu.config_id,
+                pbu.parameter_id,
+                pbu.base_category_id,
+                pbu.base_unit_id,
+                pbu.is_slab_accredited,
+                pbu.certificate_id,
+                pbu.temperature_options,
+                pbu.is_active,
+                buc.category_name,
+                buc.category_code,
+                bu.unit_name
+            FROM parameter_base_unit_config pbu
+            INNER JOIN base_unit_categories buc ON pbu.base_category_id = buc.base_category_id
+            INNER JOIN base_units bu ON pbu.base_unit_id = bu.base_unit_id
+            WHERE pbu.parameter_id = ?
+            ORDER BY buc.display_order ASC"
+        );
+        $stmt->bind_param("i", $paramId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $configs = [];
+        while ($row = $result->fetch_assoc()) {
+            $configs[] = $row;
+        }
+        return $configs;
+    }
+
+    /**
+     * Save or update a single category config for a parameter
+     * Uses INSERT ... ON DUPLICATE KEY UPDATE for upsert
+     */
+    public function saveCategoryConfig($paramId, $categoryId, $unitId, $isSlabAccredited, $certificateId)
+    {
+        // If not accredited, clear certificate_id
+        if (!$isSlabAccredited) {
+            $certificateId = null;
+        }
+
+        $stmt = $this->conn->prepare(
+            "INSERT INTO parameter_base_unit_config 
+            (parameter_id, base_category_id, base_unit_id, is_slab_accredited, 
+             certificate_id, is_active)
+            VALUES (?, ?, ?, ?, ?, 1)
+            ON DUPLICATE KEY UPDATE 
+                base_unit_id = VALUES(base_unit_id),
+                is_slab_accredited = VALUES(is_slab_accredited),
+                certificate_id = VALUES(certificate_id),
+                is_active = 1,
+                updated_at = NOW()"
+        );
+        $stmt->bind_param(
+            "iiiii",
+            $paramId,
+            $categoryId,
+            $unitId,
+            $isSlabAccredited,
+            $certificateId
+        );
+
+        if ($stmt->execute()) {
+            // Return the config_id (either newly inserted or existing)
+            if ($this->conn->insert_id > 0) {
+                return $this->conn->insert_id;
+            }
+            // For update cases, get the existing config_id
+            $getStmt = $this->conn->prepare(
+                "SELECT config_id FROM parameter_base_unit_config 
+                 WHERE parameter_id = ? AND base_category_id = ?"
+            );
+            $getStmt->bind_param("ii", $paramId, $categoryId);
+            $getStmt->execute();
+            $getResult = $getStmt->get_result();
+            $row = $getResult->fetch_assoc();
+            return $row ? $row['config_id'] : false;
+        }
+        return false;
+    }
+
+    /**
+     * Get active accreditation certificates for dropdown
+     */
+    public function getActiveCertificates()
+    {
+        $sql = "SELECT certificate_id, certificate_code, certificate_name
+                FROM accreditation_certificates
+                WHERE is_deleted = 0 AND status = 'active'
+                ORDER BY is_current DESC, certificate_id ASC";
+        $result = $this->conn->query($sql);
+        $certs = [];
+        while ($row = $result->fetch_assoc()) {
+            $certs[] = $row;
+        }
+        return $certs;
+    }
+
+    /**
+     * Delete all category configs for a parameter
+     * Also cascades to parameter_category_methods via FK
+     */
+    public function deleteCategoryConfigs($paramId)
+    {
+        $stmt = $this->conn->prepare(
+            "DELETE FROM parameter_base_unit_config WHERE parameter_id = ?"
+        );
+        $stmt->bind_param("i", $paramId);
+        return $stmt->execute();
+    }
+
+    /**
+     * Delete a specific category config for a parameter
+     */
+    public function deleteSingleCategoryConfig($paramId, $categoryId)
+    {
+        $stmt = $this->conn->prepare(
+            "DELETE FROM parameter_base_unit_config 
+             WHERE parameter_id = ? AND base_category_id = ?"
+        );
+        $stmt->bind_param("ii", $paramId, $categoryId);
+        return $stmt->execute();
+    }
+
+    /**
+     * Get methods assigned to a specific category config
+     */
+    public function getCategoryMethods($configId)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT pcm.pcm_id, pcm.method_id, pcm.sequence_order, pcm.is_primary,
+                    tm.method_name
+             FROM parameter_category_methods pcm
+             INNER JOIN test_methods tm ON pcm.method_id = tm.method_id
+             WHERE pcm.config_id = ?
+             ORDER BY pcm.sequence_order ASC"
+        );
+        $stmt->bind_param("i", $configId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $methods = [];
+        while ($row = $result->fetch_assoc()) {
+            $methods[] = $row;
+        }
+        return $methods;
+    }
+
+    /**
+     * Save methods for a category config (delete + re-insert)
+     */
+    public function saveCategoryMethods($configId, $methodIds)
+    {
+        // Delete existing
+        $delStmt = $this->conn->prepare(
+            "DELETE FROM parameter_category_methods WHERE config_id = ?"
+        );
+        $delStmt->bind_param("i", $configId);
+        $delStmt->execute();
+
+        if (empty($methodIds) || !is_array($methodIds)) {
+            return true;
+        }
+
+        $insStmt = $this->conn->prepare(
+            "INSERT INTO parameter_category_methods 
+             (config_id, method_id, sequence_order, is_primary)
+             VALUES (?, ?, ?, ?)"
+        );
+
+        $seq = 0;
+        foreach ($methodIds as $methodId) {
+            if (!is_numeric($methodId) || $methodId <= 0) continue;
+            $isPrimary = ($seq === 0) ? 1 : 0;
+            $insStmt->bind_param("iiii", $configId, $methodId, $seq, $isPrimary);
+            $insStmt->execute();
+            $seq++;
+        }
+        return true;
+    }
+
+    /**
+     * Get full parameter data including all category configs and their methods
+     * Used by the edit form to load everything at once
+     */
+    public function getFullParameterData($paramId)
+    {
+        $param = $this->getParameterById($paramId);
+        if (!$param) return null;
+
+        // Get universal method IDs
+        $param['method_ids'] = $this->getParameterMethodIds($paramId);
+
+        // Get category configs with their methods
+        $configs = $this->getCategoryConfigs($paramId);
+        foreach ($configs as &$config) {
+            $config['methods'] = $this->getCategoryMethods($config['config_id']);
+            $config['method_ids'] = array_column($config['methods'], 'method_id');
+        }
+        $param['category_configs'] = $configs;
+
+        return $param;
+    }
 }

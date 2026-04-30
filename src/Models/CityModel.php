@@ -23,12 +23,12 @@ class CityModel
                            usage_count, is_active, created_at, created_by 
                     FROM cities 
                     WHERE is_deleted = 0";
-            
+
             // Apply filters
             if (isset($filters['is_active']) && $filters['is_active'] !== '') {
                 $sql .= " AND is_active = " . intval($filters['is_active']);
             }
-            
+
             if (isset($filters['type']) && $filters['type'] !== 'all') {
                 if ($filters['type'] === 'predefined') {
                     $sql .= " AND is_predefined = 1";
@@ -36,13 +36,13 @@ class CityModel
                     $sql .= " AND created_by != 'system'";
                 }
             }
-            
+
             // Search matches from FIRST letter only
             if (isset($filters['search']) && trim($filters['search']) !== '') {
                 $search = $this->conn->real_escape_string($filters['search']);
                 $sql .= " AND LOWER(city_name) LIKE LOWER('{$search}%')";
             }
-            
+
             // Sorting
             $sortBy = $filters['sort'] ?? 'usage';
             switch ($sortBy) {
@@ -53,16 +53,16 @@ class CityModel
                     $sql .= " ORDER BY created_at DESC";
                     break;
                 default:
-                    $sql .= " ORDER BY usage_count DESC, city_name ASC";
+                    $sql .= " ORDER BY city_name ASC";
             }
-            
+
             $result = $this->conn->query($sql);
             $cities = [];
-            
+
             while ($row = $result->fetch_assoc()) {
                 $cities[] = $row;
             }
-            
+
             return [
                 'data' => $cities,
                 'total' => count($cities)
@@ -101,7 +101,7 @@ class CityModel
             $sql = "SELECT city_id FROM cities 
                     WHERE LOWER(city_name) = LOWER(?) 
                       AND is_deleted = 0";
-            
+
             if ($excludeId) {
                 $sql .= " AND city_id != ?";
                 $stmt = $this->conn->prepare($sql);
@@ -110,7 +110,7 @@ class CityModel
                 $stmt = $this->conn->prepare($sql);
                 $stmt->bind_param("s", $cityName);
             }
-            
+
             $stmt->execute();
             $result = $stmt->get_result();
             return $result->num_rows > 0;
@@ -128,14 +128,14 @@ class CityModel
         try {
             // Sanitize city name
             $cityName = $this->sanitizeCityName($cityName);
-            
+
             $stmt = $this->conn->prepare(
                 "INSERT INTO cities (city_name, is_predefined, created_by, usage_count) 
                  VALUES (?, ?, ?, 0)"
             );
-            
+
             $stmt->bind_param("sis", $cityName, $isPredefined, $createdBy);
-            
+
             if ($stmt->execute()) {
                 return $this->conn->insert_id;
             }
@@ -153,13 +153,13 @@ class CityModel
     {
         try {
             $cityName = $this->sanitizeCityName($cityName);
-            
+
             $stmt = $this->conn->prepare(
                 "UPDATE cities 
                  SET city_name = ?, is_predefined = ? 
                  WHERE city_id = ?"
             );
-            
+
             $stmt->bind_param("sii", $cityName, $isPredefined, $cityId);
             return $stmt->execute();
         } catch (Exception $e) {
@@ -213,7 +213,7 @@ class CityModel
                 'predefined' => 0,
                 'user_added' => 0
             ];
-            
+
             // Count cities where created_by != 'system' for user-added
             $result = $this->conn->query(
                 "SELECT 
@@ -223,11 +223,11 @@ class CityModel
                  FROM cities 
                  WHERE is_deleted = 0"
             );
-            
+
             if ($row = $result->fetch_assoc()) {
                 $stats = $row;
             }
-            
+
             return $stats;
         } catch (Exception $e) {
             error_log("CityModel::getStatistics Error: " . $e->getMessage());
@@ -243,13 +243,13 @@ class CityModel
         // Remove extra spaces
         $cityName = trim($cityName);
         $cityName = preg_replace('/\s+/', ' ', $cityName);
-        
+
         // Capitalize first letter of each word
         $cityName = ucwords(strtolower($cityName));
-        
-        // Remove special characters (keep letters, spaces, hyphens)
-        $cityName = preg_replace('/[^a-zA-Z\s\-]/', '', $cityName);
-        
+
+        // Remove special characters (keep letters, numbers, spaces, hyphens)
+        $cityName = preg_replace('/[^a-zA-Z0-9\s\-]/', '', $cityName);
+
         return $cityName;
     }
 
@@ -289,4 +289,3 @@ class CityModel
         }
     }
 }
-?>

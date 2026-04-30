@@ -24,14 +24,20 @@ class ClientModel
         return $clients;
     }
 
-    // =================== DUPLICATE CHECK ===================
-    public function isDuplicate($name, $phone)
+    public function getDuplicateDetails($name, $phone)
     {
-        $stmt = $this->conn->prepare("SELECT client_id FROM clients WHERE (client_name = ? OR phone_primary = ?) AND is_active = 1");
+        $stmt = $this->conn->prepare("SELECT client_name, phone_primary FROM clients WHERE (client_name = ? OR phone_primary = ?) AND is_active = 1 LIMIT 1");
         $stmt->bind_param("ss", $name, $phone);
         $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->num_rows > 0;
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function getDuplicateDetailsForUpdate($id, $name, $phone)
+    {
+        $stmt = $this->conn->prepare("SELECT client_name, phone_primary FROM clients WHERE (client_name = ? OR phone_primary = ?) AND client_id != ? AND is_active = 1 LIMIT 1");
+        $stmt->bind_param("ssi", $name, $phone, $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
     }
 
     // =================== INSERT ===================
@@ -61,4 +67,3 @@ class ClientModel
         return $stmt->execute();
     }
 }
-?>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sample Records Model
  * Laboratory Management System
@@ -17,7 +18,7 @@ require_once __DIR__ . '/../../Config/Database.php';
 class SampleStatusModel
 {
     private $conn;
-    
+
     // Valid status values
     private const VALID_STATUSES = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
     private const VALID_PAYMENT_STATUSES = ['Pending', 'Not Paid', 'Paid'];
@@ -26,7 +27,7 @@ class SampleStatusModel
     {
         $db = new Database();
         $this->conn = $db->connect();
-        
+
         if (!$this->conn) {
             throw new Exception("Database connection failed");
         }
@@ -158,6 +159,11 @@ class SampleStatusModel
 
             $oldStatus = $currentData['status'];
 
+            // FINALITY: Cannot change status once it's 'Completed'
+            if ($oldStatus === 'Completed') {
+                throw new Exception("Cannot change status: Sample is already Completed. This action is final.");
+            }
+
             // Don't update if status is the same
             if ($oldStatus === $newStatus) {
                 $this->conn->rollback();
@@ -171,7 +177,7 @@ class SampleStatusModel
                                               status_updated_by = ?
                                           WHERE sample_id = ?");
             $stmt->bind_param("ssi", $newStatus, $updatedBy, $sampleId);
-            
+
             if (!$stmt->execute()) {
                 throw new Exception("Failed to update sample status");
             }
@@ -186,7 +192,6 @@ class SampleStatusModel
             // Commit transaction
             $this->conn->commit();
             return true;
-
         } catch (Exception $e) {
             // Rollback on error
             $this->conn->rollback();
@@ -203,9 +208,10 @@ class SampleStatusModel
      * @param string $newPaymentStatus New payment status (Pending/Not Paid/Paid)
      * @param string|null $referenceNumber Payment reference (required for Paid)
      * @param string $updatedBy User who updated
+     * @param string|null $paymentDate Custom payment date (required for Paid)
      * @return array ['success' => bool, 'message' => string]
      */
-    public function updatePaymentStatus($sampleId, $newPaymentStatus, $referenceNumber, $updatedBy)
+    public function updatePaymentStatus($sampleId, $newPaymentStatus, $referenceNumber, $updatedBy, $paymentDate = null)
     {
         // Start transaction
         $this->conn->begin_transaction();
@@ -241,52 +247,73 @@ class SampleStatusModel
                 if (empty($referenceNumber) || trim($referenceNumber) === '') {
                     throw new Exception("Reference number is required when marking as Paid");
                 }
-                
+
                 // Sanitize reference number
                 $referenceNumber = trim($referenceNumber);
-                
+
                 if (strlen($referenceNumber) > 100) {
                     throw new Exception("Reference number too long (max 100 characters)");
                 }
             }
 
-            // Don't update if status is the same
-            if ($oldPaymentStatus === $newPaymentStatus) {
+            // Don't update if status is the same, UNLESS it's Paid
+            // For Paid, we want to allow updating the reference number or payment date
+            if ($oldPaymentStatus === $newPaymentStatus && $newPaymentStatus !== 'Paid') {
                 $this->conn->rollback();
                 return [
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Payment status unchanged'
                 ];
+            }
+
+            // Clean up fields if not paid (though Paid is final, added for safety)
+            if ($newPaymentStatus !== 'Paid') {
+                $referenceNumber = null;
+                $paymentDate = null;
+            } else if (empty($paymentDate)) {
+                $tz = new DateTimeZone('Asia/Colombo');
+                $now = new DateTime('now', $tz);
+                $paymentDate = $now->format('Y-m-d H:i:s');
+            } else {
+                // Formatting date to ensure it saves cleanly (append time if it's just a date)
+                if (strlen($paymentDate) === 10) {
+                    $tz = new DateTimeZone('Asia/Colombo');
+                    $now = new DateTime('now', $tz);
+                    $paymentDate .= ' ' . $now->format('H:i:s');
+                }
             }
 
             // Update samples table
             $stmt = $this->conn->prepare("UPDATE samples 
                                           SET payment_status = ?,
                                               payment_reference = ?,
-                                              payment_date = NOW(),
+                                              payment_date = ?,
                                               payment_updated_by = ?
                                           WHERE sample_id = ?");
-            $stmt->bind_param("sssi", $newPaymentStatus, $referenceNumber, $updatedBy, $sampleId);
-            
+            $stmt->bind_param("ssssi", $newPaymentStatus, $referenceNumber, $paymentDate, $updatedBy, $sampleId);
+
             if (!$stmt->execute()) {
+                // Check for duplicate reference number (MySQL error 1062)
+                if ($this->conn->errno === 1062) {
+                    throw new Exception("This reference number already exists. Please use a unique reference number.");
+                }
                 throw new Exception("Failed to update payment status");
             }
 
             // Commit transaction
             $this->conn->commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Payment status updated successfully',
                 'old_status' => $oldPaymentStatus,
                 'new_status' => $newPaymentStatus
             ];
-
         } catch (Exception $e) {
             // Rollback on error
             $this->conn->rollback();
             error_log("Payment update error: " . $e->getMessage());
-            
+
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -445,7 +472,7 @@ class SampleStatusModel
                     SUM(CASE WHEN payment_status = 'Paid' THEN grand_total ELSE 0 END) as paid_amount,
                     SUM(CASE WHEN payment_status != 'Paid' THEN grand_total ELSE 0 END) as unpaid_amount
                 FROM samples";
-        
+
         $result = $this->conn->query($sql);
         return $result->fetch_assoc();
     }
