@@ -9,7 +9,7 @@
  * @version 1.0
  */
 
-require_once __DIR__ . '/../../Config/roles-permissions.php';
+require_once __DIR__ . '/../../Config/RolePermissions.php';
 
 // Get current page
 $currentPage = $_GET['page'] ?? 'dashboard';
