@@ -7,6 +7,20 @@
  * Display user info from session ($currentUser from auth.php)
  */
 
+// Safety check: Ensure user variables exist
+if (!isset($currentUser) || !isset($userInitials)) {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $currentUser = $currentUser ?? [
+        'fullname' => $_SESSION['fullname'] ?? 'User',
+        'email' => $_SESSION['email'] ?? '',
+        'role' => $_SESSION['role'] ?? 'Guest'
+    ];
+    if (!isset($userInitials)) {
+        $names = explode(' ', trim($currentUser['fullname']));
+        $userInitials = strtoupper(substr($names[0], 0, 1)) . (isset($names[1]) ? strtoupper(substr($names[1], 0, 1)) : '');
+    }
+}
+
 // Get page title based on current page
 $pageTitles = [
     'dashboard' => 'Dashboard',
