@@ -1117,29 +1117,55 @@ function validateStep(step) {
       return false;
     }
 
-    let allValid = true;
+    let isStepValid = true;
     document.querySelectorAll(".sample-card").forEach((card, idx) => {
-      const sampleNum = idx + 1;
-      const name = card.querySelector(".sample-name-input").value.trim();
-      const value = card.querySelector(".sample-value").value.trim();
-      const unit = card.querySelector(".sample-unit").value;
+      const nameEl = card.querySelector(".sample-name-input");
+      const valueEl = card.querySelector(".sample-value");
+      const unitEl = card.querySelector(".sample-unit");
 
-      if (!name) {
-        showToast(`Sample ${sampleNum}: Name is required`, "error");
-        card.querySelector(".sample-name-input").classList.add("is-invalid");
-        allValid = false;
-      } else if (!value) {
-        showToast(`Sample ${sampleNum}: Value is required`, "error");
-        card.querySelector(".sample-value").classList.add("is-invalid");
-        allValid = false;
-      } else if (!unit) {
-        showToast(`Sample ${sampleNum}: Unit is required`, "error");
-        card.querySelector(".sample-unit").classList.add("is-invalid");
-        allValid = false;
+      // Validate Name
+      if (!nameEl.value.trim()) {
+        nameEl.classList.add("is-invalid");
+        isStepValid = false;
+      } else {
+        nameEl.classList.remove("is-invalid");
+        nameEl.classList.add("is-valid");
+      }
+
+      // Validate Volume
+      if (!valueEl.value.trim()) {
+        valueEl.classList.add("is-invalid");
+        isStepValid = false;
+      } else {
+        valueEl.classList.remove("is-invalid");
+        valueEl.classList.add("is-valid");
+      }
+
+      // Validate Unit
+      if (!unitEl.value) {
+        unitEl.classList.add("is-invalid");
+        isStepValid = false;
+      } else {
+        unitEl.classList.remove("is-invalid");
+        unitEl.classList.add("is-valid");
+      }
+
+      // Validate Container
+      const containerEl = card.querySelector(".sample-container");
+      if (!containerEl.value) {
+        containerEl.classList.add("is-invalid");
+        isStepValid = false;
+      } else {
+        containerEl.classList.remove("is-invalid");
+        containerEl.classList.add("is-valid");
       }
     });
 
-    return allValid;
+    if (!isStepValid) {
+        showToast("Please complete all required fields for each sample", "warning");
+    }
+
+    return isStepValid;
   }
 
   if (step === 5) {
@@ -1197,7 +1223,7 @@ function addSample() {
   const index = sampleCount;
 
   // Build container options from extra items
-  let containerOptions = '<option value="">None</option>';
+  let containerOptions = '<option value="">Select Container Type</option>';
   allExtraItems.forEach((item) => {
     containerOptions += `<option value="${item.item_id}">${escapeHtml(item.item_name)} (${item.item_value}${item.item_unit})</option>`;
   });
@@ -1219,10 +1245,12 @@ function addSample() {
           <input type="hidden" class="sample-category-id" value="">
           <input type="hidden" class="sample-category-name" value="">
           <div class="sample-name-autocomplete"></div>
+          <div class="invalid-feedback">Sample name is required</div>
         </div>
         <div class="col-md-3">
           <label class="fw-bold">Volume <span class="text-danger">*</span></label>
           <input type="text" class="form-control sample-value" required>
+          <div class="invalid-feedback">Volume is required</div>
         </div>
         <div class="col-md-3">
           <label class="fw-bold">Unit <span class="text-danger">*</span></label>
@@ -1234,6 +1262,7 @@ function addSample() {
             <option value="L">L</option>
             <option value="kg">kg</option>
           </select>
+          <div class="invalid-feedback">Unit is required</div>
         </div>
         <div class="col-md-6">
           <label class="fw-bold">Client Sample Code</label>
@@ -1249,8 +1278,9 @@ function addSample() {
         </div>
         <div class="col-12"><hr class="my-2 opacity-25"></div>
         <div class="col-md-4">
-          <label class="fw-bold">Container Type</label>
-          <select class="form-select sample-container">${containerOptions}</select>
+          <label class="fw-bold">Container Type <span class="text-danger">*</span></label>
+          <select class="form-select sample-container" required>${containerOptions}</select>
+          <div class="invalid-feedback">Container type is required</div>
         </div>
         <div class="col-md-4">
           <label class="fw-bold">Container Damage</label>
@@ -1328,6 +1358,14 @@ function addSample() {
     }
   });
 
+  const sampleContainer = card.querySelector(".sample-container");
+  sampleContainer.addEventListener("change", function () {
+    if (this.value) {
+      this.classList.remove("is-invalid");
+      this.classList.add("is-valid");
+    }
+  });
+
   // Temperature slider toggle
   const tempSelect = card.querySelector(".sample-temp");
   const sliderCol = card.querySelector(".temp-slider-col");
@@ -1388,12 +1426,8 @@ async function handleSampleNameSearch(input) {
     if (data.success && data.names && data.names.length > 0) {
       let html = "";
       data.names.forEach((n) => {
-        const catBadge = n.category_name
-          ? `<span class="badge bg-secondary ms-1">${escapeHtml(n.category_name)}</span>`
-          : "";
         html += `<div class="autocomplete-item" data-name="${escapeHtml(n.sample_name)}" data-category-id="${n.category_id || ""}" data-category-name="${escapeHtml(n.category_name || "")}">
-          ${escapeHtml(n.sample_name)} ${catBadge}
-          <span class="autocomplete-usage">${n.usage_count} uses</span>
+          ${escapeHtml(n.sample_name)}
         </div>`;
       });
       dropdown.innerHTML = html;

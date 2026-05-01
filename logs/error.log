@@ -1739,3 +1739,5 @@
 [2026-05-01 06:49:36] [TotalValidation] Total mismatch - Frontend: Rs. 5000, Backend: Rs. 2625, Diff: Rs. 2375, Combos: 1
 [2026-05-01 07:04:26] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Coliforms + Escherichia coli + Faecal Coliforms) | Individual: Rs. 5000 | Combo: Rs. 2625 | Savings: Rs. 2375 (47.5%)
 [2026-05-01 07:04:26] [TotalValidation] Total mismatch - Frontend: Rs. 5000, Backend: Rs. 2625, Diff: Rs. 2375, Combos: 1
+[2026-05-01 11:12:14] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Coliforms + Escherichia coli + Faecal Coliforms) | Individual: Rs. 5000 | Combo: Rs. 2625 | Savings: Rs. 2375 (47.5%)
+[2026-05-01 11:12:14] [TotalValidation] Total mismatch - Frontend: Rs. 5000, Backend: Rs. 2625, Diff: Rs. 2375, Combos: 1
