@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * Sample Submission Form - COMPLETE VERSION 3.0
@@ -75,8 +75,8 @@ $userId = $_SESSION['user_id'] ?? 0;
                     <!-- STEP 1: CLIENT INFORMATION -->
                     <div class="step active" data-step="1">
                         <h2 class="step-title">
-                            <i class="fas fa-user"></i> Step 1: Client Information
-                        </h2>
+                                <i class="fas fa-user"></i> Step 1: Client Information
+                            </h2>
 
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i> Search for existing clients or enter new client details
@@ -176,7 +176,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                             <i class="fas fa-calendar-alt"></i> Step 3: Submission Details
                         </h2>
 
-                        <!-- ✅ SERVER TIME DISPLAY -->
+                        <!-- âœ… SERVER TIME DISPLAY -->
                         <div class="alert alert-info mb-4">
                             <div class="row align-items-center">
                                 <div class="col-md-6">
@@ -429,3 +429,4 @@ $userId = $_SESSION['user_id'] ?? 0;
 <!-- Load Scripts -->
 <link rel="stylesheet" href="public/assets/css/sample-submission.css">
 <script src="public/assets/js/sample-submission.js"></script>
+
