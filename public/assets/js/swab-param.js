@@ -146,6 +146,16 @@ async function loadComboParametersDropdown() {
     }));
 
     comboChoices.setChoices(choiceOptions, "value", "label", true);
+
+    // Real-time listener for multi-select
+    selectEl.addEventListener('change', () => {
+        const selected = comboChoices.getValue(true);
+        const err = document.getElementById("comboParametersError");
+        if (selected.length >= 2) {
+            err.style.display = "none";
+            document.querySelector('.choices').classList.remove('is-invalid-choices');
+        }
+    });
   } else {
     console.error("Failed to load combo parameters:", result);
     showToast("Failed to load parameters for combo", "danger");
@@ -337,19 +347,46 @@ function closeModal() {
 }
 
 // === VALIDATION ===
-function validateSwabInput(inputEl, errorEl) {
-  const val = inputEl.value.trim();
-  if (val === "") {
-    inputEl.classList.add("is-invalid");
-    errorEl.textContent = "This field is required.";
-    errorEl.style.display = "block";
-    return false;
-  } else {
-    inputEl.classList.remove("is-invalid");
-    inputEl.classList.add("is-valid");
-    errorEl.style.display = "none";
-    return true;
+function validateSwabInput(inputEl, errorEl, type = 'text') {
+  const val = inputEl ? inputEl.value.trim() : null;
+  let isValid = true;
+  let msg = "";
+
+  if (type === 'text' && val === "") {
+    isValid = false;
+    msg = "This field is required.";
+  } else if (type === 'number' && (isNaN(val) || parseFloat(val) < 0)) {
+    isValid = false;
+    msg = "Price cannot be negative.";
+  } else if (type === 'choices') {
+    const selected = comboChoices ? comboChoices.getValue(true) : [];
+    if (selected.length < 2) {
+      isValid = false;
+      msg = "Please select at least 2 parameters.";
+    }
   }
+
+  if (!isValid) {
+    if (type === 'choices') {
+        document.querySelector('.choices').classList.add('is-invalid-choices');
+    } else if (inputEl) {
+        inputEl.classList.add("is-invalid");
+        inputEl.classList.remove("is-valid");
+    }
+    if (errorEl) {
+        errorEl.textContent = msg;
+        errorEl.style.display = "block";
+    }
+  } else {
+    if (type === 'choices') {
+        document.querySelector('.choices').classList.remove('is-invalid-choices');
+    } else if (inputEl) {
+        inputEl.classList.remove("is-invalid");
+        inputEl.classList.add("is-valid");
+    }
+    if (errorEl) errorEl.style.display = "none";
+  }
+  return isValid;
 }
 
 document
@@ -358,7 +395,7 @@ document
     validateSwabInput(this, document.getElementById("parameterSelectError"));
   });
 document.getElementById("swabPrice").addEventListener("input", function () {
-  validateSwabInput(this, document.getElementById("swabPriceError"));
+  validateSwabInput(this, document.getElementById("swabPriceError"), 'number');
 });
 document.getElementById("swabStatus").addEventListener("change", function () {
   validateSwabInput(this, document.getElementById("swabStatusError"));
@@ -374,6 +411,8 @@ function clearSwabValidations() {
   // Also clear combo validations
   const comboErr = document.getElementById("comboParametersError");
   if (comboErr) comboErr.style.display = "none";
+  const choices = document.querySelector('.choices');
+  if (choices) choices.classList.remove('is-invalid-choices');
 }
 
 // === SAVE (INSERT/UPDATE - Individual & Combo) ===
@@ -386,10 +425,11 @@ swabPriceForm.addEventListener("submit", async (e) => {
   const vPrice = validateSwabInput(
     document.getElementById("swabPrice"),
     document.getElementById("swabPriceError"),
+    'number'
   );
   const vStatus = validateSwabInput(
     document.getElementById("swabStatus"),
-    document.getElementById("swabStatusError"),
+    document.getElementById("swabStatusError")
   );
 
   if (type === "individual") {
@@ -398,12 +438,12 @@ swabPriceForm.addEventListener("submit", async (e) => {
     if (mode === "create") {
       vParam = validateSwabInput(
         document.getElementById("parameterSelect"),
-        document.getElementById("parameterSelectError"),
+        document.getElementById("parameterSelectError")
       );
     }
 
     if (!vPrice || !vStatus || !vParam) {
-      showToast("Please correct the highlighted errors.", "danger");
+      showToast("Please correct the highlighted errors.", "warning");
       return;
     }
 
@@ -427,25 +467,27 @@ swabPriceForm.addEventListener("submit", async (e) => {
       loadSwabPrices();
     } else if (result.status === "info") {
       showToast(result.message || "No update detected.", "info");
+      closeModal();
     } else {
-      showToast(result.message || "Failed to save", "danger");
+        if (result.message && result.message.includes("already exists")) {
+            const el = document.getElementById("parameterSelect");
+            const err = document.getElementById("parameterSelectError");
+            el.classList.add("is-invalid");
+            err.textContent = result.message;
+            err.style.display = "block";
+        }
+        showToast(result.message || "Failed to save", "danger");
     }
   } else {
     // Combo validation
+    const vCombo = validateSwabInput(null, document.getElementById("comboParametersError"), 'choices');
+
+    if (!vPrice || !vStatus || !vCombo) {
+      showToast("Please correct the highlighted errors.", "warning");
+      return;
+    }
+
     const selectedValues = comboChoices ? comboChoices.getValue(true) : [];
-    if (selectedValues.length < 2) {
-      const comboErr = document.getElementById("comboParametersError");
-      comboErr.textContent = "Please select at least 2 parameters.";
-      comboErr.style.display = "block";
-      showToast("Please select at least 2 parameters for the combo.", "danger");
-      return;
-    }
-
-    if (!vPrice || !vStatus) {
-      showToast("Please correct the highlighted errors.", "danger");
-      return;
-    }
-
     const data = {
       price: document.getElementById("swabPrice").value.trim(),
       is_active: document.getElementById("swabStatus").value,
@@ -461,7 +503,13 @@ swabPriceForm.addEventListener("submit", async (e) => {
       closeModal();
       loadSwabPrices();
     } else {
-      showToast(result.message || "Failed to save combo", "danger");
+        if (result.message && result.message.includes("combination already exists")) {
+            const err = document.getElementById("comboParametersError");
+            err.textContent = result.message;
+            err.style.display = "block";
+            document.querySelector('.choices').classList.add('is-invalid-choices');
+        }
+        showToast(result.message || "Failed to save combo", "danger");
     }
   }
 });
