@@ -180,7 +180,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                         <div class="alert alert-info mb-4">
                             <div class="row align-items-center">
                                 <div class="col-md-6">
-                                    <i class="fas fa-server"></i> <strong>Server Time:</strong>
+                                    <i class="fas fa-clock"></i> <strong>Local Time:</strong>
                                     <span id="currentServerTime" class="fw-bold text-primary ms-2">Loading...</span>
                                 </div>
                                 <div class="col-md-6 text-md-end">
@@ -216,16 +216,18 @@ $userId = $_SESSION['user_id'] ?? 0;
                         <div class="row gx-lg-5 gy-4 mb-4">
                             <!-- COLLECTED DATE -->
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Sample Collected Date</label>
-                                <input type="date" class="form-control" id="collectedDate">
+                                <label class="form-label fw-bold">Sample Collected Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="collectedDate" required>
                                 <small class="text-muted d-block mt-1">Date originally collected by client</small>
+                                <div class="invalid-feedback" id="collectedDateError"></div>
                             </div>
 
                             <!-- COLLECTED TIME -->
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Sample Collected Time</label>
-                                <input type="time" class="form-control" id="collectedTime">
+                                <label class="form-label fw-bold">Sample Collected Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="collectedTime" required>
                                 <small class="text-muted d-block mt-1">Time of original sample collection</small>
+                                <div class="invalid-feedback" id="collectedTimeError"></div>
                             </div>
                         </div>
 
@@ -262,6 +264,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                                     </div>
                                 </div>
                                 <small class="text-muted d-block mt-1">Specify if NARA staff collected the sample</small>
+                                <div class="invalid-feedback" id="originError"></div>
                             </div>
                         </div>
 

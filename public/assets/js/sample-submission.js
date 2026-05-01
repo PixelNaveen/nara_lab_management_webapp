@@ -598,6 +598,31 @@ function initializeRealTimeValidation() {
     });
   }
 
+  // Collected Date
+  const collectedDateEl = document.getElementById("collectedDate");
+  if (collectedDateEl) {
+    collectedDateEl.addEventListener("change", function () {
+      validateStep(3); // Trigger sweep to check date relationships
+    });
+  }
+
+  // Collected Time
+  const collectedTimeEl = document.getElementById("collectedTime");
+  if (collectedTimeEl) {
+    collectedTimeEl.addEventListener("change", function () {
+      validateStep(3); // Trigger sweep to check time relationships
+    });
+  }
+
+  // Sample Drawing Origin
+  document.querySelectorAll('input[name="is_drawn_by_nara"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const originError = document.getElementById("originError");
+        if (originError) originError.style.display = "none";
+        document.querySelector('.segmented-control').classList.remove('is-invalid');
+    });
+  });
+
   // Email Validation
   const receiptEmailEl = document.getElementById("receiptEmail");
   if (receiptEmailEl) {
@@ -1013,23 +1038,77 @@ function validateStep(step) {
   }
 
   if (step === 3) {
-    if (!validateReceivedDate()) {
-      showToast("Please fix received date errors", "error");
-      return false;
+    const rDate = document.getElementById("receivedDate").value;
+    const rTime = document.getElementById("receivedTime").value;
+    const cDate = document.getElementById("collectedDate").value;
+    const cTime = document.getElementById("collectedTime").value;
+    const tDate = document.getElementById("tentativeDate").value;
+    const originSelected = document.querySelector('input[name="is_drawn_by_nara"]:checked');
+
+    let isStepValid = true;
+
+    // Validate Received Date/Time
+    if (!validateReceivedDate()) isStepValid = false;
+    if (!validateReceivedTime()) isStepValid = false;
+
+    // Validate Collected Date
+    if (!cDate) {
+        showError("collectedDate", "Collected date is required");
+        isStepValid = false;
+    } else {
+        const received = new Date(rDate);
+        const collected = new Date(cDate);
+        if (collected > received) {
+            showError("collectedDate", "Cannot be after Received Date");
+            isStepValid = false;
+        } else {
+            showSuccess("collectedDate");
+        }
     }
 
-    if (!validateReceivedTime()) {
-      showToast("Please fix received time errors", "error");
-      return false;
+    // Validate Collected Time
+    if (!cTime) {
+        showError("collectedTime", "Collected time is required");
+        isStepValid = false;
+    } else {
+        if (rDate && cDate && rDate === cDate && rTime) {
+            // Same day - must compare times
+            if (cTime >= rTime) {
+                showError("collectedTime", "Must be before Received Time");
+                isStepValid = false;
+            } else {
+                showSuccess("collectedTime");
+            }
+        } else {
+            showSuccess("collectedTime");
+        }
     }
 
-    if (!validateTentativeDate()) {
-      showToast("Please fix tentative date errors", "error");
-      return false;
+    // Validate Tentative Date
+    if (!validateTentativeDate()) isStepValid = false;
+
+    // Validate Origin
+    if (!originSelected) {
+        const originErr = document.getElementById("originError");
+        const originContainer = document.querySelector(".segmented-control");
+        if (originErr) {
+            originErr.textContent = "Please select sample origin";
+            originErr.style.display = "block";
+        }
+        if (originContainer) originContainer.classList.add("is-invalid");
+        isStepValid = false;
+    } else {
+        const originErr = document.getElementById("originError");
+        const originContainer = document.querySelector(".segmented-control");
+        if (originErr) originErr.style.display = "none";
+        if (originContainer) originContainer.classList.remove("is-invalid");
     }
 
-    // Additional charges are auto-calculated from extra items - always valid
-    return true;
+    if (!isStepValid) {
+      showToast("Please correct the highlighted errors in Submission Details", "warning");
+    }
+
+    return isStepValid;
   }
 
   if (step === 4) {
