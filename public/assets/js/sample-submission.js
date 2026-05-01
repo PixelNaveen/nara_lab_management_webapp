@@ -108,7 +108,7 @@ function showError(inputId, message) {
 
   if (errorLabel) {
     errorLabel.textContent = message;
-    errorLabel.classList.add("show");
+    errorLabel.style.display = "block";
   }
 }
 
@@ -121,7 +121,7 @@ function hideError(inputId) {
   }
 
   if (errorLabel) {
-    errorLabel.classList.remove("show");
+    errorLabel.style.display = "none";
   }
 }
 
@@ -530,6 +530,8 @@ function initializeRealTimeValidation() {
         showError("clientName", "Client name is required");
       } else if (value.length < 3) {
         showError("clientName", "Client name must be at least 3 characters");
+      } else if (!/^[a-zA-Z\s.]+$/.test(value)) {
+        showError("clientName", "Name can only contain letters, spaces, and dots");
       } else {
         showSuccess("clientName");
       }
@@ -546,17 +548,55 @@ function initializeRealTimeValidation() {
         showError("phonePrimary", "Phone number is required");
       } else if (value.length > 0 && value[0] !== "0") {
         showError("phonePrimary", "Phone must start with 0");
-      } else if (value.length > 0 && value.length < 10) {
-        showError("phonePrimary", `Enter ${10 - value.length} more digit(s)`);
       } else if (value.length === 10 && /^0\d{9}$/.test(value)) {
         showSuccess("phonePrimary");
       } else if (value.length > 10) {
         showError("phonePrimary", "Phone must be exactly 10 digits");
+      } else {
+          // If in between (e.g. 5 digits), we don't necessarily show error until blur or next
+          // but if it was already invalid, we keep showing it
+          if (this.classList.contains('is-invalid')) {
+              showError("phonePrimary", `Enter ${10 - value.length} more digit(s)`);
+          }
       }
     });
   }
 
-  // Additional charges are now auto-calculated from extra items — no manual validation needed
+  // Address
+  const addressEl = document.getElementById("addressLine1");
+  if (addressEl) {
+    addressEl.addEventListener("input", function () {
+      if (this.value.trim().length > 0) {
+        showSuccess("addressLine1");
+      } else {
+        showError("addressLine1", "Address is required");
+      }
+    });
+  }
+
+  // City
+  const cityEl = document.getElementById("city");
+  if (cityEl) {
+    cityEl.addEventListener("input", function () {
+      if (this.value.trim().length > 0) {
+        showSuccess("city");
+      } else {
+        showError("city", "City is required");
+      }
+    });
+  }
+
+  // Contact Person
+  const contactEl = document.getElementById("contactPerson");
+  if (contactEl) {
+    contactEl.addEventListener("input", function () {
+      if (this.value.trim().length > 0) {
+        showSuccess("contactPerson");
+      } else {
+        showError("contactPerson", "Contact person is required");
+      }
+    });
+  }
 
   // Email Validation
   const receiptEmailEl = document.getElementById("receiptEmail");
@@ -662,6 +702,9 @@ function selectClientFromSearch() {
 
   showSuccess("clientName");
   showSuccess("phonePrimary");
+  showSuccess("addressLine1");
+  showSuccess("city");
+  showSuccess("contactPerson");
 
   showToast("Client selected successfully", "success");
 }
@@ -888,35 +931,75 @@ function validateStep(step) {
   console.log("🔍 Validating step:", step);
 
   if (step === 1) {
-    const clientName = document.getElementById("clientName").value.trim();
-    const phone = document.getElementById("phonePrimary").value.trim();
-
-    if (!clientName) {
-      showToast("Client name is required", "error");
-      showError("clientName", "Client name is required");
-      return false;
-    }
-
-    if (clientName.length < 3) {
-      showToast("Client name must be at least 3 characters", "error");
-      showError("clientName", "Client name must be at least 3 characters");
-      return false;
-    }
-
-    if (!phone) {
-      showToast("Phone number is required", "error");
-      showError("phonePrimary", "Phone number is required");
-      return false;
-    }
-
+    const clientNameEl = document.getElementById("clientName");
+    const phoneEl = document.getElementById("phonePrimary");
+    const addressEl = document.getElementById("addressLine1");
+    const cityEl = document.getElementById("city");
+    const contactEl = document.getElementById("contactPerson");
+    
+    const clientName = clientNameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const address = addressEl.value.trim();
+    const city = cityEl.value.trim();
+    const contact = contactEl.value.trim();
     const phoneClean = phone.replace(/[\s-]/g, "");
-    if (!/^0\d{9}$/.test(phoneClean)) {
-      showToast("Phone must be 10 digits starting with 0", "error");
-      showError("phonePrimary", "Phone must be 10 digits starting with 0");
-      return false;
+
+    let isStepValid = true;
+
+    // Validate Name
+    if (!clientName) {
+      showError("clientName", "Client name is required");
+      isStepValid = false;
+    } else if (clientName.length < 3) {
+      showError("clientName", "Client name must be at least 3 characters");
+      isStepValid = false;
+    } else if (!/^[a-zA-Z\s.]+$/.test(clientName)) {
+      showError("clientName", "Name can only contain letters, spaces, and dots");
+      isStepValid = false;
+    } else {
+      showSuccess("clientName");
     }
 
-    return true;
+    // Validate Phone
+    if (!phone) {
+      showError("phonePrimary", "Phone number is required");
+      isStepValid = false;
+    } else if (!/^0\d{9}$/.test(phoneClean)) {
+      showError("phonePrimary", "Enter exactly 10 digits starting with 0");
+      isStepValid = false;
+    } else {
+      showSuccess("phonePrimary");
+    }
+
+    // Validate Address
+    if (!address) {
+      showError("addressLine1", "Address is required");
+      isStepValid = false;
+    } else {
+      showSuccess("addressLine1");
+    }
+
+    // Validate City
+    if (!city) {
+      showError("city", "City is required");
+      isStepValid = false;
+    } else {
+      showSuccess("city");
+    }
+
+    // Validate Contact Person
+    if (!contact) {
+      showError("contactPerson", "Contact person is required");
+      isStepValid = false;
+    } else {
+      showSuccess("contactPerson");
+    }
+
+    if (!isStepValid) {
+      showToast("Please correct the highlighted errors in Client Information", "warning");
+    }
+
+    return isStepValid;
   }
 
   if (step === 2) {
@@ -1052,18 +1135,18 @@ function addSample() {
       </div>
       <div class="row g-3">
         <div class="col-md-6 position-relative">
-          <label>Sample Name <span class="text-danger">*</span></label>
+          <label class="fw-bold">Sample Name <span class="text-danger">*</span></label>
           <input type="text" class="form-control sample-name-input" placeholder="Type to search..." required>
           <input type="hidden" class="sample-category-id" value="">
           <input type="hidden" class="sample-category-name" value="">
           <div class="sample-name-autocomplete"></div>
         </div>
         <div class="col-md-3">
-          <label>Volume <span class="text-danger">*</span></label>
+          <label class="fw-bold">Volume <span class="text-danger">*</span></label>
           <input type="text" class="form-control sample-value" required>
         </div>
         <div class="col-md-3">
-          <label>Unit <span class="text-danger">*</span></label>
+          <label class="fw-bold">Unit <span class="text-danger">*</span></label>
           <select class="form-select sample-unit" required>
             <option value="">Select</option>
             <option value="mL">mL</option>
@@ -1074,38 +1157,38 @@ function addSample() {
           </select>
         </div>
         <div class="col-md-6">
-          <label>Client Sample Code</label>
+          <label class="fw-bold">Client Sample Code</label>
           <input type="text" class="form-control sample-client-code">
         </div>
         <div class="col-md-6">
-          <label>Sampling Location</label>
+          <label class="fw-bold">Sampling Location</label>
           <input type="text" class="form-control sample-location">
         </div>
         <div class="col-12">
-          <label>Reason for Analysis</label>
+          <label class="fw-bold">Reason for Analysis</label>
           <textarea class="form-control sample-reason" rows="2"></textarea>
         </div>
         <div class="col-12"><hr class="my-2 opacity-25"></div>
         <div class="col-md-4">
-          <label>Container Type</label>
+          <label class="fw-bold">Container Type</label>
           <select class="form-select sample-container">${containerOptions}</select>
         </div>
         <div class="col-md-4">
-          <label>Container Damage</label>
+          <label class="fw-bold">Container Damage</label>
           <select class="form-select sample-damage"><option>No</option><option>Yes</option></select>
         </div>
         <div class="col-md-4">
-          <label>Validity</label>
+          <label class="fw-bold">Validity</label>
           <select class="form-select sample-validity"><option>OK</option><option>Damaged</option><option>Expired</option></select>
         </div>
         <div class="col-md-4">
-          <label>Temperature Condition</label>
+          <label class="fw-bold">Temperature Condition</label>
           <select class="form-select sample-temp">
             <option>Ambient</option><option>Chilled</option><option>Frozen</option>
           </select>
         </div>
         <div class="col-md-4 temp-slider-col" style="display:none;">
-          <label>Temperature (°C)</label>
+          <label class="fw-bold">Temperature (°C)</label>
           <div class="temp-slider-wrapper">
             <div class="d-flex align-items-center gap-2 mb-1">
               <span class="temp-slider-value badge bg-primary">4.0°C</span>

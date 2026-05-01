@@ -84,40 +84,45 @@ $userId = $_SESSION['user_id'] ?? 0;
 
                         <!-- Client Search -->
                         <div class="mb-4 position-relative">
-                            <label class="form-label">Search Client</label>
+                            <label class="form-label fw-bold">Search Client</label>
                             <input type="text" class="form-control" id="clientSearch"
                                 placeholder="Search by name, phone, or contact person..." autocomplete="off">
                             <div class="client-results" id="clientResults"></div>
-                            <span class="error-label" id="clientSearchError"></span>
+                            <div class="invalid-feedback" id="clientSearchError"></div>
                         </div>
 
                         <!-- Client Details -->
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">
+                                <label class="form-label fw-bold">
                                     Client Name <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control" id="clientName" required>
-                                <span class="error-label" id="clientNameError"></span>
+                                <div class="invalid-feedback" id="clientNameError"></div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">
+                                <label class="form-label fw-bold">
                                     Primary Phone <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control" id="phonePrimary"
                                     required placeholder="0XXXXXXXXX" maxlength="10">
                                 <small class="text-muted">Format: 10 digits starting with 0</small>
-                                <span class="error-label" id="phonePrimaryError"></span>
+                                <div class="invalid-feedback" id="phonePrimaryError"></div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Address</label>
-                                <input type="text" class="form-control" id="addressLine1">
+                                <label class="form-label fw-bold">
+                                    Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="addressLine1" required>
+                                <div class="invalid-feedback" id="addressLine1Error"></div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">City</label>
+                                <label class="form-label fw-bold">
+                                    City <span class="text-danger">*</span>
+                                </label>
                                 <div class="position-relative">
                                     <input type="text"
                                         class="form-control"
@@ -126,12 +131,16 @@ $userId = $_SESSION['user_id'] ?? 0;
                                         autocomplete="off">
                                     <input type="hidden" id="selectedCityId" value="">
                                     <div class="city-autocomplete" id="cityAutocomplete"></div>
+                                    <div class="invalid-feedback" id="cityError"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Contact Person</label>
-                                <input type="text" class="form-control" id="contactPerson">
+                                <label class="form-label fw-bold">
+                                    Contact Person <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="contactPerson" required>
+                                <div class="invalid-feedback" id="contactPersonError"></div>
                             </div>
                         </div>
                     </div>
@@ -158,7 +167,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 <p class="text-muted">Swab sample submission</p>
                             </div>
                         </div>
-                        <span class="error-label text-center d-block" id="submissionTypeError"></span>
+                        <div class="invalid-feedback text-center d-block" id="submissionTypeError"></div>
                     </div>
 
                     <!-- STEP 3: SUBMISSION DETAILS -->
@@ -190,7 +199,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 </label>
                                 <input type="date" class="form-control" id="receivedDate" required>
                                 <small class="text-muted d-block mt-1">Today or up to 30 days in the past</small>
-                                <span class="error-label" id="receivedDateError"></span>
+                                <div class="invalid-feedback" id="receivedDateError"></div>
                             </div>
 
                             <!-- RECEIVED TIME -->
@@ -200,7 +209,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 </label>
                                 <input type="time" class="form-control" id="receivedTime" required>
                                 <small class="text-muted d-block mt-1">Exact time sample arrived (24-hour format)</small>
-                                <span class="error-label" id="receivedTimeError"></span>
+                                <div class="invalid-feedback" id="receivedTimeError"></div>
                             </div>
                         </div>
 
@@ -230,7 +239,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                                 <small class="text-muted d-block mt-1">
                                     <i class="fas fa-info-circle"></i> Auto-calculated (Received Date + 10 days)
                                 </small>
-                                <span class="error-label" id="tentativeDateError"></span>
+                                <div class="invalid-feedback" id="tentativeDateError"></div>
                             </div>
 
                             <!-- SUBMISSION ORIGIN -->
@@ -258,7 +267,7 @@ $userId = $_SESSION['user_id'] ?? 0;
 
                             <!-- EXTRA ITEMS SECTION -->
                             <div class="col-12">
-                                <label class="form-label">
+                                <label class="form-label fw-bold">
                                     <i class="fas fa-box-open"></i> Additional Items / Charges
                                 </label>
                                 <div id="extraItemsContainer" class="extra-items-section">
@@ -344,11 +353,11 @@ $userId = $_SESSION['user_id'] ?? 0;
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Email Address (for email receipt)</label>
+                                    <label class="form-label fw-bold">Email Address (for email receipt)</label>
                                     <input type="email" class="form-control" id="receiptEmail"
                                         placeholder="client@example.com">
                                     <small class="text-muted">Optional - for sending receipt via email</small>
-                                    <span class="error-label" id="receiptEmailError"></span>
+                                    <div class="invalid-feedback" id="receiptEmailError"></div>
                                 </div>
                             </div>
                         </div>
