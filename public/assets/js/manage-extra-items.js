@@ -12,9 +12,60 @@ const deleteModal = document.getElementById('deleteModal');
 const toastContainer = document.getElementById('toastContainer');
 const itemNameInput = document.getElementById('itemName');
 
-// === REAL-TIME FILTERING ===
-itemNameInput.addEventListener('input', () => {
-    itemNameInput.value = itemNameInput.value.replace(/[^a-zA-Z\s]/g, "");
+// === VALIDATION ===
+function validateExtraItemInput(inputEl, errorEl, type = 'text') {
+    const val = inputEl.value.trim();
+    let isValid = true;
+    let msg = '';
+
+    if (val === '') {
+        isValid = false;
+        msg = 'This field is required.';
+    } else if (type === 'text' && val.length < 3) {
+        isValid = false;
+        msg = 'Must be at least 3 characters.';
+    } else if (type === 'text' && !/^[a-zA-Z\s.-]+$/.test(val)) {
+        isValid = false;
+        msg = 'Only letters, spaces, and hyphens allowed.';
+    } else if (type === 'number' && (isNaN(val) || parseFloat(val) <= 0)) {
+        isValid = false;
+        msg = 'Must be greater than 0.';
+    }
+
+    if (!isValid) {
+        inputEl.classList.add('is-invalid');
+        inputEl.classList.remove('is-valid');
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+    } else {
+        inputEl.classList.remove('is-invalid');
+        inputEl.classList.add('is-valid');
+        errorEl.style.display = 'none';
+    }
+    return isValid;
+}
+
+function clearExtraItemValidation() {
+    ['itemName', 'itemValue', 'itemUnit', 'itemPrice'].forEach(id => {
+        const el = document.getElementById(id);
+        const err = document.getElementById(id + 'Error');
+        if (el) el.classList.remove('is-invalid', 'is-valid');
+        if (err) err.style.display = 'none';
+    });
+}
+
+// Real-time validation
+document.getElementById('itemName').addEventListener('input', function() {
+    validateExtraItemInput(this, document.getElementById('itemNameError'), 'text');
+});
+document.getElementById('itemValue').addEventListener('input', function() {
+    validateExtraItemInput(this, document.getElementById('itemValueError'), 'number');
+});
+document.getElementById('itemUnit').addEventListener('change', function() {
+    validateExtraItemInput(this, document.getElementById('itemUnitError'), 'select');
+});
+document.getElementById('itemPrice').addEventListener('input', function() {
+    validateExtraItemInput(this, document.getElementById('itemPriceError'), 'number');
 });
 
 let deleteItemId = null;
@@ -144,6 +195,7 @@ function openModal(mode) {
     
     if (mode === 'create') {
         itemForm.reset();
+        clearExtraItemValidation();
         document.getElementById('itemId').value = '';
         btnSave.classList.remove('d-none');
         btnUpdate.classList.add('d-none');
@@ -153,12 +205,14 @@ function openModal(mode) {
         btnUpdate.classList.remove('d-none');
         formTitle.textContent = 'Update Item';
     }
+    clearExtraItemValidation();
 }
 
 function closeModal() {
     modalOverlay.classList.remove('active');
     document.body.style.overflow = 'auto';
     itemForm.reset();
+    clearExtraItemValidation();
 }
 
 btnNewItem.onclick = () => openModal('create');
@@ -172,6 +226,16 @@ modalOverlay.onclick = e => {
 itemForm.addEventListener('submit', e => {
     e.preventDefault();
     
+    const vName = validateExtraItemInput(document.getElementById('itemName'), document.getElementById('itemNameError'), 'text');
+    const vValue = validateExtraItemInput(document.getElementById('itemValue'), document.getElementById('itemValueError'), 'number');
+    const vUnit = validateExtraItemInput(document.getElementById('itemUnit'), document.getElementById('itemUnitError'), 'select');
+    const vPrice = validateExtraItemInput(document.getElementById('itemPrice'), document.getElementById('itemPriceError'), 'number');
+
+    if (!vName || !vValue || !vUnit || !vPrice) {
+        showToast('Please correct the highlighted errors.', 'warning');
+        return;
+    }
+    
     const data = {
         item_name: document.getElementById('itemName').value.trim(),
         item_value: document.getElementById('itemValue').value,
@@ -179,26 +243,6 @@ itemForm.addEventListener('submit', e => {
         item_price: document.getElementById('itemPrice').value,
         item_description: document.getElementById('itemDescription').value.trim()
     };
-    
-    if (data.item_name === '') {
-        showToast('Item name is required', 'warning');
-        return;
-    }
-    
-    if (parseFloat(data.item_value) <= 0) {
-        showToast('Value must be greater than 0', 'warning');
-        return;
-    }
-    
-    if (data.item_unit === '') {
-        showToast('Unit is required', 'warning');
-        return;
-    }
-    
-    if (parseFloat(data.item_price) <= 0) {
-        showToast('Price must be greater than 0', 'warning');
-        return;
-    }
     
     sendAjax('insert', data).then(res => {
         if (res.status === 'success' || res.status === 'warning') {
@@ -220,6 +264,7 @@ function attachRowEvents() {
         btn.onclick = e => {
             const row = e.target.closest('tr');
             openModal('edit');
+            clearExtraItemValidation();
             document.getElementById('itemId').value = row.dataset.id;
             document.getElementById('itemName').value = row.dataset.name;
             document.getElementById('itemValue').value = row.dataset.value;
@@ -261,6 +306,16 @@ document.getElementById('confirmDeleteBtn').onclick = () => {
 
 // === UPDATE ITEM ===
 btnUpdate.onclick = () => {
+    const vName = validateExtraItemInput(document.getElementById('itemName'), document.getElementById('itemNameError'), 'text');
+    const vValue = validateExtraItemInput(document.getElementById('itemValue'), document.getElementById('itemValueError'), 'number');
+    const vUnit = validateExtraItemInput(document.getElementById('itemUnit'), document.getElementById('itemUnitError'), 'select');
+    const vPrice = validateExtraItemInput(document.getElementById('itemPrice'), document.getElementById('itemPriceError'), 'number');
+
+    if (!vName || !vValue || !vUnit || !vPrice) {
+        showToast('Please correct the highlighted errors.', 'warning');
+        return;
+    }
+
     const data = {
         item_id: document.getElementById('itemId').value,
         item_name: document.getElementById('itemName').value.trim(),
@@ -269,26 +324,6 @@ btnUpdate.onclick = () => {
         item_price: document.getElementById('itemPrice').value,
         item_description: document.getElementById('itemDescription').value.trim()
     };
-    
-    if (data.item_name === '') {
-        showToast('Item name is required', 'warning');
-        return;
-    }
-    
-    if (parseFloat(data.item_value) <= 0) {
-        showToast('Value must be greater than 0', 'warning');
-        return;
-    }
-    
-    if (data.item_unit === '') {
-        showToast('Unit is required', 'warning');
-        return;
-    }
-    
-    if (parseFloat(data.item_price) <= 0) {
-        showToast('Price must be greater than 0', 'warning');
-        return;
-    }
     
     sendAjax('update', data).then(res => {
         if (res.status === 'success' || res.status === 'warning') {

@@ -114,6 +114,7 @@
                     <input type="text" class="form-control items-form-control" 
                            id="itemName" name="itemName" required 
                            placeholder="e.g., Water Bottle">
+                    <div class="invalid-feedback" id="itemNameError"></div>
                 </div>
 
                 <div class="col-md-3 mb-3">
@@ -123,6 +124,7 @@
                     <input type="number" class="form-control items-form-control" 
                            id="itemValue" name="itemValue" required 
                            step="0.01" min="0.01" placeholder="500">
+                    <div class="invalid-feedback" id="itemValueError"></div>
                 </div>
 
                 <div class="col-md-3 mb-3">
@@ -138,6 +140,7 @@
                         <option value="kg">kg</option>
                         <option value="Piece">Piece</option>
                     </select>
+                    <div class="invalid-feedback" id="itemUnitError"></div>
                 </div>
             </div>
 
@@ -148,6 +151,7 @@
                 <input type="number" class="form-control items-form-control" 
                        id="itemPrice" name="itemPrice" required 
                        step="0.01" min="0.01" placeholder="50.00">
+                <div class="invalid-feedback" id="itemPriceError"></div>
             </div>
 
             <div class="mb-3">
