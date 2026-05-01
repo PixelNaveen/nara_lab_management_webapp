@@ -95,7 +95,7 @@ $registered = isset($_GET['registered']) ? true : false;
                         placeholder="Enter your username or email"
                         required
                         autofocus>
-                    <div class="invalid-feedback">
+                    <div class="invalid-feedback" id="usernameError">
                         Please enter your username or email.
                     </div>
                 </div>
@@ -116,7 +116,7 @@ $registered = isset($_GET['registered']) ? true : false;
                             <i class="fas fa-eye" id="toggleIcon"></i>
                         </button>
                     </div>
-                    <div class="invalid-feedback">
+                    <div class="invalid-feedback" id="passwordError">
                         Please enter your password.
                     </div>
                 </div>

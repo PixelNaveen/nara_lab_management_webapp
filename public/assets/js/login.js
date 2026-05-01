@@ -47,6 +47,8 @@ function validateForm() {
   // Validate username
   if (!username.value.trim()) {
     username.classList.add("is-invalid");
+    document.getElementById("usernameError").textContent = "Please enter your username or email.";
+    document.getElementById("usernameError").style.display = "block";
     isValid = false;
   } else {
     username.classList.remove("is-invalid");
@@ -56,6 +58,8 @@ function validateForm() {
   // Validate password
   if (!password.value) {
     password.classList.add("is-invalid");
+    document.getElementById("passwordError").textContent = "Please enter your password.";
+    document.getElementById("passwordError").style.display = "block";
     isValid = false;
   } else {
     password.classList.remove("is-invalid");
@@ -103,7 +107,26 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         window.location.href = result.redirect;
       }, 1000);
     } else {
-      showAlert(result.message, "danger");
+      // Pass errors to labels instead of generic alert
+      if (result.message.toLowerCase().includes("username") || result.message.toLowerCase().includes("password")) {
+          const usernameInput = document.getElementById("username");
+          const passwordInput = document.getElementById("password");
+          const userError = document.getElementById("usernameError");
+          const passError = document.getElementById("passwordError");
+
+          usernameInput.classList.add("is-invalid");
+          passwordInput.classList.add("is-invalid");
+          
+          // Show the same credential error message under both fields
+          userError.textContent = result.message;
+          userError.style.display = "block";
+          passError.textContent = result.message;
+          passError.style.display = "block";
+      } else {
+          // If it's a deactivated account or other system message, use alert
+          showAlert(result.message, "danger");
+      }
+
       loginBtn.disabled = false;
       loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
     }
@@ -120,12 +143,25 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
 // Clear validation on input
 document.getElementById("username").addEventListener("input", function () {
-  this.classList.remove("is-invalid", "is-valid");
+  clearCredentialErrors();
 });
 
 document.getElementById("password").addEventListener("input", function () {
-  this.classList.remove("is-invalid", "is-valid");
+  clearCredentialErrors();
 });
+
+function clearCredentialErrors() {
+    const uInput = document.getElementById("username");
+    const pInput = document.getElementById("password");
+    const uErr = document.getElementById("usernameError");
+    const pErr = document.getElementById("passwordError");
+
+    uInput.classList.remove("is-invalid", "is-valid");
+    pInput.classList.remove("is-invalid", "is-valid");
+    
+    if (uErr) uErr.style.display = "none";
+    if (pErr) pErr.style.display = "none";
+}
 
 // Enter key on password field
 document.getElementById("password").addEventListener("keypress", function (e) {
