@@ -12,15 +12,26 @@ require_once __DIR__ . '/../Helpers/Functions.php';
 
 class SampleModel
 {
-    public $conn;
+    /**
+     * @var mysqli Database connection
+     */
+    public mysqli $conn;
 
+    /**
+     * Constructor - Initializes database connection
+     */
     public function __construct()
     {
         $database = new Database();
         $this->conn = $database->connect();
     }
 
-    public function searchClients($query)
+    /**
+     * Search for clients by name
+     * @param string $query Search query
+     * @return array List of matching clients
+     */
+    public function searchClients(string $query)
     {
         try {
             $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
@@ -63,7 +74,12 @@ class SampleModel
         }
     }
 
-    public function createClient($data)
+    /**
+     * Create a new client record
+     * @param array $data Client information
+     * @return array Result status and new client ID
+     */
+    public function createClient(array $data): array
     {
         try {
             $sql = "INSERT INTO clients (
@@ -109,7 +125,12 @@ class SampleModel
         }
     }
 
-    public function updateClient($data)
+    /**
+     * Update an existing client record
+     * @param array $data Updated client information
+     * @return array Result status
+     */
+    public function updateClient(array $data): array
     {
         try {
             $sql = "UPDATE clients 
@@ -159,7 +180,12 @@ class SampleModel
         }
     }
 
-    public function getParameters($submissionType = 'regular')
+    /**
+     * Get all active test parameters with pricing
+     * @param string $submissionType 'regular' or 'swab'
+     * @return array List of parameters with variants and pricing
+     */
+    public function getParameters(string $submissionType = 'regular'): array
     {
         try {
             $sql = "SELECT 
@@ -252,7 +278,11 @@ class SampleModel
         }
     }
 
-    public function getCombos()
+    /**
+     * Get all active parameter combinations (combos) with pricing
+     * @return array List of combos with parameter IDs and savings
+     */
+    public function getCombos(): array
     {
         try {
             $sql = "SELECT 
@@ -319,7 +349,11 @@ class SampleModel
      * Get all active swab combo groups (for frontend partial-match detection)
      * Returns each group's parameter IDs and fixed surcharge price.
      */
-    public function getSwabCombos()
+    /**
+     * Get all active swab combinations with pricing
+     * @return array List of swab combos
+     */
+    public function getSwabCombos(): array
     {
         try {
             $sql = "SELECT sc.combo_id, sc.combo_name, sc.price AS combo_price,
@@ -362,7 +396,13 @@ class SampleModel
         }
     }
 
-    public function searchSampleNames($query, $submissionType = 'regular')
+    /**
+     * Search for sample names by partial match
+     * @param string $query Search query
+     * @param string $submissionType 'regular' or 'swab'
+     * @return array List of matching sample names with categories
+     */
+    public function searchSampleNames(string $query, string $submissionType = 'regular'): array
     {
         try {
             $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
@@ -430,7 +470,12 @@ class SampleModel
         }
     }
 
-    public function searchCities($query)
+    /**
+     * Search for cities by partial match
+     * @param string $query Search query
+     * @return array List of matching cities
+     */
+    public function searchCities(string $query): array
     {
         try {
             $searchTerm = "%" . $this->conn->real_escape_string($query) . "%";
@@ -476,7 +521,12 @@ class SampleModel
         }
     }
 
-    public function findCityByName($cityName)
+    /**
+     * Find a city record by its exact name
+     * @param string $cityName Name of the city to find
+     * @return array|null City data or null if not found
+     */
+    public function findCityByName(string $cityName): ?array
     {
         try {
             if (empty($cityName)) {
@@ -519,7 +569,12 @@ class SampleModel
         }
     }
 
-    public function incrementCityUsage($cityId)
+    /**
+     * Increment the usage counter for a city
+     * @param int $cityId ID of the city
+     * @return bool Success status
+     */
+    public function incrementCityUsage(int $cityId): bool
     {
         try {
             $sql = "UPDATE cities 
@@ -541,7 +596,13 @@ class SampleModel
         }
     }
 
-    public function saveSample($data)
+    /**
+     * Save a complete sample submission transaction
+     * @param array $data Full submission data package
+     * @return array Result status with form number and sample ID
+     * @throws Exception If any part of the transaction fails
+     */
+    public function saveSample(array $data): array
     {
         $this->conn->begin_transaction();
 
@@ -619,7 +680,16 @@ class SampleModel
     /**
      * ✅ CRITICAL FIX: bind_param now includes received_time
      */
-    private function insertSample($data, $formNumber, $reportRef, $acReference)
+    /**
+     * Insert a new sample record
+     * @param array $data Submission data
+     * @param string $formNumber Generated form number
+     * @param string $reportRef Report reference code
+     * @param string $acReference Acceptance reference code
+     * @return int The inserted sample ID
+     * @throws Exception If database insertion fails
+     */
+    private function insertSample(array $data, string $formNumber, string $reportRef, string $acReference): int
     {
         $sql = "INSERT INTO samples (
                     client_id, sample_code, form_number, report_ref, city_id, submission_type,
@@ -628,8 +698,8 @@ class SampleModel
                     sample_collected_date, sample_collected_time,
                     submitted_by,
                     additional_charges, test_charges_total, grand_total,
-                    payment_status, payment_reference, status, status_updated_at, status_updated_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
+                    payment_status, payment_reference, is_drawn_by_nara, status, status_updated_at, status_updated_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?)";
 
         $stmt = $this->conn->prepare($sql);
         if ($stmt === false) {
@@ -654,10 +724,11 @@ class SampleModel
         $paymentReference = ($paymentStatus === 'Paid' && !empty($data['payment_reference']))
             ? $data['payment_reference']
             : null;
+        $isDrawnByNara = $data['is_drawn_by_nara'] ?? 0;
         $statusUpdatedBy = $submittedBy;
 
         $stmt->bind_param(
-            "isssissssssssdddsss",
+            "isssissssssssdddssis",
             $clientId,
             $sampleCode,
             $formNumber,
@@ -676,6 +747,7 @@ class SampleModel
             $grandTotal,
             $paymentStatus,
             $paymentReference,
+            $isDrawnByNara,
             $statusUpdatedBy
         );
 
@@ -686,7 +758,15 @@ class SampleModel
         return $this->conn->insert_id;
     }
 
-    private function insertSampleItem($sampleId, $item, $sequenceNumber)
+    /**
+     * Insert a sample item (individual specimen) linked to a sample
+     * @param int $sampleId Parent sample ID
+     * @param array $item Item details
+     * @param int $sequenceNumber Sequence position in submission
+     * @return int The inserted item ID
+     * @throws Exception If database insertion fails
+     */
+    private function insertSampleItem(int $sampleId, array $item, int $sequenceNumber): int
     {
         $sql = "INSERT INTO sample_items (
                     sample_id, sample_name, value, unit, client_sample_code,
@@ -739,7 +819,16 @@ class SampleModel
         return $this->conn->insert_id;
     }
 
-    private function insertSampleTests($sampleItemIds, $testsData, $submissionType, $comboCalc = null)
+    /**
+     * Insert tests for multiple sample items in bulk
+     * @param array $sampleItemIds Array of inserted item IDs
+     * @param array $testsData Test selection data from frontend
+     * @param string $submissionType 'regular' or 'swab'
+     * @param array|null $comboCalc Optional combo calculation results
+     * @return void
+     * @throws Exception If database insertion fails
+     */
+    private function insertSampleTests(array $sampleItemIds, array $testsData, string $submissionType, ?array $comboCalc = null): void
     {
         $sql = "INSERT INTO sample_tests (
                     sample_item_id, parameter_id, variant_id, test_method_id,
@@ -821,7 +910,16 @@ class SampleModel
     /**
      * ✅ UPDATED: Now includes received_time
      */
-    private function insertSampleAcceptance($sampleId, $acReference, $firstSample, $data)
+    /**
+     * Insert sample acceptance record (Step 3 info)
+     * @param int $sampleId Parent sample ID
+     * @param string $acReference Acceptance reference
+     * @param array $firstSample Data from the first specimen (for defaults)
+     * @param array $data Submission metadata
+     * @return void
+     * @throws Exception If database insertion fails
+     */
+    private function insertSampleAcceptance(int $sampleId, string $acReference, array $firstSample, array $data): void
     {
         $sql = "INSERT INTO sample_acceptance (
                     sample_id, report_ref, received_by, received_time, container_damage,
@@ -859,7 +957,15 @@ class SampleModel
         }
     }
 
-    private function insertSampleAcknowledgement($sampleId, $acReference, $data)
+    /**
+     * Insert sample acknowledgement record (Step 6 info)
+     * @param int $sampleId Parent sample ID
+     * @param string $acReference Acceptance reference
+     * @param array $data Payment and notes data
+     * @return void
+     * @throws Exception If database insertion fails
+     */
+    private function insertSampleAcknowledgement(int $sampleId, string $acReference, array $data): void
     {
         $sql = "INSERT INTO sample_acknowledgement (
                     sample_id, report_ref, test_charges, additional_charges,
@@ -903,7 +1009,14 @@ class SampleModel
     /**
      * Insert extra items purchased with the submission
      */
-    private function insertSampleExtraItems($sampleId, $extraItems)
+    /**
+     * Insert extra items purchased with the submission
+     * @param int $sampleId Parent sample ID
+     * @param array $extraItems List of extra items
+     * @return void
+     * @throws Exception If database insertion fails
+     */
+    private function insertSampleExtraItems(int $sampleId, array $extraItems): void
     {
         if (empty($extraItems)) return;
 
@@ -931,7 +1044,11 @@ class SampleModel
     /**
      * Get all active extra items for the submission form
      */
-    public function getExtraItems()
+    /**
+     * Get all active extra items for the submission form
+     * @return array List of extra items with status
+     */
+    public function getExtraItems(): array
     {
         try {
             $sql = "SELECT item_id, item_name, item_value, item_unit, item_price, item_description
@@ -974,7 +1091,12 @@ class SampleModel
     /**
      * Bulk create new sample names with categories (from interceptor modal)
      */
-    public function bulkCreateSampleNames($names)
+    /**
+     * Bulk create new sample names with categories
+     * @param array $names List of names and categories to create
+     * @return array Result status
+     */
+    public function bulkCreateSampleNames(array $names): array
     {
         try {
             $created = [];

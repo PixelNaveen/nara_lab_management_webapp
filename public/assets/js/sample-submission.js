@@ -1609,6 +1609,7 @@ function generateReview() {
     <div class="review-section">
       <h6><i class="fas fa-calendar-alt"></i> Submission Details</h6>
       <p><strong>Type:</strong> ${submissionType.charAt(0).toUpperCase() + submissionType.slice(1)}</p>
+      <p><strong>Origin:</strong> ${document.querySelector('input[name="is_drawn_by_nara"]:checked').value == "1" ? '<span class="badge bg-primary"><i class="fas fa-flask"></i> Drawn by NARA</span>' : '<span class="badge bg-secondary"><i class="fas fa-user-tie"></i> Submitted by Client</span>'}</p>
       <p><strong>Received:</strong> ${formatDate(document.getElementById("receivedDate").value)} at ${
         document.getElementById("receivedTime").value
       }</p>
@@ -1952,6 +1953,10 @@ async function handleSubmit(e) {
   formData.append(
     "tentative_date",
     document.getElementById("tentativeDate").value,
+  );
+  formData.append(
+    "is_drawn_by_nara",
+    document.querySelector('input[name="is_drawn_by_nara"]:checked').value,
   );
   formData.append(
     "sample_collected_date",

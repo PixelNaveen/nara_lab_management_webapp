@@ -117,7 +117,12 @@ try {
     ]);
 }
 
-function handleSearchClients($model)
+/**
+ * Handle searching for clients
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleSearchClients(SampleModel $model)
 {
     $query = trim($_GET['query'] ?? '');
 
@@ -132,13 +137,23 @@ function handleSearchClients($model)
     sendJsonResponse($result);
 }
 
-function handleGetSwabCombos($model)
+/**
+ * Handle getting swab combos
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleGetSwabCombos(SampleModel $model)
 {
     $result = $model->getSwabCombos();
     sendJsonResponse($result);
 }
 
-function handleCreateClient($model)
+/**
+ * Handle creating a new client
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleCreateClient(SampleModel $model)
 {
     $requiredFields = ['client_name', 'phone_primary'];
     foreach ($requiredFields as $field) {
@@ -171,7 +186,12 @@ function handleCreateClient($model)
     sendJsonResponse($result);
 }
 
-function handleUpdateClient($model)
+/**
+ * Handle updating an existing client
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleUpdateClient(SampleModel $model)
 {
     $clientId = intval($_POST['client_id'] ?? 0);
 
@@ -212,7 +232,12 @@ function handleUpdateClient($model)
     sendJsonResponse($result);
 }
 
-function handleGetParameters($model)
+/**
+ * Handle getting test parameters based on submission type
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleGetParameters(SampleModel $model)
 {
     $submissionType = $_GET['type'] ?? 'regular';
 
@@ -230,13 +255,23 @@ function handleGetParameters($model)
 /**
  * NEW: Get all active combos for frontend detection
  */
-function handleGetCombos($model)
+/**
+ * Get all active combos for frontend detection
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleGetCombos(SampleModel $model)
 {
     $result = $model->getCombos();
     sendJsonResponse($result);
 }
 
-function handleSearchSampleNames($model)
+/**
+ * Handle searching for sample names
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleSearchSampleNames(SampleModel $model)
 {
     $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
     $submissionType = trim($_GET['type'] ?? 'regular'); // ✅ Get submission type
@@ -257,7 +292,12 @@ function handleSearchSampleNames($model)
 /**
  * MAIN SUBMISSION HANDLER - WITH COMBO PRICING FIX
  */
-function handleSaveSample($model)
+/**
+ * Main submission handler - saves sample data to database
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleSaveSample(SampleModel $model)
 {
     try {
         // VALIDATION
@@ -480,6 +520,7 @@ function handleSaveSample($model)
             'payment_status' => 'Not Paid',
             'payment_reference' => '',
             'additional_notes' => sanitizeInput($_POST['additional_notes'] ?? ''),
+            'is_drawn_by_nara' => isset($_POST['is_drawn_by_nara']) ? intval($_POST['is_drawn_by_nara']) : 0,
             'samples' => $samplesData,
             'tests' => $testsData,
             'combo_calculation' => $calculationResult,
@@ -526,7 +567,12 @@ function handleSaveSample($model)
  * ==========================================
  */
 
-function handleSearchCities($model)
+/**
+ * Handle searching for cities
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleSearchCities(SampleModel $model)
 {
     $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
 
@@ -543,7 +589,12 @@ function handleSearchCities($model)
     sendJsonResponse($result);
 }
 
-function handleFindCityByName($model)
+/**
+ * Find a specific city by its name
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleFindCityByName(SampleModel $model)
 {
     $cityName = trim($_GET['city_name'] ?? $_POST['city_name'] ?? '');
 
@@ -566,7 +617,12 @@ function handleFindCityByName($model)
     sendJsonResponse($result);
 }
 
-function handleTrackCityUsage($model)
+/**
+ * Track how many times a city has been used in submissions
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleTrackCityUsage(SampleModel $model)
 {
     $cityId = intval($_POST['city_id'] ?? 0);
 
@@ -598,7 +654,12 @@ function handleTrackCityUsage($model)
  * This handler checks if a sample name exists (case-insensitive) and provides
  * suggestions for proper capitalization
  */
-function handleValidateSampleName($model)
+/**
+ * Validate a sample name and provide canonical suggestions
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleValidateSampleName(SampleModel $model)
 {
     $name = trim($_GET['name'] ?? '');
 
@@ -629,7 +690,12 @@ function handleValidateSampleName($model)
 /**
  * Get all active extra items for the submission form
  */
-function handleGetExtraItems($model)
+/**
+ * Get all active extra items for the submission form
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleGetExtraItems(SampleModel $model)
 {
     $result = $model->getExtraItems();
     sendJsonResponse($result);
@@ -638,7 +704,12 @@ function handleGetExtraItems($model)
 /**
  * Bulk create new sample names with categories (interceptor modal)
  */
-function handleBulkCreateSampleNames($model)
+/**
+ * Bulk create new sample names with categories
+ * @param SampleModel $model Instance of SampleModel
+ * @return void
+ */
+function handleBulkCreateSampleNames(SampleModel $model)
 {
     $namesJson = $_POST['names'] ?? '';
     $names = is_string($namesJson) ? json_decode($namesJson, true) : $namesJson;

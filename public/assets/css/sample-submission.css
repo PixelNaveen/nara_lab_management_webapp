@@ -88,6 +88,7 @@
 .sample-submission-page .step {
   display: none;
   animation: fadeIn 0.3s ease;
+  padding: 0 1rem; /* Added horizontal padding for content safety */
 }
 
 .sample-submission-page .step.active {
@@ -108,6 +109,7 @@
 .sample-submission-page .step-title {
   font-size: 1.5rem;
   font-weight: 600;
+  margin-top: 1.5rem; /* Added margin-top to separate from navigation */
   margin-bottom: 1.5rem;
   color: var(--primary-blue);
 }
@@ -449,7 +451,7 @@
 /* ===== Review Section ===== */
 .sample-submission-page .review-section {
   margin-bottom: 1.5rem;
-  padding: 1.5rem;
+  padding: 1.5rem 2rem; /* Increased horizontal padding */
   background: var(--light-gray);
   border-radius: 10px;
   border-left: 4px solid var(--primary-blue);
@@ -494,9 +496,9 @@
 .sample-submission-page .nav-buttons {
   display: flex;
   justify-content: space-between;
-  padding: 1.5rem 0;
-  margin-top: 2rem;
-  border-top: 2px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  margin-top: 3rem; /* Increased margin-top for better separation */
+  border-top: 1px solid var(--border-color); /* Slightly thinner line for a cleaner look */
 }
 
 /* ===== Loading Spinner ===== */
@@ -797,9 +799,74 @@
 
 .extra-item-card {
   background: #ffffff;
-  transition:
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+  transition: all 0.2s;
+}
+
+/* ===================================
+   SEGMENTED CONTROL (Radio Buttons)
+   =================================== */
+.segmented-control {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  width: fit-content;
+  margin-top: 0.5rem;
+}
+
+.segmented-control .form-check {
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+}
+
+.segmented-control input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.segmented-control label {
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8; /* Lighter color for unselected state */
+  margin-bottom: 0 !important;
+}
+
+.segmented-control input[type="radio"]:checked + label {
+  background: white;
+  color: #1e3a8a;
+  transform: scale(1.02);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.segmented-control input#originClient:checked + label {
+  color: #1e293b; /* Dark slate for high contrast */
+}
+
+.segmented-control input#originNara:checked + label {
+  color: #2563eb; /* Vibrant blue */
+}
+
+.segmented-control label i {
+  font-size: 1.1rem;
+}
+
+/* Animation for segmented control */
+.segmented-control label:active {
+  transform: scale(0.96);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .extra-item-card:hover {

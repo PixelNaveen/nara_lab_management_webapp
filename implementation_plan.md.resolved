@@ -1,0 +1,54 @@
+# Implementation Plan: Submission Origin Tracking
+
+Integrate a "Drawn by NARA" vs. "Submitted by Client" radio button selector into the lab sample submission interface and map it to the `is_drawn_by_nara` database column.
+
+## User Review Required
+
+> [!IMPORTANT]
+> The new radio button group will be placed in Step 3 (Submission Details), to the right of the "Tentative Date" field. The default selection will be "Submitted by Client" (0) to maintain consistency with existing records.
+
+## Proposed Changes
+
+---
+
+### Frontend Components
+
+#### [MODIFY] [sample-submission.php](file:///c:/Users/KNJ/OneDrive/Desktop/nara_lab_management_webapp/src/Includes/sample-submission.php)
+- Add a new `col-md-6` div after the Tentative Date field.
+- Implement a radio button group with:
+    - **Label**: Origin / Sample Source
+    - **Option 1**: Drawn by NARA (Value: 1)
+    - **Option 2**: Submitted by Client (Value: 0, Checked by default)
+- Use Bootstrap's `form-check-inline` for a premium look.
+
+#### [MODIFY] [sample-submission.js](file:///c:/Users/KNJ/OneDrive/Desktop/nara_lab_management_webapp/public/assets/js/sample-submission.js)
+- **`handleSubmit`**: Capture the selected radio button value using `document.querySelector('input[name="is_drawn_by_nara"]:checked').value`.
+- **`formData`**: Append `is_drawn_by_nara` to the data sent to the backend.
+- **`generateReview`**: Update the "Submission Details" section in the review summary to display the origin.
+
+---
+
+### Backend Logic
+
+#### [MODIFY] [SampleController.php](file:///c:/Users/KNJ/OneDrive/Desktop/nara_lab_management_webapp/src/Controllers/SampleController.php)
+- **`handleSaveSample`**: 
+    - Extract `$_POST['is_drawn_by_nara']`.
+    - Sanitize and validate as integer (0 or 1).
+    - Include it in the `$submissionData` array.
+
+#### [MODIFY] [SampleModel.php](file:///c:/Users/KNJ/OneDrive/Desktop/nara_lab_management_webapp/src/Models/SampleModel.php)
+- **`insertSample`**:
+    - Update the `INSERT INTO samples` SQL query to include `is_drawn_by_nara`.
+    - Add the corresponding placeholder `?` in the `VALUES` clause.
+    - Update `bind_param` to include the new integer variable (`i`).
+
+## Verification Plan
+
+### Automated Tests (via Browser Tool)
+1. **Selection Test**: Navigate to the submission form, select "Drawn by NARA", and verify it appears in the Step 6 Review.
+2. **Persistence Test**: Submit a sample with "Drawn by NARA" and check the server response.
+3. **Database Verification**: Query the `samples` table to ensure `is_drawn_by_nara` is correctly set to `1`.
+
+### Manual Verification
+1. Verify the layout on different screen sizes to ensure the radio buttons align well with the Tentative Date field.
+2. Ensure the "Submitted by Client" default works without manual selection.

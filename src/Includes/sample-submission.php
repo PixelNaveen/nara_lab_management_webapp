@@ -182,52 +182,79 @@ $userId = $_SESSION['user_id'] ?? 0;
                             </div>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row gx-lg-5 gy-4 mb-4">
                             <!-- RECEIVED DATE -->
                             <div class="col-md-6">
-                                <label class="form-label">
+                                <label class="form-label fw-bold">
                                     Received Date <span class="text-danger">*</span>
                                 </label>
                                 <input type="date" class="form-control" id="receivedDate" required>
-                                <small class="text-muted">Today or up to 30 days in the past</small>
+                                <small class="text-muted d-block mt-1">Today or up to 30 days in the past</small>
                                 <span class="error-label" id="receivedDateError"></span>
                             </div>
 
                             <!-- RECEIVED TIME -->
                             <div class="col-md-6">
-                                <label class="form-label">
+                                <label class="form-label fw-bold">
                                     Received Time <span class="text-danger">*</span>
                                 </label>
                                 <input type="time" class="form-control" id="receivedTime" required>
-                                <small class="text-muted">Exact time sample arrived at lab (24-hour format)</small>
+                                <small class="text-muted d-block mt-1">Exact time sample arrived (24-hour format)</small>
                                 <span class="error-label" id="receivedTimeError"></span>
                             </div>
+                        </div>
 
+                        <div class="row gx-lg-5 gy-4 mb-4">
                             <!-- COLLECTED DATE -->
                             <div class="col-md-6">
-                                <label class="form-label">Sample Collected Date</label>
+                                <label class="form-label fw-bold">Sample Collected Date</label>
                                 <input type="date" class="form-control" id="collectedDate">
-                                <small class="text-muted">When the sample was originally collected by client</small>
+                                <small class="text-muted d-block mt-1">Date originally collected by client</small>
                             </div>
 
                             <!-- COLLECTED TIME -->
                             <div class="col-md-6">
-                                <label class="form-label">Sample Collected Time</label>
+                                <label class="form-label fw-bold">Sample Collected Time</label>
                                 <input type="time" class="form-control" id="collectedTime">
-                                <small class="text-muted">Time of original sample collection</small>
+                                <small class="text-muted d-block mt-1">Time of original sample collection</small>
                             </div>
+                        </div>
 
+                        <div class="row gx-lg-5 gy-4 mb-4">
                             <!-- TENTATIVE DATE -->
                             <div class="col-md-6">
-                                <label class="form-label">
+                                <label class="form-label fw-bold">
                                     Tentative Date <span class="text-danger">*</span>
                                 </label>
                                 <input type="date" class="form-control" id="tentativeDate" required>
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle"></i> Auto-calculated as Received Date + 10 days
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-info-circle"></i> Auto-calculated (Received Date + 10 days)
                                 </small>
                                 <span class="error-label" id="tentativeDateError"></span>
                             </div>
+
+                            <!-- SUBMISSION ORIGIN -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    Sample Drawing Origin <span class="text-danger">*</span>
+                                </label>
+                                <div class="segmented-control">
+                                    <div class="form-check">
+                                        <input type="radio" name="is_drawn_by_nara" id="originClient" value="0" checked>
+                                        <label for="originClient">
+                                            <i class="fas fa-user-tie"></i> Client Submitted
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="radio" name="is_drawn_by_nara" id="originNara" value="1">
+                                        <label for="originNara">
+                                            <i class="fas fa-flask"></i> Drawn by NARA
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Specify if NARA staff collected the sample</small>
+                            </div>
+                        </div>
 
                             <!-- EXTRA ITEMS SECTION -->
                             <div class="col-12">
