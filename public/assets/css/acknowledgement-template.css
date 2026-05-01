@@ -199,8 +199,9 @@ th {
 
 /* ===== FOOTER TABLE ===== */
 .footer-table {
-  margin-top: auto;
+  margin-top: 15pt;
   font-size: 8.5pt;
+  width: 100%;
 }
 
 .footer-table td {
