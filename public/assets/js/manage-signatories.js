@@ -254,6 +254,7 @@
     });
 
     if (!vName || !vTitle || !vDiv) {
+      showToast("Please correct the highlighted errors.", "warning");
       return;
     }
 
@@ -288,10 +289,11 @@
           loadSignatories();
         } else if (res.code === "DUPLICATE") {
           showToast(res.message, "warning");
-          // Highlight name field as it's likely the cause
           nameInput.classList.add("is-invalid");
-          document.getElementById("sigFullNameError").textContent = res.message;
-          document.getElementById("sigFullNameError").style.display = "block";
+          nameInput.classList.remove("is-valid");
+          const errEl = document.getElementById("sigFullNameError");
+          errEl.textContent = res.message;
+          errEl.style.display = "block";
         } else if (res.code === "NO_CHANGES") {
           showToast(res.message, "warning");
           closeModal();
@@ -333,6 +335,7 @@
     saveBtn.innerHTML = '<i class="fas fa-save"></i> Update Signatory';
 
     modal.classList.add("active");
+    clearValidation();
   };
 
   function setSelectCaseInsensitive(selectId, value) {
