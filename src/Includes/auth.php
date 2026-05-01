@@ -32,15 +32,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || $_SESSION[
     exit;
 }
 
-// ✅ CHECK SESSION TIMEOUT (2 hours)
-$sessionTimeout = 2 * 60 * 60; // 2 hours in seconds
-if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time'] > $sessionTimeout)) {
-    // Session expired
-    $_SESSION = [];
-    session_destroy();
-    header('Location: src/Views/login.php?timeout=1');
-    exit;
-}
+require_once __DIR__ . '/session-helper.php';
+checkSessionTimeout(false);
 
 // ✅ IP ADDRESS VALIDATION (Prevents session hijacking)
 // Note: Can be disabled if users have dynamic IPs

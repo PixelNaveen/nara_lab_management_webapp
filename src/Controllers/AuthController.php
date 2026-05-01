@@ -9,13 +9,18 @@
  * @version 1.0
  */
 
-session_start();
 require_once __DIR__ . '/../Models/AuthModel.php';
-
-header('Content-Type: application/json');
+require_once __DIR__ . '/../Includes/session-helper.php';
 
 $authModel = new AuthModel();
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+// Check timeout for all actions EXCEPT login and logout
+if ($action !== 'login' && $action !== 'logout') {
+    checkSessionTimeout(true);
+}
+
+header('Content-Type: application/json');
 
 // CSRF Protection for state-changing actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -90,6 +95,7 @@ function handleLogin($authModel)
         $_SESSION['role'] = $result['user']['role'];
         $_SESSION['logged_in'] = true;
         $_SESSION['login_time'] = time();
+        $_SESSION['last_activity'] = time();
         $_SESSION['last_regeneration'] = time();
         $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
 

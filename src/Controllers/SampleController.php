@@ -13,13 +13,11 @@ require_once __DIR__ . '/../../Config/Database.php';
 require_once __DIR__ . '/../Helpers/Functions.php';
 require_once __DIR__ . '/../Models/SampleModel.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 // Discard any accidental output before sending JSON
 ob_start();
-
 header('Content-Type: application/json; charset=utf-8');
 
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in'])) {
