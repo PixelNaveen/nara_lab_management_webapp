@@ -125,6 +125,44 @@ function loadCities() {
     });
 }
 
+// === VALIDATION ===
+function validateCityInput(inputEl, errorEl) {
+    const val = inputEl.value.trim();
+    if (val === '') {
+        inputEl.classList.add('is-invalid');
+        errorEl.textContent = 'City name is required.';
+        errorEl.style.display = 'block';
+        return false;
+    } else if (val.length < 3) {
+        inputEl.classList.add('is-invalid');
+        errorEl.textContent = 'City name must be at least 3 characters.';
+        errorEl.style.display = 'block';
+        return false;
+    } else if (!/^[a-zA-Z\s.-]+$/.test(val)) {
+        inputEl.classList.add('is-invalid');
+        errorEl.textContent = 'Only letters, spaces, and hyphens allowed.';
+        errorEl.style.display = 'block';
+        return false;
+    } else {
+        inputEl.classList.remove('is-invalid');
+        inputEl.classList.add('is-valid');
+        errorEl.style.display = 'none';
+        return true;
+    }
+}
+
+function clearCityValidation() {
+    const cityNameInput = document.getElementById('cityName');
+    const cityNameError = document.getElementById('cityNameError');
+    cityNameInput.classList.remove('is-invalid', 'is-valid');
+    cityNameError.style.display = 'none';
+}
+
+// Real-time validation
+document.getElementById('cityName').addEventListener('input', function() {
+    validateCityInput(this, document.getElementById('cityNameError'));
+});
+
 // === MODAL CONTROL ===
 function openModal(mode) {
     modalOverlay.classList.add('active');
@@ -132,6 +170,7 @@ function openModal(mode) {
     
     if (mode === 'create') {
         cityForm.reset();
+        clearCityValidation();
         document.getElementById('cityId').value = '';
         btnSave.classList.remove('d-none');
         btnUpdate.classList.add('d-none');
@@ -141,12 +180,13 @@ function openModal(mode) {
         btnUpdate.classList.remove('d-none');
         formTitle.textContent = 'Update City';
     }
+    clearCityValidation();
 }
-
 function closeModal() {
     modalOverlay.classList.remove('active');
     document.body.style.overflow = 'auto';
     cityForm.reset();
+    clearCityValidation();
 }
 
 btnNewCity.onclick = () => openModal('create');
@@ -160,14 +200,17 @@ modalOverlay.onclick = e => {
 cityForm.addEventListener('submit', e => {
     e.preventDefault();
     
-    const data = {
-        city_name: document.getElementById('cityName').value.trim()
-    };
+    const cityNameInput = document.getElementById('cityName');
+    const cityNameError = document.getElementById('cityNameError');
     
-    if (data.city_name === '') {
-        showToast('City name is required', 'warning');
+    if (!validateCityInput(cityNameInput, cityNameError)) {
+        showToast('Please correct the highlighted errors.', 'warning');
         return;
     }
+    
+    const data = {
+        city_name: cityNameInput.value.trim()
+    };
     
     sendAjax('insert', data).then(res => {
         if (res.status === 'success' || res.status === 'warning') {
@@ -189,6 +232,7 @@ function attachRowEvents() {
         btn.onclick = e => {
             const row = e.target.closest('tr');
             openModal('edit');
+            clearCityValidation();
             document.getElementById('cityId').value = row.dataset.id;
             document.getElementById('cityName').value = row.dataset.name;
         };
@@ -226,15 +270,18 @@ document.getElementById('confirmDeleteBtn').onclick = () => {
 // === UPDATE CITY ===
 btnUpdate.onclick = () => {
     const id = document.getElementById('cityId').value;
-    const data = {
-        city_id: id,
-        city_name: document.getElementById('cityName').value.trim()
-    };
-    
-    if (data.city_name === '') {
-        showToast('City name is required', 'warning');
+    const cityNameInput = document.getElementById('cityName');
+    const cityNameError = document.getElementById('cityNameError');
+
+    if (!validateCityInput(cityNameInput, cityNameError)) {
+        showToast('Please correct the highlighted errors.', 'warning');
         return;
     }
+
+    const data = {
+        city_id: id,
+        city_name: cityNameInput.value.trim()
+    };
     
     sendAjax('update', data).then(res => {
         if (res.status === 'success' || res.status === 'warning') {

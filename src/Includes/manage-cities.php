@@ -113,6 +113,7 @@
                 <input type="text" class="form-control cities-form-control"
                     id="cityName" name="cityName" required
                     placeholder="Enter city name (e.g., Colombo)">
+                <div class="invalid-feedback" id="cityNameError"></div>
                 <small class="text-muted">Will be auto-formatted (e.g., "colombo" → "Colombo")</small>
             </div>
 
