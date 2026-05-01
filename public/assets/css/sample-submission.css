@@ -1,4 +1,4 @@
-/* ======================================================
+﻿/* ======================================================
    Sample Submission Styles - COMPLETE VERSION
    Version: 2.0 - With Validation Styles
 ====================================================== */
@@ -298,19 +298,27 @@
 }
 
 .sample-submission-page .remove-sample {
-  border: none;
-  background: transparent;
-  color: var(--danger-red);
-  padding: 0.25rem 0.5rem;
-  transition: all 0.2s;
+  background-color: var(--danger-red) !important;
+  color: white !important;
+  border: none !important;
+  padding: 6px 16px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+  text-decoration: none !important;
 }
 
 .sample-submission-page .remove-sample:hover {
-  background: rgba(220, 38, 38, 0.1);
-  border-radius: 4px;
+  background-color: #b91c1c !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.4);
+  color: white !important;
 }
 
-/* ===== Sample Name Autocomplete ===== */
 .sample-submission-page .sample-name-autocomplete {
   position: absolute;
   top: 100%;
@@ -846,8 +854,8 @@
   background: white;
   color: #1e3a8a;
   transform: scale(1.02);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -866,7 +874,9 @@
 /* Animation for segmented control */
 .segmented-control label:active {
   transform: scale(0.96);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .extra-item-card:hover {
@@ -1052,3 +1062,5 @@
 #newSampleNamesModal .modal-header {
   border-bottom: 2px solid #ffc107;
 }
+
+

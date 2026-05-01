@@ -75,8 +75,8 @@ $userId = $_SESSION['user_id'] ?? 0;
                     <!-- STEP 1: CLIENT INFORMATION -->
                     <div class="step active" data-step="1">
                         <h2 class="step-title">
-                                <i class="fas fa-user"></i> Step 1: Client Information
-                            </h2>
+                            <i class="fas fa-user"></i> Step 1: Client Information
+                        </h2>
 
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i> Search for existing clients or enter new client details
@@ -268,160 +268,160 @@ $userId = $_SESSION['user_id'] ?? 0;
                             </div>
                         </div>
 
-                            <!-- EXTRA ITEMS SECTION -->
-                            <div class="col-12">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-box-open"></i> Additional Items / Charges
-                                </label>
-                                <div id="extraItemsContainer" class="extra-items-section">
-                                    <div class="text-center text-muted p-3">
-                                        <div class="spinner-border spinner-border-sm"></div> Loading extra items...
-                                    </div>
+                        <!-- EXTRA ITEMS SECTION -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-box-open"></i> Additional Items / Charges
+                            </label>
+                            <div id="extraItemsContainer" class="extra-items-section">
+                                <div class="text-center text-muted p-3">
+                                    <div class="spinner-border spinner-border-sm"></div> Loading extra items...
                                 </div>
-                                <input type="hidden" id="additionalCharges" value="0">
-                                <div class="extra-items-total mt-2 d-flex justify-content-end">
-                                    <strong>Additional Charges Total: <span id="extraItemsTotalDisplay">Rs. 0.00</span></strong>
-                                </div>
+                            </div>
+                            <input type="hidden" id="additionalCharges" value="0">
+                            <div class="extra-items-total mt-2 d-flex justify-content-end">
+                                <strong>Additional Charges Total: <span id="extraItemsTotalDisplay">Rs. 0.00</span></strong>
                             </div>
                         </div>
                     </div>
-
-                    <!-- STEP 4: ADD SAMPLES -->
-                    <div class="step" data-step="4">
-                        <h2 class="step-title">
-                            <i class="fas fa-flask"></i> Step 4: Add Sample Items
-                        </h2>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-plus-circle"></i> Add at least one sample. Click "Add Sample" to add more.
-                        </div>
-
-                        <div id="samplesContainer"></div>
-
-                        <button type="button" class="btn btn-outline-primary mt-3" id="addSampleBtn">
-                            <i class="fas fa-plus"></i> Add Sample
-                        </button>
-                    </div>
-
-                    <!-- STEP 5: SELECT TESTS -->
-                    <div class="step" data-step="5">
-                        <h2 class="step-title">
-                            <i class="fas fa-tasks"></i> Step 5: Select Tests for Each Sample
-                        </h2>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-exclamation-circle"></i> Each sample must have at least one test selected (maximum 10 tests per sample)
-                        </div>
-
-                        <div id="testsContainer"></div>
-
-                        <!-- Live Price Summary Bar (Step 5) -->
-                        <div id="step5PriceSummary" class="mt-4 p-3 border rounded bg-light" style="display:none;">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <span class="text-muted small"><i class="fas fa-flask"></i> Test Charges:</span>
-                                    <strong id="testChargesTotal" class="ms-1 text-primary">Rs. 0.00</strong>
-                                </div>
-                                <div class="col-md-4" id="swabChargeSummary" style="display:none;">
-                                    <span class="text-muted small"><i class="fas fa-tint"></i> Swab Surcharges:</span>
-                                    <strong id="swabChargesTotal" class="ms-1" style="color:#6f42c1;">Rs. 0.00</strong>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <span class="text-muted small">Grand Total:</span>
-                                    <strong id="grandTotalDisplay" class="ms-1 text-success fs-5">Rs. 0.00</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- STEP 6: REVIEW & SUBMIT -->
-                    <div class="step" data-step="6">
-                        <h2 class="step-title">
-                            <i class="fas fa-check-circle"></i> Step 6: Review & Submit
-                        </h2>
-
-                        <!-- Summary -->
-                        <div id="reviewSummary"></div>
-
-                        <!-- Receipt Delivery -->
-                        <div class="receipt-delivery-section">
-                            <h5 class="mb-3">
-                                <i class="fas fa-envelope"></i> Receipt Delivery (Optional)
-                            </h5>
-
-                            <div class="alert alert-warning">
-                                <i class="fas fa-info-circle"></i>
-                                Optional: Provide an email address to receive the receipt electronically.
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">Email Address (for email receipt)</label>
-                                    <input type="email" class="form-control" id="receiptEmail"
-                                        placeholder="client@example.com">
-                                    <small class="text-muted">Optional - for sending receipt via email</small>
-                                    <div class="invalid-feedback" id="receiptEmailError"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Navigation Buttons -->
-                    <div class="nav-buttons">
-                        <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
-                            <i class="fas fa-arrow-left"></i> Previous
-                        </button>
-                        <div>
-                            <button type="button" class="btn btn-primary" id="nextBtn">
-                                Next <i class="fas fa-arrow-right"></i>
-                            </button>
-                            <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
-                                <i class="fas fa-paper-plane"></i> Submit Form
-                            </button>
-                        </div>
-                    </div>
-                </form>
             </div>
-        </div>
-    </div>
 
-    <!-- NEW SAMPLE NAME CATEGORY INTERCEPTOR MODAL -->
-    <div class="modal fade" id="newSampleNamesModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle"></i> New Sample Names Detected
+            <!-- STEP 4: ADD SAMPLES -->
+            <div class="step" data-step="4">
+                <h2 class="step-title ms-2">
+                    <i class="fas fa-flask"></i> Step 4: Add Sample Items
+                </h2>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-plus-circle"></i> Add at least one sample. Click "Add Sample" to add more.
+                </div>
+
+                <div id="samplesContainer"></div>
+
+                <button type="button" class="btn btn-outline-primary mt-3" id="addSampleBtn">
+                    <i class="fas fa-plus"></i> Add Sample
+                </button>
+            </div>
+
+            <!-- STEP 5: SELECT TESTS -->
+            <div class="step" data-step="5">
+                <h2 class="step-title">
+                    <i class="fas fa-tasks"></i> Step 5: Select Tests for Each Sample
+                </h2>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-exclamation-circle"></i> Each sample must have at least one test selected (maximum 10 tests per sample)
+                </div>
+
+                <div id="testsContainer"></div>
+
+                <!-- Live Price Summary Bar (Step 5) -->
+                <div id="step5PriceSummary" class="mt-4 p-3 border rounded bg-light" style="display:none;">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <span class="text-muted small"><i class="fas fa-flask"></i> Test Charges:</span>
+                            <strong id="testChargesTotal" class="ms-1 text-primary">Rs. 0.00</strong>
+                        </div>
+                        <div class="col-md-4" id="swabChargeSummary" style="display:none;">
+                            <span class="text-muted small"><i class="fas fa-tint"></i> Swab Surcharges:</span>
+                            <strong id="swabChargesTotal" class="ms-1" style="color:#6f42c1;">Rs. 0.00</strong>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="text-muted small">Grand Total:</span>
+                            <strong id="grandTotalDisplay" class="ms-1 text-success fs-5">Rs. 0.00</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 6: REVIEW & SUBMIT -->
+            <div class="step" data-step="6">
+                <h2 class="step-title">
+                    <i class="fas fa-check-circle"></i> Step 6: Review & Submit
+                </h2>
+
+                <!-- Summary -->
+                <div id="reviewSummary"></div>
+
+                <!-- Receipt Delivery -->
+                <div class="receipt-delivery-section">
+                    <h5 class="mb-3">
+                        <i class="fas fa-envelope"></i> Receipt Delivery (Optional)
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted mb-3">
-                        The following sample names are new to the system. Please assign a category and SLAB accreditation to each.
-                    </p>
-                    <div class="row fw-bold mb-2">
-                        <div class="col-5">Sample Name</div>
-                        <div class="col-4">Category</div>
-                        <div class="col-3 text-center">SLAB Accredited</div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i>
+                        Optional: Provide an email address to receive the receipt electronically.
                     </div>
-                    <div id="newNamesListContainer"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email Address (for email receipt)</label>
+                            <input type="email" class="form-control" id="receiptEmail"
+                                placeholder="client@example.com">
+                            <small class="text-muted">Optional - for sending receipt via email</small>
+                            <div class="invalid-feedback" id="receiptEmailError"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Cancel
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <div>
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        Next <i class="fas fa-arrow-right"></i>
                     </button>
-                    <button type="button" class="btn btn-primary" id="saveNewNamesBtn">
-                        <i class="fas fa-check"></i> Save & Continue
+                    <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
+                        <i class="fas fa-paper-plane"></i> Submit Form
                     </button>
                 </div>
             </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Toast Container -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
-        <div id="submissionToastContainer"></div>
+<!-- NEW SAMPLE NAME CATEGORY INTERCEPTOR MODAL -->
+<div class="modal fade" id="newSampleNamesModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> New Sample Names Detected
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    The following sample names are new to the system. Please assign a category and SLAB accreditation to each.
+                </p>
+                <div class="row fw-bold mb-2">
+                    <div class="col-5">Sample Name</div>
+                    <div class="col-4">Category</div>
+                    <div class="col-3 text-center">SLAB Accredited</div>
+                </div>
+                <div id="newNamesListContainer"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveNewNamesBtn">
+                    <i class="fas fa-check"></i> Save & Continue
+                </button>
+            </div>
+        </div>
     </div>
+</div>
+
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+    <div id="submissionToastContainer"></div>
+</div>
 
 </div>
 <!-- End scoped div -->
@@ -429,4 +429,3 @@ $userId = $_SESSION['user_id'] ?? 0;
 <!-- Load Scripts -->
 <link rel="stylesheet" href="public/assets/css/sample-submission.css">
 <script src="public/assets/js/sample-submission.js"></script>
-

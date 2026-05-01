@@ -138,16 +138,23 @@ function showSuccess(inputId) {
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("[INIT] Sample Submission initialized - Version 3.0");
+
   // Start clock immediately with browser time so UI is never stuck on "Loading..."
   useBrowserTime();
+
+    // Auto-initialize fields if on step 3
+    if (currentStep === 3) {
+      const initialized = initializeDateTimeFields();
+      if (initialized) initializeDateTimeListeners();
+    }
 
   initializeEventListeners();
   initializeRealTimeValidation();
   initializeCityAutocomplete();
 
-  // Try to sync with server time (updates display if available)
+  // Sync with server time in background
   fetchServerTime();
-
   showStep(1);
 });
 
@@ -160,28 +167,35 @@ document.addEventListener("DOMContentLoaded", function () {
  */
 async function fetchServerTime() {
   try {
-    console.log("?? Fetching server time...");
+    console.log("[INFO] Fetching server time...");
     const response = await fetch(`${API_BASE}?action=getServerTime`);
     const data = await response.json();
 
     if (data.success) {
       serverDateTime = data;
-      console.log("? Server time loaded:", data.formatted);
-
-      // Update display immediately
       updateServerTimeDisplay();
-
-      // Start clock
       startServerTimeClock();
+
+      // Auto-initialize fields if on step 3
+      if (currentStep === 3) {
+        const initialized = initializeDateTimeFields();
+        if (initialized) initializeDateTimeListeners();
+      }
 
       return true;
     } else {
       throw new Error(data.message || "Failed to get server time");
     }
   } catch (error) {
-    console.error("Ã¢ÂÅ’ Server time fetch error:", error);
+    console.error("âŒ Server time fetch error:", error);
     // showToast("Warning: Could not sync with server time. Using browser time.", "warning");
     useBrowserTime();
+
+    // Auto-initialize fields if on step 3
+    if (currentStep === 3) {
+      const initialized = initializeDateTimeFields();
+      if (initialized) initializeDateTimeListeners();
+    }
     return false;
   }
 }
@@ -190,7 +204,7 @@ async function fetchServerTime() {
  * Fallback to browser time if server unavailable
  */
 function useBrowserTime() {
-  console.warn("?? Ã¯Â¸Â Using browser time as fallback");
+  console.warn("âš ï¸ Using browser time as fallback");
   const now = new Date();
   serverDateTime = {
     success: true,
@@ -254,7 +268,7 @@ function startServerTimeClock() {
   updateClock();
   serverTimeInterval = setInterval(updateClock, 1000);
 
-  console.log("? Server time clock started");
+  console.log("â° Server time clock started");
 }
 
 /**
@@ -265,21 +279,25 @@ function initializeDateTimeFields() {
   const receivedTimeEl = document.getElementById("receivedTime");
   const tentativeDateEl = document.getElementById("tentativeDate");
 
-  // Elements must exist
-  if (!receivedDateEl || !receivedTimeEl || !tentativeDateEl) return false;
+  // Check if elements exist (might not be in DOM yet)
+  if (!receivedDateEl || !receivedTimeEl || !tentativeDateEl) {
+    console.warn(
+      "â³ Date/time fields not in DOM yet, will initialize when Step 3 is shown",
+    );
+    return false;
+  }
 
-  // Use serverDateTime if available, otherwise fall back to browser time right now
+  // Check if server time is available
   if (!serverDateTime) {
-    useBrowserTime();
+    console.warn("â³ Server time not yet loaded");
+    return false;
   }
 
-  // Only auto-fill if fields are empty (don't overwrite user edits)
-  if (!receivedDateEl.value) {
-    receivedDateEl.value = serverDateTime.date;
-  }
-  if (!receivedTimeEl.value) {
-    receivedTimeEl.value = serverDateTime.time_short;
-  }
+  // Set received date to server date
+  receivedDateEl.value = serverDateTime.date;
+
+  // Set received time to server time
+  receivedTimeEl.value = serverDateTime.time_short;
 
   // Set date range: 30 days back to today
   const today = new Date(serverDateTime.date);
@@ -289,10 +307,14 @@ function initializeDateTimeFields() {
   receivedDateEl.min = minDate.toISOString().split("T")[0];
   receivedDateEl.max = serverDateTime.date;
 
-  // Auto-calculate tentative date (only if not already set)
-  if (!tentativeDateEl.value) {
-    updateTentativeDate();
-  }
+  // Calculate and set tentative date
+  updateTentativeDate();
+
+  console.log("[DONE] Date/time fields initialized:");
+  console.log("   Received Date:", receivedDateEl.value);
+  console.log("   Received Time:", receivedTimeEl.value);
+  console.log("   Tentative Date:", tentativeDateEl.value);
+  console.log("   Date Range:", receivedDateEl.min, "to", receivedDateEl.max);
 
   return true;
 }
@@ -321,7 +343,7 @@ function updateTentativeDate() {
   tentativeDateEl.min = receivedDate;
 
   console.log(
-    "?? Tentative date updated:",
+    "[DATE] Tentative date updated:",
     tentativeDate,
     "(+10 days from",
     receivedDate + ")",
@@ -352,7 +374,7 @@ function initializeDateTimeListeners() {
     tentativeDateEl.addEventListener("change", validateTentativeDate);
   }
 
-  console.log("? Date/time event listeners initialized");
+  console.log("[DONE] Date/time event listeners initialized");
 }
 
 /**
@@ -370,7 +392,7 @@ function validateReceivedDate() {
   }
 
   if (!serverDateTime) {
-    console.warn("? Server time not loaded, skipping date validation");
+    console.warn("â³ Server time not loaded, skipping date validation");
     return true; // Allow if server time not loaded yet
   }
 
@@ -536,7 +558,7 @@ async function handleClientSearch() {
                data-address="${escapeHtml(client.address_line1 || "")}"
                data-city="${escapeHtml(client.city || "")}">
             <strong>${escapeHtml(client.client_name)}</strong><br>
-            <small class="text-muted">${escapeHtml(client.phone_primary)} • ${escapeHtml(
+            <small class="text-muted">${escapeHtml(client.phone_primary)} â€¢ ${escapeHtml(
               client.contact_person || "No contact",
             )}</small>
           </div>`;
@@ -753,8 +775,10 @@ function showStep(step) {
 
   // INITIALIZE DATE/TIME FIELDS WHEN STEP 3 IS SHOWN
   if (step === 3) {
-    initializeDateTimeFields();
-    initializeDateTimeListeners(); // Always attach listeners
+    const initialized = initializeDateTimeFields();
+    if (initialized) {
+      initializeDateTimeListeners();
+    }
     loadExtraItems();
   }
 
@@ -768,12 +792,11 @@ function showStep(step) {
   if (step === 6) generateReview();
 
   currentStep = step;
-  console.log("?? Switched to step:", step);
-  saveProgress(); // Sync current step to draft
+  console.log("ðŸ“ Switched to step:", step);
 }
 
 async function handleNext() {
-  console.log("?? Next button clicked, current step:", currentStep);
+  console.log("âž¡ï¸ Next button clicked, current step:", currentStep);
 
   if (!validateStep(currentStep)) {
     return;
@@ -795,7 +818,7 @@ async function handleNext() {
     }
   }
 
-  // CATEGORY INTERCEPTOR: Before going from Step 4 → Step 5
+  // CATEGORY INTERCEPTOR: Before going from Step 4 â†’ Step 5
   if (currentStep === 4) {
     const intercepted = await checkNewSampleNames();
     if (intercepted) {
@@ -811,7 +834,7 @@ function handlePrev() {
 }
 
 function validateStep(step) {
-  console.log("?? Validating step:", step);
+  console.log("ðŸ” Validating step:", step);
 
   if (step === 1) {
     const clientNameEl = document.getElementById("clientName");
@@ -1066,7 +1089,7 @@ function selectSubmissionType() {
     .forEach((c) => c.classList.remove("selected"));
   this.classList.add("selected");
   submissionType = this.dataset.type;
-  console.log("✅ Submission type selected:", submissionType);
+  console.log("[DONE] Submission type selected:", submissionType);
 
   hideError("submissionType");
 
@@ -1126,7 +1149,7 @@ function addSample() {
             <option value="">Select</option>
             <option value="mL">mL</option>
             <option value="g">g</option>
-            <option value="cm²">cm²</option>
+            <option value="cmÂ²">cmÂ²</option>
             <option value="L">L</option>
             <option value="kg">kg</option>
           </select>
@@ -1165,11 +1188,11 @@ function addSample() {
           </select>
         </div>
         <div class="col-md-4 temp-slider-col" style="display:none;">
-          <label class="fw-bold">Temperature (°C)</label>
+          <label class="fw-bold">Temperature (Â°C)</label>
           <div class="temp-slider-wrapper">
             <div class="d-flex align-items-center gap-2 mb-1">
-              <span class="temp-slider-value badge bg-primary">4.0°C</span>
-              <small class="text-muted">2.0 – 6.0°C</small>
+              <span class="temp-slider-value badge bg-primary">4.0Â°C</span>
+              <small class="text-muted">2.0 â€“ 6.0Â°C</small>
             </div>
             <input type="range" class="form-range sample-temp-value" min="2" max="6" step="0.5" value="4">
           </div>
@@ -1264,7 +1287,7 @@ function addSample() {
 
   if (tempSlider && tempBadge) {
     tempSlider.addEventListener("input", function () {
-      tempBadge.textContent = parseFloat(this.value).toFixed(1) + "°C";
+      tempBadge.textContent = parseFloat(this.value).toFixed(1) + "Â°C";
     });
   }
 }
@@ -1292,9 +1315,9 @@ async function handleSampleNameSearch(input) {
     return;
   }
 
-  // ? FIX: Include submission type for filtering
+  // [DONE] FIX: Include submission type for filtering
   if (!submissionType) {
-    console.warn("?? Submission type not selected yet");
+    console.warn("âš ï¸ Submission type not selected yet");
     dropdown.classList.remove("show");
     return;
   }
@@ -1362,7 +1385,7 @@ async function loadTests() {
     if (!data.success) throw new Error(data.message);
 
     allParameters = data.parameters;
-    console.log("? Loaded parameters:", allParameters);
+    console.log("[DONE] Loaded parameters:", allParameters);
 
     // Load the correct combo set based on submission type
     if (submissionType === "swab") {
@@ -1386,13 +1409,13 @@ async function loadCombos() {
 
     if (data.success) {
       availableCombos = data.combos || [];
-      console.log("? Loaded regular combos:", availableCombos);
+      console.log("[DONE] Loaded regular combos:", availableCombos);
     } else {
-      console.warn("⚠️ No combos loaded:", data.message);
+      console.warn("âš ï¸ No combos loaded:", data.message);
       availableCombos = [];
     }
   } catch (err) {
-    console.error("❌ Load combos error:", err);
+    console.error("âŒ Load combos error:", err);
     availableCombos = [];
   }
 }
@@ -1404,13 +1427,13 @@ async function loadSwabCombos() {
 
     if (data.success) {
       availableSwabCombos = data.swab_combos || [];
-      console.log("✅ Loaded swab combo groups:", availableSwabCombos);
+      console.log("[DONE] Loaded swab combo groups:", availableSwabCombos);
     } else {
-      console.warn("⚠️ No swab combos loaded:", data.message);
+      console.warn("âš ï¸ No swab combos loaded:", data.message);
       availableSwabCombos = [];
     }
   } catch (err) {
-    console.error("❌ Load swab combos error:", err);
+    console.error("âŒ Load swab combos error:", err);
     availableSwabCombos = [];
   }
 }
@@ -1596,7 +1619,7 @@ function calculateTestTotals() {
       const available = matching.filter((pid) => !claimedParamIds.has(pid));
       if (available.length === 0) continue;
 
-      // This group is detected — apply fixed fee ONCE
+      // This group is detected â€” apply fixed fee ONCE
       swabTotal += combo.combo_price;
       detectedGroups.push({ combo, matchedIds: available });
       available.forEach((pid) => claimedParamIds.add(pid));
@@ -1736,7 +1759,7 @@ function generateReview() {
     extraItemsForReview.forEach((ei) => {
       const item = allExtraItems.find((i) => i.item_id == ei.item_id);
       if (item) {
-        html += `<li>${escapeHtml(item.item_name)} (${item.item_value}${item.item_unit}) × ${ei.quantity} = ${formatCurrency(ei.unit_price * ei.quantity)}</li>`;
+        html += `<li>${escapeHtml(item.item_name)} (${item.item_value}${item.item_unit}) Ã— ${ei.quantity} = ${formatCurrency(ei.unit_price * ei.quantity)}</li>`;
       }
     });
     html += `</ul><p><strong>Extra Items Total:</strong> ${formatCurrency(addCharges)}</p></div>`;
@@ -1958,13 +1981,13 @@ function updateGrandTotal() {
 async function handleSubmit(e) {
   e.preventDefault();
 
-  // ✅ SUBMISSION LOCK
+  // [DONE] SUBMISSION LOCK
   if (isSubmitting) {
-    console.warn("⚠️ Submission already in progress");
+    console.warn("âš ï¸ Submission already in progress");
     return;
   }
   isSubmitting = true;
-  console.log("🔒 Submission lock acquired");
+  console.log("ðŸ”’ Submission lock acquired");
 
   // Validate email if provided
   const receiptEmailEl = document.getElementById("receiptEmail");
@@ -1979,7 +2002,7 @@ async function handleSubmit(e) {
     }
   }
 
-  // ✅ FINAL DATE/TIME VALIDATION
+  // [DONE] FINAL DATE/TIME VALIDATION
   if (!validateReceivedDate()) {
     showToast("Please fix received date errors", "error");
     isSubmitting = false;
@@ -2114,16 +2137,16 @@ async function handleSubmit(e) {
   formData.append("receipt_email", receiptEmail);
 
   try {
-    console.log("📤 Sending submission request...");
+    console.log("ðŸ“¤ Sending submission request...");
     const res = await fetch(API_BASE, { method: "POST", body: formData });
     const data = await res.json();
 
-    console.log("📥 Server response:", data);
+    console.log("[RECV] Server response:", data);
 
     if (data.success) {
-      console.log("✅ Submission successful:", data.form_number);
+      console.log("[DONE] Submission successful:", data.form_number);
       showToast(
-        `✅ Sample submitted successfully!\n📋 Form: ${data.form_number}\n🔖 AC Ref: ${data.ac_reference}`,
+        `[DONE] Sample submitted successfully!\nðŸ“‹ Form: ${data.form_number}\nðŸ”– AC Ref: ${data.ac_reference}`,
         "success",
       );
 
@@ -2134,8 +2157,8 @@ async function handleSubmit(e) {
       throw new Error(data.message || "Submission failed");
     }
   } catch (err) {
-    console.error("❌ Submission error:", err);
-    showToast(`❌ Submission failed: ${err.message}`, "error");
+    console.error("âŒ Submission error:", err);
+    showToast(`âŒ Submission failed: ${err.message}`, "error");
 
     submitBtn.disabled = false;
     submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Form';
@@ -2166,7 +2189,7 @@ function initializeCityAutocomplete() {
 
   cityInput.addEventListener("keydown", handleCityKeyboardNavigation);
 
-  console.log("✅ City autocomplete initialized");
+  console.log("[DONE] City autocomplete initialized");
 }
 
 async function handleCitySearch() {
@@ -2269,7 +2292,7 @@ async function selectCityFromAutocomplete() {
     cityInput.classList.add("is-valid");
   }
 
-  console.log(`✅ City selected: ${cityName} (ID: ${cityId})`);
+  console.log(`[DONE] City selected: ${cityName} (ID: ${cityId})`);
 }
 
 async function trackCityUsage(cityId) {
@@ -2371,7 +2394,7 @@ async function loadCityIdForClient(cityName) {
       if (selectedCityId) {
         selectedCityId.value = data.city_id;
         console.log(
-          `✅ City ID loaded: ${data.city_name} (ID: ${data.city_id})`,
+          `[DONE] City ID loaded: ${data.city_name} (ID: ${data.city_id})`,
         );
       }
     } else {
@@ -2496,7 +2519,7 @@ function getExtraItemsData() {
 }
 
 // ==========================================
-// CATEGORY INTERCEPTOR (Step 4 → Step 5)
+// CATEGORY INTERCEPTOR (Step 4 â†’ Step 5)
 // ==========================================
 
 async function checkNewSampleNames() {
@@ -2507,7 +2530,7 @@ async function checkNewSampleNames() {
     const categoryId = card.querySelector(".sample-category-id")?.value;
 
     if (name && !categoryId) {
-      // Name not from DB autocomplete — it's new
+      // Name not from DB autocomplete â€” it's new
       if (!newNames.find((n) => n.name.toLowerCase() === name.toLowerCase())) {
         newNames.push({ name });
       }
