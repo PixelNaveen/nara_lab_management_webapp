@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sample Submission JavaScript - COMPLETE VERSION 3.0
  * @version 3.0 - 100% Production Ready with Server Time
  * @date February 5, 2026
@@ -558,7 +558,7 @@ async function handleClientSearch() {
                data-address="${escapeHtml(client.address_line1 || "")}"
                data-city="${escapeHtml(client.city || "")}">
             <strong>${escapeHtml(client.client_name)}</strong><br>
-            <small class="text-muted">${escapeHtml(client.phone_primary)} â€¢ ${escapeHtml(
+            <small class="text-muted">${escapeHtml(client.phone_primary)} &bull; ${escapeHtml(
               client.contact_person || "No contact",
             )}</small>
           </div>`;
