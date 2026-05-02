@@ -344,7 +344,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                 <div id="reviewSummary"></div>
 
                 <!-- Receipt Delivery -->
-                <div class="receipt-delivery-section">
+                <!-- <div class="receipt-delivery-section">
                     <h5 class="mb-3">
                         <i class="fas fa-envelope"></i> Receipt Delivery (Optional)
                     </h5>
@@ -363,7 +363,7 @@ $userId = $_SESSION['user_id'] ?? 0;
                             <div class="invalid-feedback" id="receiptEmailError"></div>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Navigation Buttons -->
