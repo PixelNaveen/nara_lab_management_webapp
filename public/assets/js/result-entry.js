@@ -2,17 +2,7 @@
  * ============================================================
  * RESULT ENTRY JAVASCRIPT MODULE
  * Laboratory Management System
- * Version 1.0 - Result Entry with Type-Aware Controls
- * ============================================================
- *
- * Features:
- * - Sample listing with real-time filtering
- * - Modal-based result entry form
- * - Type-aware controls (numeric/ND or present/absent)
- * - ESPC toggle support
- * - Auto-completion status on all results filled
- * - Toast notifications
- *
+ * Version 3.0 - Modernised: ES6+ (let/const), Auto-Init
  * ============================================================
  */
 
@@ -44,10 +34,24 @@ const ResultEntry = (function () {
 
   // ==================== INITIALIZATION ====================
   function init() {
-    cacheElements();
-    attachEventListeners();
-    initializeModal();
-    loadSamples();
+    try {
+      cacheElements();
+      attachEventListeners();
+      initializeModal();
+      loadSamples();
+      console.log('✅ ResultEntry Module: Initialized Successfully');
+    } catch (error) {
+      console.error('❌ ResultEntry Module: Initialization Failed', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger m-3';
+      errorDiv.innerHTML = `
+        <h5><i class="bi bi-exclamation-triangle"></i> Initialization Error</h5>
+        <p>Failed to initialize Result Entry module. Please refresh the page.</p>
+        <small>${error.message}</small>
+      `;
+      const container = document.querySelector('.re-container');
+      if (container) container.prepend(errorDiv);
+    }
   }
 
   function cacheElements() {
@@ -56,7 +60,7 @@ const ResultEntry = (function () {
     EL.datePreset = document.getElementById("reDatePreset");
 
     EL.table = document.getElementById("resultsTable");
-    EL.tbody = EL.table.querySelector("tbody");
+    EL.tbody = EL.table ? EL.table.querySelector("tbody") : null;
     EL.emptyState = document.getElementById("reEmptyState");
 
     EL.modal = document.getElementById("resultEntryModal");
@@ -69,14 +73,15 @@ const ResultEntry = (function () {
     EL.toastContainer = document.getElementById("reToastContainer");
 
     // Verify critical elements
-    [
+    const critical = [
       "searchInput",
       "statusFilter",
       "table",
       "tbody",
       "modal",
       "btnSave",
-    ].forEach(function (k) {
+    ];
+    critical.forEach((k) => {
       if (!EL[k]) throw new Error("Critical element missing: " + k);
     });
   }
@@ -124,18 +129,18 @@ const ResultEntry = (function () {
     STATE.isLoading = true;
     showTableLoading();
 
-    var fd = new FormData();
+    const fd = new FormData();
     fd.append("action", "fetchSamples");
     fd.append("search", STATE.currentFilters.search);
     fd.append("status", STATE.currentFilters.status);
     fd.append("date_preset", STATE.currentFilters.date_preset);
 
     fetch(CONFIG.CONTROLLER_URL, { method: "POST", body: fd })
-      .then(function (r) {
+      .then((r) => {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       })
-      .then(function (data) {
+      .then((data) => {
         if (data.status === "success") {
           STATE.samples = data.data || [];
           renderTable(STATE.samples);
@@ -143,11 +148,11 @@ const ResultEntry = (function () {
           throw new Error(data.message || "Failed to load");
         }
       })
-      .catch(function (err) {
+      .catch((err) => {
         showToast("Failed to load samples: " + err.message, "danger");
         showEmptyState();
       })
-      .finally(function () {
+      .finally(() => {
         STATE.isLoading = false;
       });
   }
@@ -175,11 +180,11 @@ const ResultEntry = (function () {
   }
 
   function createRow(s) {
-    var statusClass = getStatusClass(s.status);
-    var progress = getProgressInfo(s);
-    var date = formatDate(s.received_date);
-    var isCompleted = s.status === "Completed";
-    var isCancelled = s.status === "Cancelled";
+    const statusClass = getStatusClass(s.status);
+    const progress = getProgressInfo(s);
+    const date = formatDate(s.received_date);
+    const isCompleted = s.status === "Completed";
+    const isCancelled = s.status === "Cancelled";
 
     return (
       '<tr data-sample-id="' +
@@ -223,7 +228,7 @@ const ResultEntry = (function () {
   }
 
   function getStatusClass(status) {
-    var map = {
+    const map = {
       Pending: "badge-pending",
       "In Progress": "badge-in-progress",
       Completed: "badge-completed",
@@ -233,15 +238,15 @@ const ResultEntry = (function () {
   }
 
   function getProgressInfo(s) {
-    var total = parseInt(s.test_count) || 0;
-    var done = parseInt(s.result_count) || 0;
-    var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const total = parseInt(s.test_count) || 0;
+    const done = parseInt(s.result_count) || 0;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
     if (total === 0) {
       return { html: '<span class="text-muted small">No tests</span>' };
     }
 
-    var color = pct === 100 ? "#16a34a" : pct > 0 ? "#3b82f6" : "#94a3b8";
+    const color = pct === 100 ? "#16a34a" : pct > 0 ? "#3b82f6" : "#94a3b8";
     return {
       html:
         '<div class="re-progress-wrap">' +
@@ -261,14 +266,14 @@ const ResultEntry = (function () {
   function attachRowListeners() {
     document
       .querySelectorAll(".btn-assign, .btn-view-results")
-      .forEach(function (btn) {
+      .forEach((btn) => {
         btn.addEventListener("click", function () {
           openResultModal(parseInt(this.dataset.sampleId));
         });
       });
-    document.querySelectorAll(".btn-print-re").forEach(function (btn) {
+    document.querySelectorAll(".btn-print-re").forEach((btn) => {
       btn.addEventListener("click", function () {
-        var sid = this.dataset.sampleId;
+        const sid = this.dataset.sampleId;
         window.location.href = "index.php?page=test-reports&sample_id=" + sid;
       });
     });
@@ -285,15 +290,13 @@ const ResultEntry = (function () {
 
     if (EL.modalInstance) EL.modalInstance.show();
 
-    var fd = new FormData();
+    const fd = new FormData();
     fd.append("action", "getForm");
     fd.append("sample_id", sampleId);
 
     fetch(CONFIG.CONTROLLER_URL, { method: "POST", body: fd })
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
+      .then((r) => r.json())
+      .then((data) => {
         if (data.status === "success" && data.data) {
           STATE.formData = data.data;
           renderFormModal(data.data);
@@ -302,7 +305,7 @@ const ResultEntry = (function () {
           throw new Error(data.message || "Failed to load form");
         }
       })
-      .catch(function (err) {
+      .catch((err) => {
         EL.modalBody.innerHTML =
           '<div class="alert alert-danger m-3"><i class="bi bi-exclamation-triangle me-2"></i>' +
           esc(err.message) +
@@ -311,13 +314,12 @@ const ResultEntry = (function () {
   }
 
   function renderFormModal(data) {
-    var sample = data.sample;
-    var items = data.items;
+    const { sample, items } = data;
 
     EL.modalSampleCode.textContent = sample.sample_code;
     EL.modalClientName.textContent = sample.client_name;
 
-    var html =
+    let html =
       '<div class="re-sample-header mb-3">' +
       '<div class="row g-2">' +
       '<div class="col-md-3"><div class="re-info-chip"><small class="text-muted">Form No.</small><strong>' +
@@ -366,17 +368,25 @@ const ResultEntry = (function () {
 
     html += '<div class="accordion" id="itemsAccordion">';
 
-    items.forEach(function (item, idx) {
-      var catBadge = getCategoryBadge(item.category_code, item.category_name);
-      var isFirst = idx === 0;
-      var collapseId = "collapse-item-" + item.sample_item_id;
+    items.forEach((item, idx) => {
+      const catBadge = getCategoryBadge(item.category_code, item.category_name);
+      const isFirst = idx === 0;
+      const collapseId = "collapse-item-" + item.sample_item_id;
 
       html +=
         '<div class="accordion-item re-accordion-item">' +
         '<h2 class="accordion-header">' +
-        '<button class="accordion-button re-accordion-btn' +
-        (isFirst ? "" : " collapsed") +
-        '" type="button" data-bs-toggle="collapse" data-bs-target="#' +
+        '<button class="accordion-button re-accordion-btn ' +
+        (isFirst ? "" : "collapsed") +
+        '" type="button"' +
+        ' data-bs-toggle="collapse"' +
+        ' data-bs-target="#' +
+        collapseId +
+        '"' +
+        ' aria-expanded="' +
+        (isFirst ? "true" : "false") +
+        '"' +
+        ' aria-controls="' +
         collapseId +
         '">' +
         '<span class="re-item-label">Item ' +
@@ -393,9 +403,11 @@ const ResultEntry = (function () {
         "</button></h2>" +
         '<div id="' +
         collapseId +
-        '" class="accordion-collapse collapse' +
+        '"' +
+        ' class="accordion-collapse collapse' +
         (isFirst ? " show" : "") +
-        '" data-bs-parent="#itemsAccordion">' +
+        '"' +
+        ' data-bs-parent="#itemsAccordion">' +
         '<div class="accordion-body p-0">';
 
       if (!item.tests || item.tests.length === 0) {
@@ -409,12 +421,22 @@ const ResultEntry = (function () {
     });
 
     html += "</div>";
+
     EL.modalBody.innerHTML = html;
+
+    if (typeof bootstrap !== "undefined") {
+      document
+        .querySelectorAll("#itemsAccordion .accordion-collapse")
+        .forEach((el) => {
+          bootstrap.Collapse.getOrCreateInstance(el, { toggle: false });
+        });
+    }
+
     attachFormListeners();
   }
 
   function renderTestsTable(item) {
-    var html =
+    let html =
       '<div class="table-responsive"><table class="table table-sm mb-0 re-tests-table">' +
       "<thead><tr>" +
       '<th class="px-3 py-2">Parameter</th>' +
@@ -424,15 +446,15 @@ const ResultEntry = (function () {
       '<th class="px-3 py-2 text-center" style="width:60px;">ESPC</th>' +
       "</tr></thead><tbody>";
 
-    item.tests.forEach(function (test) {
-      var paramLabel =
+    item.tests.forEach((test) => {
+      const paramLabel =
         esc(test.parameter_name) +
         (test.variant_name
           ? ' <small class="text-muted">(' +
             esc(test.variant_name) +
             ")</small>"
           : "");
-      var existing = test.existing_result;
+      const existing = test.existing_result;
 
       html +=
         '<tr class="result-row" data-sample-test-id="' +
@@ -471,11 +493,11 @@ const ResultEntry = (function () {
   }
 
   function renderResultControl(test, existing) {
-    var stid = test.sample_test_id;
+    const stid = test.sample_test_id;
 
     if (test.result_mode === "numeric_or_ND") {
-      var selType = "";
-      var numVal = "";
+      let selType = "";
+      let numVal = "";
 
       if (existing && existing.result_value) {
         if (existing.result_value === "ND") {
@@ -486,7 +508,7 @@ const ResultEntry = (function () {
         }
       }
 
-      var numDisabled = selType !== "numeric" ? "disabled" : "";
+      const numDisabled = selType !== "numeric" ? "disabled" : "";
 
       return (
         '<div class="d-flex flex-column gap-1">' +
@@ -516,7 +538,7 @@ const ResultEntry = (function () {
         "</div>"
       );
     } else if (test.result_mode === "present_or_absent") {
-      var catVal =
+      const catVal =
         existing && existing.result_value ? existing.result_value : "";
 
       return (
@@ -547,13 +569,11 @@ const ResultEntry = (function () {
       return '<span class="text-muted">-</span>';
     }
 
-    // Auto-check only if a prior result explicitly had ESPC checked
-    var isChecked = existing ? existing.has_espc === 1 : false;
-    var checkedAttr = isChecked ? " checked" : "";
+    const isChecked = existing ? existing.has_espc === 1 : false;
+    const checkedAttr = isChecked ? " checked" : "";
 
-    // Disable if result is ND or empty
-    var resVal = existing && existing.result_value ? existing.result_value : "";
-    var disabledAttr = resVal === "ND" || resVal === "" ? " disabled" : "";
+    const resVal = existing && existing.result_value ? existing.result_value : "";
+    const disabledAttr = resVal === "ND" || resVal === "" ? " disabled" : "";
 
     return (
       '<input type="checkbox" class="form-check-input re-espc-check" data-test-id="' +
@@ -566,15 +586,15 @@ const ResultEntry = (function () {
   }
 
   function getCategoryBadge(code, name) {
-    var colors = {
+    const colors = {
       WAT: "background:rgba(59,130,246,0.15);color:#2563eb;border-color:rgba(59,130,246,0.3)",
       FSH: "background:rgba(245,158,11,0.15);color:#d97706;border-color:rgba(245,158,11,0.3)",
       SWB: "background:rgba(22,163,74,0.15);color:#15803d;border-color:rgba(22,163,74,0.3)",
       OTH: "background:rgba(100,116,139,0.15);color:#475569;border-color:rgba(100,116,139,0.3)",
     };
-    var icons = { WAT: "💧", FSH: "🐟", SWB: "🧹", OTH: "📦" };
-    var style = colors[code] || colors.OTH;
-    var icon = icons[code] || icons.OTH;
+    const icons = { WAT: "💧", FSH: "🐟", SWB: "🧹", OTH: "📦" };
+    const style = colors[code] || colors.OTH;
+    const icon = icons[code] || icons.OTH;
 
     return (
       '<span class="badge re-cat-badge" style="' +
@@ -588,12 +608,11 @@ const ResultEntry = (function () {
   }
 
   function attachFormListeners() {
-    // Toggle numeric input when result type changes
-    document.querySelectorAll(".re-result-type").forEach(function (sel) {
+    document.querySelectorAll(".re-result-type").forEach((sel) => {
       sel.addEventListener("change", function () {
-        var row = this.closest(".result-row");
-        var mode = row.dataset.resultMode;
-        var numInput = row.querySelector(".re-result-value");
+        const row = this.closest(".result-row");
+        const mode = row.dataset.resultMode;
+        const numInput = row.querySelector(".re-result-value");
 
         if (mode === "numeric_or_ND" && numInput) {
           if (this.value === "numeric") {
@@ -604,10 +623,10 @@ const ResultEntry = (function () {
             numInput.value = "";
           }
         }
+
         validateResultRow(row);
 
-        // Toggle ESPC based on selection
-        var espcCheck = row.querySelector(".re-espc-check");
+        const espcCheck = row.querySelector(".re-espc-check");
         if (espcCheck) {
           if (this.value === "ND" || this.value === "") {
             espcCheck.disabled = true;
@@ -619,26 +638,23 @@ const ResultEntry = (function () {
       });
     });
 
-    // Real-time validation for numeric values
-    document.querySelectorAll(".re-result-value").forEach(function (input) {
+    document.querySelectorAll(".re-result-value").forEach((input) => {
       input.addEventListener("input", function () {
         validateResultRow(this.closest(".result-row"));
       });
     });
 
-    // Real-time validation for dates
-    ["reAnalysisStartDate", "reAnalysisEndDate"].forEach(function (id) {
-      var el = document.getElementById(id);
+    ["reAnalysisStartDate", "reAnalysisEndDate"].forEach((id) => {
+      const el = document.getElementById(id);
       if (el) {
         el.addEventListener("change", function () {
           validateDateField(this);
-          // Also validate the other date to check cross-date logic (start <= end)
-          var otherId =
+          const otherId =
             id === "reAnalysisStartDate"
               ? "reAnalysisEndDate"
               : "reAnalysisStartDate";
-          var otherEl = document.getElementById(otherId);
-          if (otherEl) validateDateField(otherEl);
+          const otherEl = document.getElementById(otherId);
+          if (otherEl && otherEl.value) validateDateField(otherEl);
         });
       }
     });
@@ -647,17 +663,17 @@ const ResultEntry = (function () {
   // ==================== VALIDATION LOGIC ====================
 
   function validateResultRow(row) {
-    var mode = row.dataset.resultMode;
-    var typeSel = row.querySelector(".re-result-type");
-    var valInput = row.querySelector(".re-result-value");
-    var type = typeSel ? typeSel.value : "";
+    const mode = row.dataset.resultMode;
+    const typeSel = row.querySelector(".re-result-type");
+    const valInput = row.querySelector(".re-result-value");
+    const type = typeSel ? typeSel.value : "";
 
     clearError(typeSel);
     if (valInput) clearError(valInput);
 
     if (mode === "numeric_or_ND") {
       if (type === "numeric") {
-        var val = valInput.value.trim();
+        const val = valInput ? valInput.value.trim() : "";
         if (!val) {
           showError(valInput, "Result value is required");
           return false;
@@ -674,23 +690,21 @@ const ResultEntry = (function () {
 
   function validateDateField(el) {
     clearError(el);
-    var val = el.value;
+    const val = el.value;
     if (!val) return true;
 
-    // Use current local date in YYYY-MM-DD format for direct comparison
-    var todayStr = new Date().toLocaleDateString("en-CA"); // 'en-CA' gives YYYY-MM-DD
+    const todayStr = new Date().toLocaleDateString("en-CA");
 
     if (val > todayStr) {
       showError(el, "Future dates are not allowed");
       return false;
     }
 
-    // Logic: Start Date <= End Date
-    var startEl = document.getElementById("reAnalysisStartDate");
-    var endEl = document.getElementById("reAnalysisEndDate");
+    const startEl = document.getElementById("reAnalysisStartDate");
+    const endEl = document.getElementById("reAnalysisEndDate");
     if (startEl && endEl && startEl.value && endEl.value) {
-      var start = new Date(startEl.value);
-      var end = new Date(endEl.value);
+      const start = new Date(startEl.value);
+      const end = new Date(endEl.value);
       if (el.id === "reAnalysisEndDate" && end < start) {
         showError(el, "End date cannot be earlier than start date");
         return false;
@@ -702,11 +716,11 @@ const ResultEntry = (function () {
 
   function showError(el, message) {
     el.classList.add("is-invalid");
-    var container =
+    const container =
       el.closest(".flex-column") ||
       el.closest(".re-date-chip") ||
       el.parentElement;
-    var label = container.querySelector(".re-error-label");
+    const label = container ? container.querySelector(".re-error-label") : null;
     if (label) {
       label.textContent = message;
       label.style.display = "block";
@@ -714,12 +728,13 @@ const ResultEntry = (function () {
   }
 
   function clearError(el) {
+    if (!el) return;
     el.classList.remove("is-invalid");
-    var container =
+    const container =
       el.closest(".flex-column") ||
       el.closest(".re-date-chip") ||
       el.parentElement;
-    var label = container.querySelector(".re-error-label");
+    const label = container ? container.querySelector(".re-error-label") : null;
     if (label) {
       label.textContent = "";
       label.style.display = "none";
@@ -728,16 +743,15 @@ const ResultEntry = (function () {
 
   // ==================== SAVE RESULTS ====================
   function saveResults() {
-    var sampleId = STATE.currentSampleId;
+    const sampleId = STATE.currentSampleId;
     if (!sampleId) return;
 
-    var rows = document.querySelectorAll(".result-row");
-    var results = [];
-    var hasError = false;
+    const rows = document.querySelectorAll(".result-row");
+    const results = [];
+    let hasError = false;
 
-    // Validate Dates first (MANDATORY per user request)
-    var startDateEl = document.getElementById("reAnalysisStartDate");
-    var endDateEl = document.getElementById("reAnalysisEndDate");
+    const startDateEl = document.getElementById("reAnalysisStartDate");
+    const endDateEl = document.getElementById("reAnalysisEndDate");
 
     if (startDateEl) {
       if (!startDateEl.value) {
@@ -757,16 +771,15 @@ const ResultEntry = (function () {
       }
     }
 
-    rows.forEach(function (row) {
-      var mode = row.dataset.resultMode;
-      var typeSel = row.querySelector(".re-result-type");
-      var valInput = row.querySelector(".re-result-value");
-      var espcCheck = row.querySelector(".re-espc-check");
+    rows.forEach((row) => {
+      const mode = row.dataset.resultMode;
+      const typeSel = row.querySelector(".re-result-type");
+      const valInput = row.querySelector(".re-result-value");
+      const espcCheck = row.querySelector(".re-espc-check");
 
-      var resultType = typeSel ? typeSel.value : "";
+      const resultType = typeSel ? typeSel.value : "";
 
       if (mode === "present_or_absent") {
-        // Must select Present or Absent — never leave as --
         if (!resultType) {
           showError(typeSel, "Please select Present or Absent.");
           hasError = true;
@@ -775,15 +788,13 @@ const ResultEntry = (function () {
       }
 
       if (mode === "numeric_or_ND") {
-        // Must choose either Numeric or ND
         if (!resultType) {
           showError(typeSel, "Please select Numeric or ND.");
           hasError = true;
           return;
         }
-        // If Numeric selected, value must not be empty
         if (resultType === "numeric") {
-          var val = valInput ? valInput.value.trim() : "";
+          const val = valInput ? valInput.value.trim() : "";
           if (!val) {
             showError(valInput, "A numeric value is required.");
             hasError = true;
@@ -792,12 +803,11 @@ const ResultEntry = (function () {
         }
       }
 
-      // Live row validation check
       if (!validateResultRow(row)) hasError = true;
 
       if (!resultType) return;
 
-      var entry = {
+      const entry = {
         sample_test_id: row.dataset.sampleTestId,
         sample_item_id: row.dataset.sampleItemId,
         parameter_id: row.dataset.parameterId,
@@ -815,8 +825,7 @@ const ResultEntry = (function () {
         "Please check again and fill all results correctly.",
         "warning",
       );
-      // Find first error and scroll to it
-      var firstError = document.querySelector(".is-invalid");
+      const firstError = document.querySelector(".is-invalid");
       if (firstError)
         firstError.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -827,19 +836,15 @@ const ResultEntry = (function () {
       return;
     }
 
-    // Disable button
     EL.btnSave.disabled = true;
     EL.btnSave.innerHTML =
       '<i class="bi bi-hourglass-split me-1"></i>Saving...';
 
-    var fd = new FormData();
+    const fd = new FormData();
     fd.append("action", "saveResults");
     fd.append("sample_id", sampleId);
     fd.append("results", JSON.stringify(results));
 
-    // Append analysis dates from date pickers
-    var startDateEl = document.getElementById("reAnalysisStartDate");
-    var endDateEl = document.getElementById("reAnalysisEndDate");
     if (startDateEl && startDateEl.value) {
       fd.append("analysis_start_date", startDateEl.value);
     }
@@ -847,37 +852,34 @@ const ResultEntry = (function () {
       fd.append("analysis_end_date", endDateEl.value);
     }
 
-    // Get CSRF Token from meta tag or window object
-    var csrfToken =
+    const csrfToken =
       window.CSRF_TOKEN ||
-      document
-        .querySelector('meta[name="csrf-token"]')
-        ?.getAttribute("content") ||
+      (document.querySelector('meta[name="csrf-token"]') &&
+        document
+          .querySelector('meta[name="csrf-token"]')
+          .getAttribute("content")) ||
       "";
     fd.append("csrf_token", csrfToken);
 
     fetch(CONFIG.CONTROLLER_URL, { method: "POST", body: fd })
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
+      .then((r) => r.json())
+      .then((data) => {
         if (data.status === "success") {
-          var msg = data.message || "Results saved!";
+          let msg = data.message || "Results saved!";
           if (data.status_changed) {
-            msg += " Sample marked as Completed ✅";
+            msg += " Sample marked as Completed \u2705";
           }
           showToast(msg, "success");
-
           if (EL.modalInstance) EL.modalInstance.hide();
           loadSamples();
         } else {
           throw new Error(data.message || "Failed to save");
         }
       })
-      .catch(function (err) {
+      .catch((err) => {
         showToast("Save failed: " + err.message, "danger");
       })
-      .finally(function () {
+      .finally(() => {
         EL.btnSave.disabled = false;
         EL.btnSave.innerHTML =
           '<i class="bi bi-check-circle me-1"></i>Save All Results';
@@ -885,48 +887,41 @@ const ResultEntry = (function () {
   }
 
   // ==================== TOAST NOTIFICATIONS ====================
-  function showToast(message, type) {
-    type = type || "info";
-    var colors = {
+  function showToast(message, type = "info") {
+    const colors = {
       success: "text-bg-success",
       danger: "text-bg-danger",
       warning: "text-bg-warning",
       info: "text-bg-info",
     };
-    var icons = {
+    const icons = {
       success: "bi-check-circle-fill",
       danger: "bi-exclamation-triangle-fill",
       warning: "bi-exclamation-circle-fill",
       info: "bi-info-circle-fill",
     };
 
-    var toastEl = document.createElement("div");
+    const toastEl = document.createElement("div");
     toastEl.className =
       "toast align-items-center " + (colors[type] || colors.info) + " border-0";
     toastEl.setAttribute("role", "alert");
-    toastEl.innerHTML =
-      '<div class="d-flex">' +
-      '<div class="toast-body">' +
-      '<i class="bi ' +
-      (icons[type] || icons.info) +
-      ' flex-shrink-0 me-2"></i>' +
-      "<span>" +
-      esc(message) +
-      "</span>" +
-      "</div>" +
-      '<button type="button" class="btn-close ' +
-      (type === "warning" ? "btn-close-black" : "btn-close-white") +
-      ' me-2 m-auto" data-bs-dismiss="toast"></button>' +
-      "</div>";
+    toastEl.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi ${icons[type] || icons.info} flex-shrink-0 me-2"></i>
+          <span>${esc(message)}</span>
+        </div>
+        <button type="button" class="btn-close ${type === "warning" ? "btn-close-black" : "btn-close-white"} me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>`;
 
     if (EL.toastContainer) {
       EL.toastContainer.appendChild(toastEl);
       if (typeof bootstrap !== "undefined") {
-        var bsToast = new bootstrap.Toast(toastEl, {
+        const bsToast = new bootstrap.Toast(toastEl, {
           delay: CONFIG.TOAST_DURATION || 4000,
         });
         bsToast.show();
-        toastEl.addEventListener("hidden.bs.toast", function () {
+        toastEl.addEventListener("hidden.bs.toast", () => {
           toastEl.remove();
         });
       }
@@ -936,23 +931,33 @@ const ResultEntry = (function () {
   // ==================== UTILITIES ====================
   function formatDate(d) {
     if (!d) return "-";
-    var parts = d.split("-");
+    const parts = d.split("-");
     if (parts.length === 3) return parts[2] + "/" + parts[1] + "/" + parts[0];
     return d;
   }
 
   function esc(str) {
     if (!str) return "";
-    var el = document.createElement("span");
+    const el = document.createElement("span");
     el.textContent = str;
     return el.innerHTML;
   }
 
-  // Converts "cm^2" → "cm<sup>2</sup>" after escaping
   function formatUnitSup(str) {
     return esc(str).replace(/\^(\d+)/g, "<sup>$1</sup>");
   }
 
   // ==================== PUBLIC API ====================
-  return { init: init };
+  return {
+    init: init
+  };
 })();
+
+// ==================== AUTO-INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof ResultEntry !== 'undefined') {
+        ResultEntry.init();
+    } else {
+        console.error('\u274c ResultEntry Module: Not Found \u2014 check that result-entry.js loaded correctly.');
+    }
+});

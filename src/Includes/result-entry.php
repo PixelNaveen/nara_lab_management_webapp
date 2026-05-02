@@ -1,7 +1,7 @@
 <!-- ============================================================
    RESULT ENTRY PAGE
    Laboratory Management System
-   Version 1.0 - Test Result Entry with Category-Aware Controls
+   Version 2.0 - Fixed accordion, scoping, and validation
    ============================================================ -->
 
 <!-- Link to External CSS -->
@@ -9,15 +9,21 @@
 
 <div class="re-container">
 
-
     <!-- ==================== FILTERS SECTION ==================== -->
     <div class="row g-3 align-items-center mb-4 mx-0">
         <div class="col-12">
             <div class="row g-2">
                 <div class="col-12 col-md-5 col-lg-4">
                     <div class="input-group shadow-sm rounded-3 overflow-hidden">
-                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                        <input type="text" id="reSearchInput" class="form-control border-start-0 ps-0 shadow-none" placeholder="Search by sample code or client name..." autocomplete="off">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input
+                            type="text"
+                            id="reSearchInput"
+                            class="form-control border-start-0 ps-0 shadow-none"
+                            placeholder="Search by sample code or client name..."
+                            autocomplete="off">
                     </div>
                 </div>
 
@@ -83,17 +89,18 @@
         <h5 class="text-muted">No samples found</h5>
         <p class="text-muted small">Try adjusting your search filters</p>
     </div>
-</div>
-</div>
 
-</div>
+</div><!-- /.re-container -->
+
 
 <!-- ============================================================
    RESULT ENTRY MODAL
    Full-width modal for entering test results per sample
    ============================================================ -->
 
-<div class="modal fade" id="resultEntryModal" tabindex="-1" aria-labelledby="resultEntryModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="resultEntryModal" tabindex="-1"
+    aria-labelledby="resultEntryModalLabel" aria-hidden="true"
+    data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
 
@@ -107,7 +114,8 @@
                         <span class="badge bg-light text-primary" id="modalSampleCode">-</span>
                         <span class="ms-2 text-white-50" id="modalClientName">-</span>
                     </span>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
 
@@ -139,6 +147,7 @@
     </div>
 </div>
 
+
 <!-- ============================================================
    TOAST NOTIFICATIONS CONTAINER
    ============================================================ -->
@@ -146,33 +155,8 @@
     <!-- Toasts will be dynamically inserted here -->
 </div>
 
+
 <!-- ============================================================
    EXTERNAL JAVASCRIPT
    ============================================================ -->
-
-<script src="../../public/assets/js/result-entry.js"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('✅ Result Entry View: DOM Loaded');
-
-        if (typeof ResultEntry !== 'undefined') {
-            try {
-                ResultEntry.init();
-                console.log('✅ ResultEntry Module: Initialized Successfully');
-            } catch (error) {
-                console.error('❌ ResultEntry Module: Initialization Failed', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger m-3';
-                errorDiv.innerHTML = `
-                <h5><i class="bi bi-exclamation-triangle"></i> Initialization Error</h5>
-                <p>Failed to initialize Result Entry module. Please refresh the page.</p>
-                <small>${error.message}</small>
-            `;
-                document.querySelector('.re-container').prepend(errorDiv);
-            }
-        } else {
-            console.error('❌ ResultEntry Module: Not Found');
-        }
-    });
-</script>
+<script src="/public/assets/js/result-entry.js"></script>

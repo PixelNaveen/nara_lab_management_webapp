@@ -103,12 +103,12 @@ body {
 /* Column Padding */
 .tr-table th:first-child,
 .tr-table td:first-child {
-  padding-left: 25px !important;
+  padding-left: 30px !important;
 }
 
 .tr-table th:last-child,
 .tr-table td:last-child {
-  padding-right: 25px !important;
+  padding-right: 30px !important;
 }
 
 /* Actions Column Alignment */
@@ -139,8 +139,8 @@ body {
 }
 
 .tr-table tbody td {
-  padding: 15px 12px;
-  font-size: 0.9rem;
+  padding: 23px 15px !important;
+  font-size: 0.95rem;
   vertical-align: middle;
   border: none;
 }
@@ -200,159 +200,163 @@ body {
 
 /* Custom Styles for Wizard */
 .wizard-steps {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 80px; /* Increased gap to prevent overlapping */
-    margin-bottom: 35px;
-    position: relative;
-    padding-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 80px; /* Increased gap to prevent overlapping */
+  margin-bottom: 35px;
+  position: relative;
+  padding-top: 10px;
 }
 
 .wizard-steps::before {
-    content: "";
-    position: absolute;
-    top: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px; /* Line between steps */
-    height: 2px;
-    background: #e2e8f0;
-    z-index: 0;
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px; /* Line between steps */
+  height: 2px;
+  background: #e2e8f0;
+  z-index: 0;
 }
 
 .wizard-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-    min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  min-width: 100px;
 }
 
 .step-number {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #f1f5f9;
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    margin-bottom: 10px;
-    border: 3px solid #fff;
-    box-shadow: 0 0 0 1px #e2e8f0;
-    transition: all 0.3s ease;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin-bottom: 10px;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .wizard-step.active .step-number {
-    background: var(--primary-blue);
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+  background: var(--primary-blue);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
 }
 
 .wizard-step.completed .step-number {
-    background: var(--success-green);
-    color: #fff;
+  background: var(--success-green);
+  color: #fff;
 }
 
 .step-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #94a3b8;
-    white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
 .wizard-step.active .step-label {
-    color: var(--primary-blue);
+  color: var(--primary-blue);
 }
 
 /* Modal Header Fixes */
 .modal-header {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
-    padding: 20px 24px;
-    border-bottom: none;
-    border-radius: 16px 16px 0 0;
+  background: linear-gradient(
+    135deg,
+    var(--primary-blue) 0%,
+    var(--primary-blue-dark) 100%
+  );
+  padding: 20px 24px;
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
 }
 
 .modal-header .modal-title {
-    color: #fff;
-    font-size: 1.15rem;
-    font-weight: 600;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
 .modal-header .btn-close {
-    filter: brightness(0) invert(1); /* Make close button white */
-    opacity: 0.8;
+  filter: brightness(0) invert(1); /* Make close button white */
+  opacity: 0.8;
 }
 
 /* Badge in Header */
 #wizardSampleCode {
-    background: rgba(255, 255, 255, 0.9) !important;
-    color: var(--success-green);
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 0.85rem;
-    padding: 6px 12px;
-    border-radius: 50px;
-    border: none !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: var(--success-green);
+  font-family: "Monaco", "Consolas", monospace;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 50px;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Panels and Alerts */
 .wizard-panel h6 {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #334155;
-    margin-bottom: 1.25rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #334155;
+  margin-bottom: 1.25rem;
 }
 
 .alert-info {
-    background: #f0f9ff;
-    border: 1px solid #e0f2fe;
-    color: #0369a1;
-    border-radius: 12px;
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  color: #0369a1;
+  border-radius: 12px;
 }
 
 .alert-warning {
-    background: #fffbeb;
-    border: 1px solid #fef3c7;
-    color: #92400e;
-    border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+  border-radius: 12px;
 }
 
 /* Signatory Card */
 .signatory-card {
-    border: 1px solid #f1f5f9;
-    border-radius: 12px !important;
-    transition: all 0.2s ease;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px !important;
+  transition: all 0.2s ease;
 }
 
 .signatory-card:hover {
-    border-color: var(--primary-blue-light);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-color: var(--primary-blue-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Buttons in Footer */
 .modal-footer .btn-emerald-600 {
-    background-color: var(--success-green);
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
+  background-color: var(--success-green);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
 }
 
 .modal-footer .btn-dark {
-    background-color: #1e293b;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-weight: 600;
+  background-color: #1e293b;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
 }
 
 .modal-footer #btnWizardBack {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
 }
 
 /* =============================================

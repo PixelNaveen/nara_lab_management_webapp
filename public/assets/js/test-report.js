@@ -134,13 +134,13 @@ const TestReport = (() => {
           : "null";
 
         return `<tr>
-                <td class="px-3 py-2" data-label="Sample Code:"><span class="fw-bold text-primary" style="font-size: 11.5pt;">${escHtml(s.sample_code)}</span></td>
-                <td class="px-3 py-2" data-label="Client:">${escHtml(s.client_name)}</td>
-                <td class="px-3 py-2 text-center" data-label="Items:">${s.item_count}</td>
-                <td class="px-3 py-2 text-center" data-label="Tests:">${s.result_count}/${s.test_count}</td>
-                <td class="px-3 py-2" data-label="Test Ended:"><small>${testEndedDate}</small></td>
-                <td class="px-3 py-2 text-center" data-label="Report:">${reportBadge}</td>
-                <td class="px-3 py-2 text-center" data-label="">
+                <td class="px-3" data-label="Sample Code:"><span class="fw-bold text-primary" style="font-size: 11.5pt;">${escHtml(s.sample_code)}</span></td>
+                <td class="px-3" data-label="Client:">${escHtml(s.client_name)}</td>
+                <td class="px-3 text-center" data-label="Items:">${s.item_count}</td>
+                <td class="px-3 text-center" data-label="Tests:">${s.result_count}/${s.test_count}</td>
+                <td class="px-3" data-label="Test Ended:"><small>${testEndedDate}</small></td>
+                <td class="px-3 text-center" data-label="Report:">${reportBadge}</td>
+                <td class="px-3 text-center" data-label="">
                     <button class="btn-tr-action" 
                             onclick="TestReport.openWizard(${s.sample_id})" 
                             title="Generate / Print Report">

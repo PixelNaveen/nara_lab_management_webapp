@@ -1741,3 +1741,12 @@
 [2026-05-01 07:04:26] [TotalValidation] Total mismatch - Frontend: Rs. 5000, Backend: Rs. 2625, Diff: Rs. 2375, Combos: 1
 [2026-05-01 11:12:14] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Coliforms + Escherichia coli + Faecal Coliforms) | Individual: Rs. 5000 | Combo: Rs. 2625 | Savings: Rs. 2375 (47.5%)
 [2026-05-01 11:12:14] [TotalValidation] Total mismatch - Frontend: Rs. 5000, Backend: Rs. 2625, Diff: Rs. 2375, Combos: 1
+[2026-05-01 13:09:22] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Coliforms + Escherichia coli + Faecal Coliforms) | Individual: Rs. 6250 | Combo: Rs. 3875 | Savings: Rs. 2375 (38%)
+[2026-05-01 13:09:22] [TotalValidation] Total mismatch - Frontend: Rs. 6250, Backend: Rs. 3875, Diff: Rs. 2375, Combos: 1
+[2026-05-01 13:35:49] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Coliforms + Escherichia coli + Faecal Coliforms) | Individual: Rs. 6250 | Combo: Rs. 3875 | Savings: Rs. 2375 (38%)
+[2026-05-01 13:35:49] [TotalValidation] Total mismatch - Frontend: Rs. 6250, Backend: Rs. 3875, Diff: Rs. 2375, Combos: 1
+[2026-05-01 15:51:26] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/028/001 (expected 4 digits)
+[2026-05-01 20:16:26] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/030/001 (expected 4 digits)
+[2026-05-01 20:19:11] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/030/001 (expected 4 digits)
+[2026-05-01 20:19:30] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/030/001 (expected 4 digits)
+[2026-05-01 21:14:21] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/030/001 (expected 4 digits)

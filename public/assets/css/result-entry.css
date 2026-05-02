@@ -1,4 +1,7 @@
-/* public/assets/css/result-entry.css - PREMIUM REFINED VERSION (SCOPED) */
+/* ============================================================
+   result-entry.css — PREMIUM REFINED VERSION (SCOPED)
+   Version 2.0 — No visual changes. File cleaned and annotated.
+   ============================================================ */
 
 :root {
   --re-primary-blue: #1e3a8a;
@@ -12,14 +15,18 @@
   --re-text-dark: #1e293b;
 }
 
-/* Scoped Container Styles */
+/* =============================================
+   SCOPED CONTAINER
+   ============================================= */
 .re-container {
   padding: 20px;
   background-color: var(--re-light-gray);
   color: var(--re-text-dark);
 }
 
-/* Filter Card */
+/* =============================================
+   FILTER CARD
+   ============================================= */
 .re-container .re-card-filter {
   border: 1px solid var(--re-border-color);
   background: #fff;
@@ -73,7 +80,9 @@
   color: #64748b;
 }
 
-/* Table Container */
+/* =============================================
+   TABLE CONTAINER
+   ============================================= */
 .re-container .re-table-container {
   background: #fff;
   border-radius: 12px;
@@ -136,7 +145,9 @@
   color: #334155;
 }
 
-/* Scoped Badges for Result Entry */
+/* =============================================
+   BADGES — SCOPED TO re-container & resultEntryModal
+   ============================================= */
 .re-container .badge,
 #resultEntryModal .badge {
   padding: 0.5em 0.9em;
@@ -173,7 +184,9 @@
   border-color: rgba(22, 163, 74, 0.3) !important;
 }
 
-/* Action Buttons Refined Icon Style */
+/* =============================================
+   ACTION BUTTONS
+   ============================================= */
 .re-container .btn-re-action {
   width: 36px;
   height: 36px;
@@ -200,7 +213,9 @@
   font-size: 1.1rem;
 }
 
-/* Modal Styling - Scoped to resultEntryModal */
+/* =============================================
+   MODAL
+   ============================================= */
 #resultEntryModal .modal-content {
   border: none;
   border-radius: 16px;
@@ -235,7 +250,9 @@
   border-color: var(--re-danger-red) !important;
 }
 
-/* Progress Section */
+/* =============================================
+   PROGRESS BAR
+   ============================================= */
 .re-container .re-progress-wrap {
   width: 60px;
   height: 6px;
@@ -250,7 +267,9 @@
   transition: width 0.4s ease;
 }
 
-/* Checkbox Style */
+/* =============================================
+   CHECKBOX (ESPC)
+   ============================================= */
 #resultEntryModal .re-espc-check {
   width: 1.2rem;
   height: 1.2rem;
@@ -264,7 +283,9 @@
   border-color: var(--re-warning-yellow);
 }
 
-/* Form Chip Overrides */
+/* =============================================
+   FORM CHIPS (SAMPLE HEADER INSIDE MODAL)
+   ============================================= */
 #resultEntryModal .re-sample-header {
   background: var(--re-light-gray);
   border: 1px solid var(--re-border-color);
@@ -287,8 +308,7 @@
 }
 
 /* =============================================
-   RESPONSIVE - TABLE TO CARD TRANSFORMATION
-   Threshold: 992px (Large Mobile / Tablet)
+   RESPONSIVE — TABLE → CARD (≤ 991px)
    ============================================= */
 @media (max-width: 991.98px) {
   .re-container .re-table-container {
@@ -346,4 +366,215 @@
     text-align: left;
     margin-right: 15px;
   }
+}
+
+/* =============================================
+   TAILWIND CDN vs BOOTSTRAP .collapse FIX
+   
+   Tailwind CDN uses a MutationObserver that watches
+   the DOM in real time. When it sees any element with
+   class "collapse" it injects:
+     .collapse { visibility: collapse; }
+   
+   Bootstrap uses the SAME class name to control
+   display: none / block on accordion panels.
+   Result: panels get display:block (Bootstrap) but
+   visibility:collapse (Tailwind) → invisible content.
+   
+   Fix: explicitly override visibility and display for
+   every collapse state, scoped tightly to our modal.
+   ============================================= */
+
+/* Counteract Tailwind's visibility:collapse on all panels */
+#resultEntryModal .accordion-collapse {
+  visibility: visible !important;
+}
+
+/* Closed state — not showing, not mid-animation */
+#resultEntryModal .accordion-collapse:not(.show):not(.collapsing) {
+  display: none !important;
+  visibility: visible !important;
+}
+
+/* Open state */
+#resultEntryModal .accordion-collapse.show {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Mid-animation state — Bootstrap adds this during transition */
+#resultEntryModal .accordion-collapse.collapsing {
+  display: block !important;
+  visibility: visible !important;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.35s ease;
+}
+
+/* =============================================
+   ACCORDION & TESTS TABLE
+   ============================================= */
+
+/* Accordion item wrapper */
+.re-accordion-item {
+  border: 1px solid var(--re-border-color) !important;
+  border-radius: 12px !important;
+  /* overflow must be visible (not hidden) so Bootstrap can correctly measure
+     scrollHeight during the collapse height animation inside a scrollable modal.
+     overflow:hidden clips the layout context that Bootstrap reads, causing
+     scrollHeight = 0 → expand animation goes 0→0 → content stays invisible.
+     Border clipping for the rounded corners is handled on the children below. */
+  overflow: visible;
+  margin-bottom: 12px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.re-accordion-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: var(--re-primary-blue-light) !important;
+}
+
+/* Apply radius to first/last children so border-radius still renders
+   correctly without needing overflow:hidden on the parent. */
+.re-accordion-item .accordion-header:first-child .re-accordion-btn {
+  border-radius: 11px 11px 0 0;
+}
+.re-accordion-item .accordion-collapse.show .accordion-body:last-child,
+.re-accordion-item .accordion-body {
+  border-radius: 0 0 11px 11px;
+}
+
+/* Accordion button (header) */
+.re-accordion-btn {
+  padding: 14px 20px !important;
+  font-weight: 600 !important;
+  color: var(--re-primary-blue) !important;
+  background-color: #fff !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.re-accordion-btn:not(.collapsed) {
+  background-color: #f0f7ff !important;
+  color: var(--re-primary-blue-dark) !important;
+  border-bottom: 1px solid var(--re-border-color) !important;
+}
+
+.re-accordion-btn::after {
+  background-size: 1rem !important;
+  transition: transform 0.2s ease-in-out !important;
+}
+
+/* Tests table (inside accordion body) */
+.re-tests-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.re-tests-table thead th {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  padding: 10px 15px !important;
+  border-bottom: 1px solid var(--re-border-color) !important;
+}
+
+.re-tests-table tbody td {
+  padding: 12px 15px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  font-size: 0.9rem !important;
+  vertical-align: middle !important;
+}
+
+.re-tests-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Result input styling */
+.re-result-input-group {
+  max-width: 140px;
+}
+
+.re-result-type-select {
+  width: 110px !important;
+  font-size: 0.85rem !important;
+  border-radius: 8px !important;
+}
+
+.re-result-value-input {
+  font-size: 0.9rem !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+/* Highlight row with validation error */
+.re-tests-table tr.has-error {
+  background-color: rgba(220, 38, 38, 0.03);
+}
+
+/* =============================================
+   TOAST NOTIFICATIONS (FIX FOR VISIBILITY)
+   ============================================= */
+#reToastContainer .toast {
+  background-color: #fff !important;
+  color: var(--re-text-dark) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid var(--re-border-color) !important;
+}
+
+#reToastContainer .text-bg-success {
+  background-color: #ecfdf5 !important; /* Very light green */
+  border-left: 4px solid #10b981 !important; /* Success green accent */
+  color: #065f46 !important; /* Dark green text */
+}
+
+#reToastContainer .text-bg-success i {
+  color: #10b981 !important;
+}
+
+#reToastContainer .text-bg-danger {
+  background-color: #fef2f2 !important;
+  border-left: 4px solid #ef4444 !important;
+  color: #991b1b !important;
+}
+
+#reToastContainer .text-bg-danger i {
+  color: #ef4444 !important;
+}
+
+#reToastContainer .text-bg-warning {
+  background-color: #fffbeb !important;
+  border-left: 4px solid #f59e0b !important;
+  color: #92400e !important;
+}
+
+#reToastContainer .text-bg-warning i {
+  color: #f59e0b !important;
+}
+
+#reToastContainer .text-bg-info {
+  background-color: #eff6ff !important;
+  border-left: 4px solid #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+#reToastContainer .text-bg-info i {
+  color: #3b82f6 !important;
+}
+
+#reToastContainer .btn-close {
+  filter: none !important;
+  opacity: 0.5 !important;
+}
+
+#reToastContainer .btn-close:hover {
+  opacity: 1 !important;
 }

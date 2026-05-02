@@ -5,7 +5,7 @@
    ============================================================ -->
 
 <!-- Link to External CSS -->
-<link rel="stylesheet" href="../../public/assets/css/test-report.css">
+<link rel="stylesheet" href="public/assets/css/test-report.css">
 
 <div class="test-report-container">
     <!-- Header/Title could be here if needed, but keeping it lean per user screenshots -->
