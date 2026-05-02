@@ -337,7 +337,7 @@ body {
 }
 
 .full-a5 .form-title {
-  font-size: 11pt; /* ✅ Consistent title size */
+  font-size: 11pt; /*  Consistent title size */
   font-weight: bold;
   margin-bottom: 8pt;
   color: #000;
@@ -348,8 +348,8 @@ body {
 .full-a5 th,
 .full-a5 td {
   border: 0.75pt solid #000;
-  padding: 5pt 6pt; /* ✅ Loosened for balance */
-  font-size: 9pt; /* ✅ Compact format */
+  padding: 5pt 6pt; /*  Loosened for balance */
+  font-size: 9pt; /*  Compact format */
   vertical-align: middle;
   color: #000;
   line-height: 1.3;
