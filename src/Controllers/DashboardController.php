@@ -5,7 +5,8 @@
  * Handles AJAX requests for dashboard metrics and charts.
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 require_once __DIR__ . '/../Models/RevenueModel.php';
 require_once __DIR__ . '/../Models/SampleStatusModel.php';
 require_once __DIR__ . '/../Models/DailySummaryModel.php';

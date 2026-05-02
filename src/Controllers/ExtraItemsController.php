@@ -1,7 +1,8 @@
 <?php
 // src/Controllers/ExtraItemsController.php - UPDATED WITHOUT DISPLAY_ORDER
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 require_once __DIR__ . '/../Models/ExtraItemsModel.php';
 header('Content-Type: application/json');

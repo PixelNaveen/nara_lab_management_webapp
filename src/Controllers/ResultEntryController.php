@@ -12,7 +12,8 @@
  * @version 1.0
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 header('Content-Type: application/json');
 
 // Auth check

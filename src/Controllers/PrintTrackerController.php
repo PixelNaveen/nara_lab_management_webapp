@@ -11,7 +11,8 @@
  * @version 1.0
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 require_once __DIR__ . '/../Models/PrintHistoryModel.php';
 header('Content-Type: application/json');
 

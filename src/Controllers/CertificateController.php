@@ -1,7 +1,8 @@
 <?php
 // src/Controllers/CertificateController.php - FINAL COMPLETE VERSION
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 require_once __DIR__ . '/../Models/CertificateModel.php';
 header('Content-Type: application/json');

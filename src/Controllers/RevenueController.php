@@ -5,7 +5,8 @@
  * AAA-Grade Implementation for Secure Data Endpoints
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 require_once __DIR__ . '/../Models/RevenueModel.php';
 require_once __DIR__ . '/../../Config/RolePermissions.php';

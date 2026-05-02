@@ -5,11 +5,10 @@
  * Use this in AJAX controllers to maintain sliding timeout
  */
 
-//  CONFIGURE SESSION LIFETIME (Override server defaults)
-ini_set('session.gc_maxlifetime', 7200);
-ini_set('session.cookie_lifetime', 0);
-
 if (session_status() === PHP_SESSION_NONE) {
+    //  CONFIGURE SESSION LIFETIME (Override server defaults)
+    ini_set('session.gc_maxlifetime', 7200);
+    ini_set('session.cookie_lifetime', 0);
     session_start();
 }
 

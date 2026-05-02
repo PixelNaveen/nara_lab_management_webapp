@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 require_once __DIR__ . '/../Models/ParameterModel.php';
 header('Content-Type: application/json');

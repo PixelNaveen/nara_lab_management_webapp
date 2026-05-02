@@ -9,7 +9,8 @@
  * @version 1.0
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 require_once __DIR__ . '/../Models/SampleNamesModel.php';
 require_once __DIR__ . '/../Helpers/Functions.php';

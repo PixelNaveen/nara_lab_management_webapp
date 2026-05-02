@@ -9,7 +9,8 @@
  * @version 2.0 - Matched to actual model
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 // Include dependencies
 require_once __DIR__ . '/../../Config/Database.php';

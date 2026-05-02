@@ -21,13 +21,12 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-//  CONFIGURE SESSION LIFETIME (Override server defaults)
-// Set to 2 hours (7200 seconds) to match our custom inactivity logic
-ini_set('session.gc_maxlifetime', 7200);
-ini_set('session.cookie_lifetime', 0); // Cookie expires when browser closes
-
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
+    //  CONFIGURE SESSION LIFETIME (Override server defaults)
+    // Set to 2 hours (7200 seconds) to match our custom inactivity logic
+    ini_set('session.gc_maxlifetime', 7200);
+    ini_set('session.cookie_lifetime', 0); // Cookie expires when browser closes
     session_start();
 }
 

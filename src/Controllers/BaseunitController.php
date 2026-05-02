@@ -8,7 +8,8 @@
  * Phase: 2 - Base Unit System
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 
 require_once __DIR__ . '/../Models/BaseUnitModel.php';
 header('Content-Type: application/json');

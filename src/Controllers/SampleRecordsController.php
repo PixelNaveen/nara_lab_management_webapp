@@ -13,7 +13,8 @@
  * @version 2.0 - Payment System Integrated
  */
 
-session_start();
+require_once __DIR__ . '/../Includes/session-helper.php';
+checkSessionTimeout(true);
 require_once __DIR__ . '/../Models/SampleStatusModel.php';
 header('Content-Type: application/json');
 
