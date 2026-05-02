@@ -82,7 +82,7 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                 </div>
 
                 <!-- Header Table -->
-                <table>
+                <table class="header-table">
                     <tr class="header-row">
                         <td style="width: 35%;">Received by: <?= htmlspecialchars($data['acceptance']['received_by']) ?></td>
                         <td style="width: 25%;">Date: <?= htmlspecialchars($data['acceptance']['date']) ?></td>
@@ -92,9 +92,9 @@ $insideCarousel = isset($data['inside_carousel']) && $data['inside_carousel'] ==
                         <td colspan="3">Client / address: <?= htmlspecialchars($data['client']['full_address']) ?></td>
                     </tr>
                 </table>
-
+                <div style="height: 20px;"></div>
                 <!-- Sample Items Table (10 rows per page) -->
-                <table>
+                <table class="items-table">
                     <tr>
                         <th style="width: 28%;">Sample/s</th>
                         <th style="width: 16%;">Sample Code</th>
