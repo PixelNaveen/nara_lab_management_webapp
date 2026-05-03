@@ -60,6 +60,7 @@ $pageMap = [
     'test-results' => 'result-entry.php',
     'test-reports' => 'test-report.php',
     'manage-signatories' => 'manage-signatories.php',
+    'manage-invoices' => 'manage-invoices.php',
     'report-turnaround' => 'report-turnaround.php',
     'report-client' => 'report-client.php',
     'report-daily' => 'report-daily.php',

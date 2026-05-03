@@ -42,6 +42,7 @@ $menuItems = [
     ['id' => 'methods', 'label' => 'Test Methods', 'icon' => 'bi-funnel', 'url' => 'index.php?page=methods'],
     ['id' => 'pricing', 'label' => 'Pricing Management', 'icon' => 'bi-currency-dollar', 'url' => 'index.php?page=pricing'],
     ['id' => 'sample-records-view', 'label' => 'Sample Records', 'icon' => 'bi-search', 'url' => 'index.php?page=sample-records-view'],
+    ['id' => 'manage-invoices', 'label' => 'Invoices', 'icon' => 'bi-file-earmark-medical', 'url' => 'index.php?page=manage-invoices'],
 
     ['id' => 'reports', 'label' => 'Reports & Analytics', 'icon' => 'bi-graph-up', 'submenu' => [
         ['id' => 'report-daily', 'label' => 'Daily Summary', 'url' => 'index.php?page=report-daily'],

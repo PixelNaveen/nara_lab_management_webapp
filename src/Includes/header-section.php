@@ -53,6 +53,7 @@ $pageTitles = [
     'sample-records-view' => 'Sample Records',
     'test-reports' => 'Test Reports',
     'manage-signatories' => 'Report Signatories',
+    'manage-invoices' => 'Invoice Management',
     'report-daily' => 'Daily Summary',
     'report-client' => 'Client Reports',
     'report-revenue' => 'Revenue Analysis',

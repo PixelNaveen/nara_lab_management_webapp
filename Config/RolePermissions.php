@@ -38,6 +38,7 @@ class RolePermissions
             'pricing' => true,
             'samples' => true,
             'sample-records-view' => true,
+            'manage-invoices' => true,
             'report-daily' => true,
             'report-client' => true,
             'report-revenue' => true,
@@ -74,6 +75,7 @@ class RolePermissions
             'pricing' => true,
             'samples' => true,
             'sample-records-view' => true,
+            'manage-invoices' => true,
             'report-daily' => true,
             'report-client' => true,
             'report-revenue' => true,
@@ -110,6 +112,7 @@ class RolePermissions
             'pricing' => false,
             'samples' => true,
             'sample-records-view' => true,
+            'manage-invoices' => true,
             'report-daily' => true,
             'report-client' => false,
             'report-revenue' => false,
@@ -146,6 +149,7 @@ class RolePermissions
             'pricing' => true, // Can view pricing
             'samples' => true, // Can view
             'sample-records-view' => true,
+            'manage-invoices' => true,
             'report-daily' => true,
             'report-client' => true,
             'report-revenue' => false,
@@ -182,6 +186,7 @@ class RolePermissions
             'pricing' => true, // Can view pricing
             'samples' => true, // Can view own samples only
             'sample-records-view' => true,
+            'manage-invoices' => true,
             'report-daily' => false,
             'report-client' => false,
             'report-revenue' => false,
