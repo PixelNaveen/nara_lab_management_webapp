@@ -7,10 +7,10 @@
  * Entry point for the application with authentication and RBAC
  */
 
-// ✅ INCLUDE AUTHENTICATION CHECK FIRST
+//  INCLUDE AUTHENTICATION CHECK FIRST
 require_once __DIR__ . '/src/Includes/auth.php';
 
-// ✅ INCLUDE ACCESS CONTROL (Page-level protection)
+// INCLUDE ACCESS CONTROL (Page-level protection)
 require_once __DIR__ . '/src/Includes/access-control.php';
 
 // Database connection
