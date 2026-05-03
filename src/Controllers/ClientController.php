@@ -20,7 +20,7 @@ $cityModel = new CityModel();
 $action = $_POST['action'] ?? '';
 
 // Regex patterns to match frontend
-$nameRegex = '/^[A-Za-z0-9\s.\-&\/()]{3,}$/';
+$nameRegex = "/^[A-Za-z0-9\s,.\-&\/()\'#]{3,}$/";
 $phoneRegex = '/^0[0-9]{9}$/';
 $addressRegex = '/^[a-zA-Z0-9\s,.\-\/#():]{5,}$/';
 $cityRegex = '/^[a-zA-Z0-9\s\-]{2,}$/';
