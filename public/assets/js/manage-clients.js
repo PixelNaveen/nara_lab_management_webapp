@@ -192,7 +192,7 @@ function setSuccess(input, errorDiv) {
   errorDiv.textContent = "";
 }
 
-const nameRegex = /^[A-Za-z0-9\s.\-&\/()]{3,}$/;
+const nameRegex = /^[A-Za-z0-9\s,.\-&\/()\'#]{3,}$/;
 const phoneRegex = /^0[0-9]{9}$/;
 const addressRegex = /^[a-zA-Z0-9\s,.\-\/#():]{5,}$/;
 const cityRegex = /^[a-zA-Z0-9\s\-]{2,}$/;
