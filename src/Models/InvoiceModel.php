@@ -15,6 +15,7 @@
  */
 
 require_once __DIR__ . '/../../Config/Database.php';
+require_once __DIR__ . '/../Helpers/Functions.php';
 
 class InvoiceModel
 {
@@ -87,46 +88,33 @@ class InvoiceModel
      * Build the dynamic Invoice Number based on Sample Code
      * e.g., QC/26/012/004 -> QC/M/26/012
      */
-    public function generateInvoiceNumber($base_sample_code)
+    public function generateInvoiceNumber($isGenerating = false)
     {
-        $code = trim($base_sample_code);
-        // Ensure it starts with QC
-        if (strtoupper(substr($code, 0, 3)) !== 'QC/') {
-            $code = 'QC/' . ltrim($code, '/');
+        if ($isGenerating) {
+            return getNextInvoiceNumber($this->conn);
         }
 
-        $parts = explode('/', $code);
-
-        // If it has 4 parts (e.g., QC/26/015/002), it represents a specific sample.
-        // For the invoice, we use the submission base (first 3 parts).
-        if (count($parts) >= 4) {
-            array_pop($parts);
-        }
-
-        // Re-insert 'M' as the second element -> QC / M / 26 / 012
-        if (count($parts) >= 2 && strtoupper($parts[0]) === 'QC') {
-            array_splice($parts, 1, 0, 'M');
-            return implode('/', $parts);
-        }
-
-        // Fallback if the format doesn't match expected
-        return $code . '-INV';
+        // Preview placeholder (shows what it would look like without incrementing)
+        $yearShort = date('y');
+        return "QC/M/{$yearShort}/TBD";
     }
 
     /**
      * Get Raw data needed to build an invoice.
      * Groups parameters by sample type.
      */
-    public function getInvoiceRawData($sampleId, $requestDate = null)
+    public function getInvoiceRawData($sampleId, $requestDate = null, $isGenerating = false)
     {
         // 1. Get header / customer details
         $headerSql = "SELECT 
                         s.sample_id, s.sample_code, s.received_date,
                         c.client_name, c.address_line1 AS client_address,
-                        ci.city_name
+                        ci.city_name,
+                        inv.invoice_number
                       FROM samples s
                       INNER JOIN clients c ON s.client_id = c.client_id
                       LEFT JOIN cities ci ON c.city_id = ci.city_id
+                      LEFT JOIN invoices inv ON inv.sample_id = s.sample_id
                       WHERE s.sample_id = ?";
 
         $stmt = $this->conn->prepare($headerSql);
@@ -146,7 +134,11 @@ class InvoiceModel
         $reportNumber = $code;
 
         // Generate invoice number
-        $invoiceNumber = $this->generateInvoiceNumber($header['sample_code']);
+        if ($header['invoice_number']) {
+            $invoiceNumber = $header['invoice_number'];
+        } else {
+            $invoiceNumber = $this->generateInvoiceNumber($isGenerating);
+        }
 
         // 2. Fetch all parameters, prices, and group by item type
         // Use sample_name (e.g., Cuttle fish samples) to group. Combine with category if needed.
@@ -426,63 +418,88 @@ class InvoiceModel
      * Generate or Retrieve an Invoice
      * Freezes pricing data to `invoices` table
      */
+    /**
+     * Save and Freeze Invoice Snapshot
+     * Now with Duplicate Entry Protection and Relation handling
+     */
     public function saveAndFreezeInvoice($sampleId, $signatoryId, $userId, $requestDate = null)
     {
-        // Check if invoice already exists
-        $stmt = $this->conn->prepare("SELECT invoice_id, signatory_id, invoice_data_snapshot FROM invoices WHERE sample_id = ?");
+        // 1. Check if invoice already exists
+        $stmt = $this->conn->prepare("SELECT invoice_id FROM invoices WHERE sample_id = ?");
         $stmt->bind_param('i', $sampleId);
         $stmt->execute();
         $res = $stmt->get_result()->fetch_assoc();
 
         if ($res && $requestDate === null) {
-            // Already generated and no new date requested? Return it.
-            return $res['invoice_id'];
+            return (int)$res['invoice_id'];
         }
 
-        // Generate data
-        $data = $this->getInvoiceRawData($sampleId, $requestDate);
-        if (!$data) throw new Exception("Unable to load data for sample ID: " . $sampleId);
+        // Start Transaction for Atomicity
+        $this->conn->begin_transaction();
 
-        // Find signatory title/division for snapping
-        $sigData = null;
-        foreach ($data['signatories'] as $s) {
-            if ($s['signatory_id'] == $signatoryId) {
-                $sigData = $s;
-                break;
+        try {
+            // 2. Load Raw Data
+            $data = $this->getInvoiceRawData($sampleId, $requestDate, true);
+            if (!$data) throw new Exception("Unable to load data for sample ID: " . $sampleId);
+
+            // 3. Enrich Snapshot with Creator and Signatory Info
+            $sigData = null;
+            foreach ($data['signatories'] as $s) {
+                if ($s['signatory_id'] == $signatoryId) {
+                    $sigData = $s;
+                    break;
+                }
             }
-        }
 
-        $snapshot = $data;
-        $snapshot['selected_signatory'] = $sigData;
-        $jsonSnapshot = json_encode($snapshot);
+            $snapshot = $data;
+            $snapshot['selected_signatory'] = $sigData;
+            $snapshot['generated_by_id'] = $userId;
+            $snapshot['generation_date'] = date('Y-m-d H:i:s');
+            
+            $jsonSnapshot = json_encode($snapshot);
 
-        if ($res) {
-            // Invoice exists but we want to update it (likely a new date or signatory)
-            $updateSql = "UPDATE invoices SET invoice_data_snapshot = ?, signatory_id = ? WHERE invoice_id = ?";
-            $updateStmt = $this->conn->prepare($updateSql);
-            $updateStmt->bind_param('sii', $jsonSnapshot, $signatoryId, $res['invoice_id']);
-            $updateStmt->execute();
-            return $res['invoice_id'];
-        }
+            if ($res) {
+                // Update existing
+                $updateSql = "UPDATE invoices SET invoice_data_snapshot = ?, signatory_id = ? WHERE invoice_id = ?";
+                $updateStmt = $this->conn->prepare($updateSql);
+                $updateStmt->bind_param('sii', $jsonSnapshot, $signatoryId, $res['invoice_id']);
+                $updateStmt->execute();
+                
+                $this->conn->commit();
+                return (int)$res['invoice_id'];
+            }
 
-        // Save
-        $sql = "INSERT INTO invoices (sample_id, invoice_number, report_number, invoice_data_snapshot, signatory_id, created_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, NOW())";
-        $stmtInsert = $this->conn->prepare($sql);
-        $stmtInsert->bind_param(
-            'isssii',
-            $sampleId,
-            $data['invoice_number'],
-            $data['report_number'],
-            $jsonSnapshot,
-            $signatoryId,
-            $userId
-        );
+            // 4. Insert New Record (Enforces Foreign Keys and Unique Constraints)
+            $sql = "INSERT INTO invoices (sample_id, invoice_number, report_number, invoice_data_snapshot, signatory_id, created_by, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())";
+            $stmtInsert = $this->conn->prepare($sql);
+            if (!$stmtInsert) throw new Exception("Prepare failed: " . $this->conn->error);
+            
+            $stmtInsert->bind_param(
+                'isssii',
+                $sampleId,
+                $data['invoice_number'],
+                $data['report_number'],
+                $jsonSnapshot,
+                $signatoryId,
+                $userId
+            );
 
-        if ($stmtInsert->execute()) {
-            return $this->conn->insert_id;
-        } else {
-            throw new Exception("Failed to save invoice.");
+            if ($stmtInsert->execute()) {
+                $newId = (int)$this->conn->insert_id;
+                $this->conn->commit();
+                return $newId;
+            } else {
+                if ($this->conn->errno === 1062) {
+                    throw new Exception("Duplicate Error: This sample is already invoiced or the number is taken.");
+                }
+                throw new Exception("Insert failed: " . $this->conn->error);
+            }
+
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            logError($e->getMessage(), 'InvoiceModel::saveAndFreezeInvoice');
+            throw $e;
         }
     }
 

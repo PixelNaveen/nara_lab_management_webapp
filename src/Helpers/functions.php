@@ -79,6 +79,55 @@ function generateFormNumber($conn, $sampleCount)
     }
 }
 
+/**
+ * Generate Next Invoice Number (QC/M/YY/NNN)
+ * Resets every year. Uses dedicated invoice_sequence table.
+ */
+function getNextInvoiceNumber($conn)
+{
+    /**
+     * NOTE: This function should be called within a transaction by the caller
+     * (e.g., InvoiceModel) to ensure zero-gap numbering and consistency.
+     */
+    try {
+        $year = (int)date('Y');
+        $yearShort = date('y');
+
+        // 1. Get and Lock the current sequence row
+        $sql = "SELECT current_number FROM invoice_sequence WHERE year = ? FOR UPDATE";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
+        
+        $stmt->bind_param("i", $year);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            // New year: start at 1
+            $sequenceNumber = 1;
+            $insertSql = "INSERT INTO invoice_sequence (year, current_number) VALUES (?, ?)";
+            $insertStmt = $conn->prepare($insertSql);
+            if (!$insertStmt) throw new Exception("Insert prepare failed: " . $conn->error);
+            $insertStmt->bind_param("ii", $year, $sequenceNumber);
+            $insertStmt->execute();
+        } else {
+            // Normal increment
+            $row = $result->fetch_assoc();
+            $sequenceNumber = (int)$row['current_number'] + 1;
+            $updateSql = "UPDATE invoice_sequence SET current_number = ? WHERE year = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            if (!$updateStmt) throw new Exception("Update prepare failed: " . $conn->error);
+            $updateStmt->bind_param("ii", $sequenceNumber, $year);
+            $updateStmt->execute();
+        }
+
+        return sprintf("QC/M/%s/%03d", $yearShort, $sequenceNumber);
+    } catch (Exception $e) {
+        logError($e->getMessage(), 'getNextInvoiceNumber');
+        throw $e; // Rethrow to trigger rollback in the caller
+    }
+}
+
 function generateQCReference($formNumber)
 {
     return 'QC/' . $formNumber;
