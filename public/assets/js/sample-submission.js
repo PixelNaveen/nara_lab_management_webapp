@@ -859,10 +859,10 @@ function validateStep(step) {
     } else if (clientName.length < 3) {
       showError("clientName", "Client name must be at least 3 characters");
       isStepValid = false;
-    } else if (!/^[a-zA-Z\s.]+$/.test(clientName)) {
+    } else if (!/^[A-Za-z0-9\s,.\-&\/()\'#]{3,}$/.test(clientName)) {
       showError(
         "clientName",
-        "Name can only contain letters, spaces, and dots",
+        "Name contains invalid characters or is too short",
       );
       isStepValid = false;
     } else {
