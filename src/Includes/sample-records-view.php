@@ -245,53 +245,8 @@
     </div>
 </div>
 
-<!-- ============================================================
-   INVOICE GENERATION MODAL
-   ============================================================ -->
-<div class="modal fade" id="invoiceModal" tabindex="-1" aria-labelledby="invoiceModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="invoiceModalLabel">
-                    <i class="fas fa-file-invoice-dollar me-2"></i>Generate Invoice
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label for="invoiceSignatory" class="form-label fw-semibold">
-                        Select Signatory <span class="text-danger">*</span>
-                    </label>
-                    <select class="form-select" id="invoiceSignatory" required>
-                        <option value="">Loading signatories...</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="invoiceRequestDate" class="form-label fw-semibold">
-                        Date of Request <span class="text-danger">*</span>
-                    </label>
-                    <input type="date" class="form-control" id="invoiceRequestDate" max="<?php echo date('Y-m-d'); ?>" required>
-                </div>
-                <!-- Error Alert -->
-                <div id="invoiceErrorAlert" class="alert alert-danger" style="display: none;"></div>
-
-                <div class="alert alert-info mt-3 mb-0">
-                    <i class="fas fa-info-circle me-1"></i> Generating the invoice creates a permanent snapshot of current testing prices.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-outline-primary" id="btnPreviewInvoice">
-                    <i class="fas fa-eye me-1"></i>Preview
-                </button>
-                <button type="button" class="btn btn-primary" id="btnGenerateInvoice">
-                    <i class="fas fa-print me-1"></i>Generate & Print
-                </button>
-            </div>
-            <input type="hidden" id="invoiceSampleId" value="">
-        </div>
-    </div>
-</div>
+<!-- TOAST NOTIFICATIONS CONTAINER -->
+<div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100"></div>
 
 <!-- ============================================================
    TOAST NOTIFICATIONS CONTAINER

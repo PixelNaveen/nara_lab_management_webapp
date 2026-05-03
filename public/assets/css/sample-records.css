@@ -411,8 +411,7 @@
   color: #fff;
 }
 
-.eye-icon-btn,
-.invoice-icon-btn {
+.eye-icon-btn {
   background: rgba(59, 130, 246, 0.08);
   color: var(--sr-primary-blue);
   padding: 6px 10px;
@@ -426,26 +425,12 @@
   justify-content: center;
 }
 
-.invoice-icon-btn {
-  background: rgba(100, 116, 139, 0.08);
-  color: #475569;
-  border-color: rgba(100, 116, 139, 0.2);
-}
-
 .eye-icon-btn:hover {
   background: var(--sr-primary-blue);
   color: #fff;
   border-color: var(--sr-primary-blue);
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
-}
-
-.invoice-icon-btn:hover {
-  background: #475569;
-  color: #fff;
-  border-color: #475569;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(71, 85, 105, 0.25);
 }
 
 /* ===== Modal Overlay ===== */

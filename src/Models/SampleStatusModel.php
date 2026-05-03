@@ -53,13 +53,16 @@ class SampleStatusModel
                     s.status_updated_at,
                     s.status_updated_by,
                     s.payment_status,
+                    s.payment_reference,
                     s.payment_date,
                     s.payment_updated_by,
+                    i.invoice_number,
                     c.client_name,
                     c.city,
                     c.phone_primary
                 FROM samples s
                 INNER JOIN clients c ON s.client_id = c.client_id
+                LEFT JOIN invoices i ON s.sample_id = i.sample_id
                 WHERE 1=1";
 
         $params = [];

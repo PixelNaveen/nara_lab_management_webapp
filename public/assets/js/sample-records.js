@@ -89,15 +89,6 @@ const SampleRecords = (function () {
 
     // Toast Container
     toastContainer: null,
-
-    // Invoice Modal
-    invoiceModal: null,
-    invoiceModalInstance: null,
-    invoiceSignatory: null,
-    invoiceSampleId: null,
-    btnPreviewInvoice: null,
-    btnGenerateInvoice: null,
-    invoiceErrorAlert: null,
   };
 
   // ==================== INITIALIZATION ====================
@@ -177,15 +168,6 @@ const SampleRecords = (function () {
 
     // Toast Container
     ELEMENTS.toastContainer = document.getElementById("toastContainer");
-
-    // Invoice Modal
-    ELEMENTS.invoiceModal = document.getElementById("invoiceModal");
-    ELEMENTS.invoiceSignatory = document.getElementById("invoiceSignatory");
-    ELEMENTS.invoiceRequestDate = document.getElementById("invoiceRequestDate");
-    ELEMENTS.invoiceSampleId = document.getElementById("invoiceSampleId");
-    ELEMENTS.btnPreviewInvoice = document.getElementById("btnPreviewInvoice");
-    ELEMENTS.btnGenerateInvoice = document.getElementById("btnGenerateInvoice");
-    ELEMENTS.invoiceErrorAlert = document.getElementById("invoiceErrorAlert");
 
     // Verify critical elements
     const criticalElements = [
@@ -283,13 +265,11 @@ const SampleRecords = (function () {
       // }
     });
 
-    // Invoice modal bindings
-    if (ELEMENTS.btnPreviewInvoice) {
-      ELEMENTS.btnPreviewInvoice.addEventListener("click", previewInvoice);
-    }
-    if (ELEMENTS.btnGenerateInvoice) {
-      ELEMENTS.btnGenerateInvoice.addEventListener("click", generateInvoice);
-    }
+    // Payment modal - reset on close
+    ELEMENTS.paymentModal.addEventListener(
+      "hidden.bs.modal",
+      resetPaymentModal,
+    );
   }
 
   /**
@@ -300,11 +280,6 @@ const SampleRecords = (function () {
       ELEMENTS.paymentModalInstance = new bootstrap.Modal(
         ELEMENTS.paymentModal,
       );
-      if (ELEMENTS.invoiceModal) {
-        ELEMENTS.invoiceModalInstance = new bootstrap.Modal(
-          ELEMENTS.invoiceModal,
-        );
-      }
       console.log("✅ Bootstrap Modal: Initialized");
     } else {
       console.error("❌ Bootstrap not loaded or modal element missing");
@@ -416,7 +391,6 @@ const SampleRecords = (function () {
     attachStatusBadgeListeners();
     attachPaymentBadgeListeners();
     attachEyeIconListeners(); // Eye icon listeners
-    attachInvoiceBadgeListeners();
   }
 
   /**
@@ -681,177 +655,7 @@ const SampleRecords = (function () {
     });
   }
 
-  // ==================== INVOICE GENERATION HANDLING ====================
-
-  /**
-   * Attach click listeners to invoice buttons
-   */
-  function attachInvoiceBadgeListeners() {
-    const invoiceButtons = document.querySelectorAll(".invoice-icon-btn");
-    invoiceButtons.forEach((btn) => {
-      btn.addEventListener("click", function () {
-        const sampleId = this.dataset.sampleId;
-        openInvoiceModal(sampleId);
-      });
-    });
-  }
-
-  /**
-   * Open the invoice generation modal and fetch signatories
-   */
-  function openInvoiceModal(sampleId) {
-    if (ELEMENTS.invoiceErrorAlert)
-      ELEMENTS.invoiceErrorAlert.style.display = "none";
-    ELEMENTS.invoiceSampleId.value = sampleId;
-
-    // Set default date to sample's received date if available in state
-    const sample = STATE.samples.find((s) => s.sample_id == sampleId);
-    if (sample && sample.received_date && ELEMENTS.invoiceRequestDate) {
-      ELEMENTS.invoiceRequestDate.value = sample.received_date;
-    } else if (ELEMENTS.invoiceRequestDate) {
-      const todayStr = formatDateForInput(new Date());
-      ELEMENTS.invoiceRequestDate.value = todayStr;
-      ELEMENTS.invoiceRequestDate.setAttribute("max", todayStr);
-    }
-
-    ELEMENTS.invoiceSignatory.innerHTML =
-      '<option value="">Loading signatories...</option>';
-
-    if (ELEMENTS.invoiceModalInstance) {
-      ELEMENTS.invoiceModalInstance.show();
-    }
-
-    const formData = new FormData();
-    formData.append("action", "getSignatories");
-
-    fetch(CONFIG.INVOICE_URL, {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.status === "success") {
-          let options = '<option value="">Select Signatory</option>';
-          data.signatories.forEach((sig) => {
-            options += `<option value="${sig.signatory_id}">${escapeHtml(sig.full_name)} - ${escapeHtml(sig.title)}</option>`;
-          });
-          ELEMENTS.invoiceSignatory.innerHTML = options;
-        } else {
-          throw new Error(data.message || "Failed to load signatories");
-        }
-      })
-      .catch((error) => {
-        ELEMENTS.invoiceSignatory.innerHTML =
-          '<option value="">Error loading signatories</option>';
-        if (ELEMENTS.invoiceErrorAlert) {
-          ELEMENTS.invoiceErrorAlert.style.display = "block";
-          ELEMENTS.invoiceErrorAlert.textContent =
-            "Failed to load signatories: " + error.message;
-        }
-      });
-  }
-
-  /**
-   * Preview Invoice without saving
-   */
-  function previewInvoice() {
-    const sampleId = ELEMENTS.invoiceSampleId.value;
-    if (!sampleId) return;
-    const dateRequest = ELEMENTS.invoiceRequestDate
-      ? ELEMENTS.invoiceRequestDate.value
-      : "";
-    const w = window.screen.availWidth;
-    const h = window.screen.availHeight;
-    window.open(
-      `../../src/Views/invoice-print-template.php?sample_id=${sampleId}&request_date=${dateRequest}`,
-      "_blank",
-      `width=${w},height=${h},left=0,top=0,scrollbars=yes,resizable=yes`,
-    );
-  }
-
-  /**
-   * Generate Invoice (Freezes Snapshot and Saves)
-   */
-  function generateInvoice() {
-    const sampleId = ELEMENTS.invoiceSampleId.value;
-    const signatoryId = ELEMENTS.invoiceSignatory.value;
-
-    if (!signatoryId) {
-      if (ELEMENTS.invoiceErrorAlert) {
-        ELEMENTS.invoiceErrorAlert.style.display = "block";
-        ELEMENTS.invoiceErrorAlert.textContent =
-          "Please select a signatory first.";
-      }
-      return;
-    }
-
-    const dateRequest = ELEMENTS.invoiceRequestDate
-      ? ELEMENTS.invoiceRequestDate.value
-      : "";
-
-    if (dateRequest) {
-      const todayStr = formatDateForInput(new Date());
-      if (dateRequest > todayStr) {
-        if (ELEMENTS.invoiceErrorAlert) {
-          ELEMENTS.invoiceErrorAlert.style.display = "block";
-          ELEMENTS.invoiceErrorAlert.textContent =
-            "Date of Request cannot be in the future.";
-        }
-        return;
-      }
-    }
-
-    if (ELEMENTS.invoiceErrorAlert)
-      ELEMENTS.invoiceErrorAlert.style.display = "none";
-
-    const btn = ELEMENTS.btnGenerateInvoice;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
-
-    const formData = new FormData();
-    formData.append("action", "generate");
-    formData.append("sample_id", sampleId);
-    formData.append("signatory_id", signatoryId);
-    formData.append(
-      "request_date",
-      ELEMENTS.invoiceRequestDate ? ELEMENTS.invoiceRequestDate.value : "",
-    );
-
-    fetch(CONFIG.INVOICE_URL, {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.status === "success") {
-          if (ELEMENTS.invoiceModalInstance)
-            ELEMENTS.invoiceModalInstance.hide();
-          showSuccess("Invoice generated successfully!");
-          // Open the generated invoice using the saved ID
-          const w = window.screen.availWidth;
-          const h = window.screen.availHeight;
-          window.open(
-            `../../src/Views/invoice-print-template.php?invoice_id=${data.invoice_id}`,
-            "_blank",
-            `width=${w},height=${h},left=0,top=0,scrollbars=yes,resizable=yes`,
-          );
-          loadSamples(); // Refresh data table
-        } else {
-          throw new Error(data.message || "Failed to generate invoice");
-        }
-      })
-      .catch((error) => {
-        if (ELEMENTS.invoiceErrorAlert) {
-          ELEMENTS.invoiceErrorAlert.style.display = "block";
-          ELEMENTS.invoiceErrorAlert.textContent = error.message;
-        }
-      })
-      .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      });
-  }
+  // ==================== PAYMENT MODAL HANDLING ====================
 
   /**
    * Open payment modal for a sample
