@@ -94,10 +94,11 @@ if ($invoiceRowCount <= 5) {
     <div class="a4-page <?php echo $densityClass; ?>">
 
 
-        <div style="text-align: right; margin-bottom: 5px;">
-            <strong>Date:</strong> <span id="currentDate"></span>
+        <div class="letterhead-date">
+            <span id="currentDate"></span>
         </div>
         <div class="invoice-title">INVOICE</div>
+
 
 
         <!-- ══════════════════════════════════════════════
@@ -129,7 +130,7 @@ if ($invoiceRowCount <= 5) {
        DATE OF REQUEST
   ══════════════════════════════════════════════ -->
         <div class="date-request">
-            Date of Request: &nbsp;<strong><?php echo htmlspecialchars($invoiceData['date_of_request']); ?></strong>
+            Date of Request: &nbsp;<span><?php echo htmlspecialchars($invoiceData['date_of_request']); ?></span>
         </div>
 
 

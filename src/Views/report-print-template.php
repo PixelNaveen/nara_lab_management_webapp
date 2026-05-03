@@ -248,15 +248,31 @@ $reportDate = date('F d, Y');
                         } else {
                             $displaySampleCode = $sample['sample_code'] ?? '';
                         }
-                        
+
                         // Append Roman numeral if the report spans multiple pages
                         // This applies to multi-page Combined reports AND live previews of Single reports
                         if ($totalPages > 1) {
                             $romanNumerals = [
-                                1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V',
-                                6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X',
-                                11 => 'XI', 12 => 'XII', 13 => 'XIII', 14 => 'XIV', 15 => 'XV',
-                                16 => 'XVI', 17 => 'XVII', 18 => 'XVIII', 19 => 'XIX', 20 => 'XX'
+                                1 => 'I',
+                                2 => 'II',
+                                3 => 'III',
+                                4 => 'IV',
+                                5 => 'V',
+                                6 => 'VI',
+                                7 => 'VII',
+                                8 => 'VIII',
+                                9 => 'IX',
+                                10 => 'X',
+                                11 => 'XI',
+                                12 => 'XII',
+                                13 => 'XIII',
+                                14 => 'XIV',
+                                15 => 'XV',
+                                16 => 'XVI',
+                                17 => 'XVII',
+                                18 => 'XVIII',
+                                19 => 'XIX',
+                                20 => 'XX'
                             ];
                             $romanSuffix = $romanNumerals[$currentPage] ?? $currentPage;
                             $displaySampleCode .= '/' . $romanSuffix;
@@ -341,7 +357,7 @@ $reportDate = date('F d, Y');
                                 <div class="info-details date-details"><?php echo $samplingDate; ?></div>
                             </div>
                             <div class="info-row">
-                                <span class="label date-label">Receipt of sample:</span>
+                                <span class="label date-label">Receipt of sample/s:</span>
                                 <div class="info-details date-details"><?php echo $receiptDate; ?></div>
                             </div>
                             <div class="info-row">
@@ -413,7 +429,7 @@ $reportDate = date('F d, Y');
                                         $method = $test['method_name'] ?? '-';
                                         $key = md5($label . '::' . $method);
 
-                                         $is_accredited = $test['is_accredited'] ?? 0;
+                                        $is_accredited = $test['is_accredited'] ?? 0;
                                         if ($is_accredited && !$isNonAccredited) {
                                             $hasAccredited = true;
                                         }
@@ -475,35 +491,35 @@ $reportDate = date('F d, Y');
                                     <?php foreach ($uniqueTests as $row): ?>
                                         <tr>
                                             <td class="px-2">
-                                                <?php 
-                                                    $displayLabel = htmlspecialchars($row['label']);
-                                                    // Restore specific technical tags after escaping
-                                                    $displayLabel = str_replace(
-                                                        ['&lt;sup&gt;', '&lt;/sup&gt;', '&lt;sub&gt;', '&lt;/sub&gt;', '&lt;i&gt;', '&lt;/i&gt;', '&lt;em&gt;', '&lt;/em&gt;'],
-                                                        ['<sup>', '</sup>', '<sub>', '</sub>', '<i>', '</i>', '<em>', '</em>'],
-                                                        $displayLabel
-                                                    );
-                                                    
-                                                    if (($row['display_format'] ?? 'normal') === 'scientific') {
-                                                        $displayLabel = '<em>' . $displayLabel . '</em>';
-                                                    }
-                                                    echo $displayLabel;
-                                                    if (!$isNonAccredited && $row['is_accredited']) echo '<sup>*</sup>'; 
+                                                <?php
+                                                $displayLabel = htmlspecialchars($row['label']);
+                                                // Restore specific technical tags after escaping
+                                                $displayLabel = str_replace(
+                                                    ['&lt;sup&gt;', '&lt;/sup&gt;', '&lt;sub&gt;', '&lt;/sub&gt;', '&lt;i&gt;', '&lt;/i&gt;', '&lt;em&gt;', '&lt;/em&gt;'],
+                                                    ['<sup>', '</sup>', '<sub>', '</sub>', '<i>', '</i>', '<em>', '</em>'],
+                                                    $displayLabel
+                                                );
+
+                                                if (($row['display_format'] ?? 'normal') === 'scientific') {
+                                                    $displayLabel = '<em>' . $displayLabel . '</em>';
+                                                }
+                                                echo $displayLabel;
+                                                if (!$isNonAccredited && $row['is_accredited']) echo '<sup>*</sup>';
                                                 ?>
                                             </td>
                                             <td class="px-2">
-                                                <?php 
-                                                    $displayMethod = htmlspecialchars($row['method']);
-                                                    // Restore specific technical tags after escaping
-                                                    echo str_replace(
-                                                        ['&lt;sup&gt;', '&lt;/sup&gt;', '&lt;sub&gt;', '&lt;/sub&gt;', '&lt;i&gt;', '&lt;/i&gt;', '&lt;em&gt;', '&lt;/em&gt;'],
-                                                        ['<sup>', '</sup>', '<sub>', '</sub>', '<i>', '</i>', '<em>', '</em>'],
-                                                        $displayMethod
-                                                    );
+                                                <?php
+                                                $displayMethod = htmlspecialchars($row['method']);
+                                                // Restore specific technical tags after escaping
+                                                echo str_replace(
+                                                    ['&lt;sup&gt;', '&lt;/sup&gt;', '&lt;sub&gt;', '&lt;/sub&gt;', '&lt;i&gt;', '&lt;/i&gt;', '&lt;em&gt;', '&lt;/em&gt;'],
+                                                    ['<sup>', '</sup>', '<sub>', '</sub>', '<i>', '</i>', '<em>', '</em>'],
+                                                    $displayMethod
+                                                );
                                                 ?>
                                             </td>
                                             <?php for ($i = 0; $i < $itemCount; $i++): ?>
-                                                 <td class="text-center"><?php echo str_replace('ESPC', '<sup class="espc-sup">ESPC</sup>', $row['results'][$i]); ?></td>
+                                                <td class="text-center"><?php echo str_replace('ESPC', '<sup class="espc-sup">ESPC</sup>', $row['results'][$i]); ?></td>
                                             <?php endfor; ?>
                                         </tr>
                                     <?php endforeach; ?>
@@ -521,7 +537,7 @@ $reportDate = date('F d, Y');
                                 <?php if ($hasESPC): ?>
                                     <div class="espc-note">ESPC - Estimated plate count</div>
                                 <?php endif; ?>
-                                <?php 
+                                <?php
                                 // Sort abbreviations alphabetically for a cleaner look
                                 ksort($pageAbbreviations);
                                 foreach ($pageAbbreviations as $abbr => $full): ?>
@@ -536,19 +552,19 @@ $reportDate = date('F d, Y');
                     </div>
 
                     <div class="signature-section">
-                        <?php foreach (['left', 'right'] as $pos): 
+                        <?php foreach (['left', 'right'] as $pos):
                             $sig = $signatories[$pos] ?? null;
                             if (!$sig) continue;
                         ?>
-                        <div class="signature-block">
-                            <div class="signature-space"></div>
-                            <div class="signatory-name"><?php echo htmlspecialchars($sig['full_name']); ?></div>
-                            <div class="signatory-title"><?php echo htmlspecialchars($sig['title']); ?></div>
-                            <div class="signatory-title"><?php echo htmlspecialchars($sig['division']); ?></div>
-                            <?php if (($sig['role_type'] ?? '') === 'scientist'): ?>
-                                <div class="signatory-title">(Authorized signatory)</div>
-                            <?php endif; ?>
-                        </div>
+                            <div class="signature-block">
+                                <div class="signature-space"></div>
+                                <div class="signatory-name"><?php echo htmlspecialchars($sig['full_name']); ?></div>
+                                <div class="signatory-title"><?php echo htmlspecialchars($sig['title']); ?></div>
+                                <div class="signatory-title"><?php echo htmlspecialchars($sig['division']); ?></div>
+                                <?php if (($sig['role_type'] ?? '') === 'scientist'): ?>
+                                    <div class="signatory-title">(Authorized signatory)</div>
+                                <?php endif; ?>
+                            </div>
                         <?php endforeach; ?>
                     </div>
 
