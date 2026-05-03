@@ -1,7 +1,12 @@
-/* Test Report Print Styles */
+/* ============================================================
+   TEST REPORT PRINT STYLES
+   Government Laboratory Report — Times New Roman
+   Fixed: Single-line rows, no method/result wrapping
+   ============================================================ */
+
 @page {
   size: A4 portrait;
-  margin: 0 !important; /* CRITICAL: Force browsers to remove default margins */
+  margin: 0 !important;
 }
 
 * {
@@ -10,7 +15,9 @@
   box-sizing: border-box;
 }
 
-/* UI Elements - Hidden on Print */
+/* ============================================================
+   FLOATING PRINT BUTTON — Screen only
+   ============================================================ */
 .no-print {
   display: block;
 }
@@ -20,7 +27,7 @@
   top: 20px;
   right: 20px;
   z-index: 9999;
-  background: #0d6efd; /* System Blue */
+  background: #0d6efd;
   color: #fff;
   border: none;
   padding: 12px 20px;
@@ -38,7 +45,7 @@
 }
 
 .floating-print-btn:hover {
-  background: #0b5ed7; /* Darker blue on hover */
+  background: #0b5ed7;
   transform: scale(1.05);
 }
 
@@ -46,11 +53,14 @@
   font-size: 1.2rem;
 }
 
+/* ============================================================
+   BASE BODY & CONTAINER
+   ============================================================ */
 body {
   font-family: "Times New Roman", Times, serif;
-  font-size: 10pt; /* Adjusted for better fit with browser margins */
+  font-size: 10pt;
   color: #000;
-  line-height: 1.3; /* Slightly tighter reading height */
+  line-height: 1.3;
   background: #f0f0f0;
   padding: 20px;
   display: flex;
@@ -58,147 +68,134 @@ body {
   align-items: center;
 }
 
+/* Scientific italic — locked, never overridden */
+em {
+  font-style: italic !important;
+}
+
 .report-container {
   width: 210mm;
   min-height: 297mm;
   background: #fff;
-  padding: 10mm 15mm 5mm 15mm; /* Reduced bottom padding */
+  padding: 0 17.78mm; /* Symmetrical 0.7in margins */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
 }
 
-/* Multi-page pagination: force page break between report pages */
 .report-container.page-break-after {
   page-break-after: always;
-  margin-bottom: 30px; /* Visual separation on screen */
+  margin-bottom: 30px;
 }
 
-/* Header Section */
+/* ============================================================
+   HEADER & FOOTER SPACERS (pre-printed letterhead)
+   ============================================================ */
 .report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 0 15mm 8px 15mm; /* Restore padding inside the breakout, tighter bottom */
-  margin: 0 -15mm 15px -15mm; /* Break out of container padding to reach edges */
-  border-bottom: 1px solid #000;
+  height: 3.8cm;
+  width: 100%;
+  display: block;
 }
 
-.header-left {
-  flex: 0 0 95px; /* Adjusted to balance logo size and text width */
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-end;
-  margin-bottom: -2px;
+.report-footer {
+  height: 3.8cm;
+  width: 100%;
+  margin-top: auto;
 }
 
-.header-left img {
-  max-height: 80px; /* Slightly reduced to keep it safe */
-  width: auto;
-}
-
-.header-right {
-  flex: 0 0 95px; /* Matches left side */
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  align-items: flex-end;
-  margin-bottom: -2px;
-}
-
-.header-center {
-  flex: 1;
-  text-align: center;
-  padding: 0; /* Removed padding to maximize space */
-}
-
-.nara-name {
-  font-size: 13.5pt; /* Micro-adjusted to fit '&' on the first line */
-  font-weight: bold;
-  text-transform: uppercase;
-  line-height: 1.2;
-  margin-bottom: 2px;
-}
-
-.nara-address {
-  font-size: 9.5pt; /* Slightly increased */
-}
-
-.header-right img {
-  max-height: 64px; /* Scaled proportionately with left */
-  width: auto;
-}
-
-/* Body Section */
+/* ============================================================
+   REPORT BODY
+   ============================================================ */
 .report-body {
   position: relative;
-  flex-grow: 1; /* Stretch to push footer to the absolute bottom */
+  flex-grow: 1;
 }
 
+/* ============================================================
+   PAGE INDICATOR — 8.5pt, right-aligned
+   ============================================================ */
 .page-indicator {
   text-align: right;
-  font-size: 9pt;
-  /* font-style: italic; */
-  margin-bottom: 10px;
+  font-size: 8.5pt;
+  font-weight: normal;
+  margin: 0 0 4mm 0;
+  line-height: 1;
+  color: #000;
 }
 
+.page-indicator-spacer {
+  height: 8.5pt;
+  display: block;
+}
+
+/* ============================================================
+   REPORT TITLE — 14pt Bold, absolute lock
+   ============================================================ */
 .report-title {
   text-align: center;
-  font-size: 14pt; /* Slightly increased */
+  font-size: 14pt !important;
   font-weight: bold;
   text-transform: uppercase;
-  margin: 5px 0 5px 0; /* Tighter margins */
+  letter-spacing: 1.5px;
+  margin: 0 0 5mm 0;
+  line-height: 1;
+  color: #000;
 }
 
+/* ============================================================
+   LAB REF & DATE BLOCK — Right-aligned, 10pt
+   ============================================================ */
 .report-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  margin-bottom: 5px; /* Tighter */
+  margin-bottom: 4mm;
   line-height: 1.2;
 }
 
 .meta-row {
-  font-size: 9pt; /* Matches info section */
+  font-size: 10pt;
+  font-weight: normal;
   margin-bottom: 2px;
 }
 
+.meta-row .font-bold {
+  font-weight: bold;
+}
+
+/* ============================================================
+   SHARED UTILITIES
+   ============================================================ */
 .font-bold {
   font-weight: bold;
 }
 
+/* ============================================================
+   INFO SECTIONS — Customer / Laboratory / Samples / Dates
+   ============================================================ */
 .info-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin: 5px 0 10px 0; /* Reduced to save space */
-  line-height: 1.25; /* Tighter line height */
-  font-size: 9.5pt; /* Balanced professional size */
-}
-
-.sample-details {
-  margin-top: 0;
-  gap: 40px; /* ENFORCES clear space between description and dates */
-}
-
-.sample-details .info-left {
-  flex: 1; /* Allows wrapping instead of spreading far right */
+  margin: 6px 0 8px 0;
+  line-height: 1.25;
 }
 
 .info-left {
-  flex: 0 0 auto;
+  flex: 1; /* Allow Customer section to take more space */
+  padding-right: 15px; /* Minimum gap between sections */
 }
 
-/* Ensure the right block is a single grid for cross-row alignment */
+/* Right block — grid for perfect label/value alignment */
 .info-right {
   display: grid;
   grid-template-columns: min-content auto;
   column-gap: 8px;
-  row-gap: 3px; /* Tighter row gaps */
-  margin-left: auto;
+  row-gap: 3px;
+  flex: 0 0 auto; /* Keep Lab section compact */
+  min-width: 42mm; /* Precision fit for Laboratory info */
 }
 
-/* Reset .info-row behavior within the grid container */
 .info-right .info-row {
   display: contents;
 }
@@ -207,42 +204,136 @@ body {
   display: flex;
   gap: 8px;
   align-items: baseline;
-  margin-bottom: 3px; /* Reduced from 5px */
+  margin-bottom: 3px;
 }
 
 .label {
   white-space: nowrap;
   font-weight: bold;
-  flex: 0 0 auto; /* Default flex behavior */
+  flex: 0 0 auto;
+}
+
+.info-details {
+  text-align: left;
+}
+
+.info-right .label {
+  grid-column: 1;
+  text-align: left;
+}
+
+.info-right .info-details {
+  grid-column: 2;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   CUSTOMER SECTION
+   ============================================================ */
+.customer-section-label {
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+.customer-section-details {
+  line-height: 1.15;
+}
+
+.customer-name {
+  font-size: 10pt;
+  font-weight: normal;
+}
+
+.customer-address {
+  font-size: 9.5pt;
+  font-weight: normal;
+}
+
+/* ============================================================
+   LABORATORY SECTION
+   ============================================================ */
+.lab-section-label {
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+.lab-section-details {
+  line-height: 1.15;
+}
+
+.lab-name {
+  font-size: 10pt;
+  font-weight: normal;
+  white-space: nowrap; /* CRITICAL: never break "Quality Control Laboratory" */
+}
+
+.lab-unit {
+  font-size: 9.5pt;
+  font-weight: normal;
+}
+
+/* ============================================================
+   SAMPLES SECTION
+   ============================================================ */
+.sample-details {
+  margin-top: 0;
+  gap: 15px; /* Reduced gap to give more room to sample descriptions */
+}
+
+.sample-details .info-left {
+  flex: 1;
 }
 
 .sample-details .info-left .label {
-  flex: 0 0 60px;
-  min-width: 60px;
+  flex: 0 0 62px;
+  min-width: 62px;
+  font-size: 10pt;
+  font-weight: bold;
 }
 
-/* Dynamic Sample Code Table — Borderless */
+.sample-details .info-details {
+  font-size: 10pt;
+  font-weight: normal;
+}
+
+/* Sample Codes Sub-table */
 .sample-code-table {
-  margin-top: 6px;
-  margin-left: 68px;
+  margin-top: 5px;
+  margin-left: 70px;
   border-collapse: collapse;
   width: auto;
-  font-size: 9pt;
+  font-size: 9.5pt;
 }
 
 .sample-code-table td {
   border: none;
-  padding: 1px 2px; /* Narrower padding */
+  padding: 1px 2px;
   text-align: left;
   line-height: 1.2;
 }
 
-.sample-code-table td:first-child {
-  padding-left: 10px;
-  padding-right: 15px; /* Tighter spacing for sample name */
+.sample-code-bullet {
+  padding-right: 6px !important;
+  text-align: left !important;
 }
 
-/* Swab Location Table — Special formatting */
+.sample-code-name {
+  font-weight: normal;
+  padding-right: 8px !important;
+  white-space: nowrap;
+}
+
+.sample-code-separator {
+  padding: 0 4px !important;
+  font-weight: normal;
+}
+
+.sample-code-value {
+  white-space: nowrap;
+}
+
+/* Swab Location Table */
 .swab-location-table {
   margin-top: 8px;
 }
@@ -256,30 +347,39 @@ body {
   text-align: center;
 }
 
-.info-details {
-  text-align: left;
+/* ============================================================
+   DATE SECTION
+   ============================================================ */
+.date-label {
+  font-size: 10pt;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
-/* Specific alignment for right-side labels within the grid */
-.info-right .label {
-  grid-column: 1;
-  text-align: left; /* Labels align on the left within their column */
+.date-details {
+  font-size: 10pt;
+  font-weight: normal;
+  white-space: nowrap;
 }
 
-.info-right .info-details {
-  grid-column: 2;
-  text-align: left;
-  white-space: normal; /* Allow long dates to wrap naturally */
-  word-wrap: break-word; /* Prevent overflow */
-}
-
-.request-details .info-left .label {
-  flex: 0 0 118px;
-  min-width: 118px;
+/* ============================================================
+   CUSTOMER'S REQUEST SECTION
+   ============================================================ */
+.request-details {
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 .request-details .info-left {
   flex: 1;
+}
+
+.request-details .info-left .label {
+  flex: 0 0 124px;
+  min-width: 124px;
+  font-size: 10pt;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 .request-details .info-left .info-details {
@@ -287,221 +387,258 @@ body {
   white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  font-size: 10pt;
+  font-weight: normal;
 }
 
-.request-details {
-  margin-top: 10px;
-  margin-bottom: 0;
-}
-
+/* ============================================================
+   RESULTS SECTION HEADING
+   ============================================================ */
 .results-section {
-  margin-top: 10px; /* Reduced from 20px */
+  margin-top: 10px;
 }
+
+.results-title {
+  font-size: 11pt !important;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+   MAIN RESULTS TABLE
+   ============================================================ */
+
+/* ============================================================
+   MAIN RESULTS TABLE - ARCHITECTURAL AUTHORITY
+   ============================================================ */
 
 .main-results-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 5px;
-  font-size: 9pt; /* Maintained readability */
-  border: 1px solid #000; /* Outer border around the whole table */
+  margin-top: 4px;
+  border: 1px solid #000;
+  table-layout: fixed; /* Enforce our precision ratios */
 }
 
+/* --- Table Components: Alignment & Authority --- */
 .main-results-table th,
 .main-results-table td {
-  border: none !important;
-  padding: 1px 4px;
   text-align: center;
-  line-height: 1.1;
+  vertical-align: middle;
+  line-height: 1.2;
+  padding: 6px 4px; /* Premium fixed padding for up to 10 rows */
+  box-sizing: border-box;
+  font-size: 10pt;
+  border: 1px solid #ccc; /* Softened internal grid lines */
+  border-top: none;
 }
 
-/* Header border: only the bottom of the last header row separates from data */
-.main-results-table thead tr:last-child th {
-  border-bottom: 1px solid #000 !important;
-}
-/* Rowspan headers (Parameters, Methods) also need their bottom edge */
-.main-results-table thead tr:first-child th[rowspan="2"] {
-  border-bottom: 1px solid #000 !important;
+.main-results-table th:first-child,
+.main-results-table td:first-child {
+  border-left: none !important;
 }
 
-/* Optional: If we still need column separators in header */
+.main-results-table th:last-child,
+.main-results-table td:last-child {
+  border-right: none !important;
+}
+
+.main-results-table tr:last-child td {
+  border-bottom: none !important; /* Clean finish at the bottom */
+}
+
 .main-results-table th {
-  background-color: transparent;
-  font-weight: bold;
+  border: 1px solid #000 !important; /* Authoritative header grid */
+  border-top: none !important;
+  font-weight: bold !important;
 }
 
-/* ================================================================
-   MULTI-COLUMN AUTO-SCALING ENGINE (cols-1 through cols-5)
-   Font size and column widths scale down as sample count increases.
-   ALL cells are strictly nowrap — font size is the ONLY control.
-   ================================================================ */
-
-/* --- Universal: NO cell in the table may ever line-break --- */
-.main-results-table th,
-.main-results-table td {
-  white-space: nowrap; /* Enforce single-line everywhere as requested */
+.main-results-table th:first-child {
+  border-left: none !important;
+}
+.main-results-table th:last-child {
+  border-right: none !important;
 }
 
-/* --- Default header alignment --- */
-.main-results-table th:nth-child(1),
-.main-results-table th:nth-child(2) {
-  text-align: center; /* Centered as requested */
-  padding-left: 8px;
-}
+/* Fixed Column Width & Typography Authority */
 .main-results-table td:nth-child(1) {
-  text-align: left;
-  padding-left: 8px;
-  padding-right: 20px; /* Increased slightly for better gap to Method column */
+  width: 32% !important;
+  text-align: left !important;
+  font-size: 9.5pt !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
+.main-results-table th:nth-child(1) {
+  width: 32% !important;
+  text-align: center !important; /* Centered Header */
+  font-size: 9.5pt !important;
+}
+
 .main-results-table td:nth-child(2) {
-  text-align: left;
-  padding-left: 8px;
-  padding-right: 60px; /* Increased to create wider gap before results */
+  width: 25% !important;
+  text-align: left !important;
+  font-size: 9.5pt !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+.main-results-table th:nth-child(2) {
+  width: 25% !important;
+  text-align: center !important; /* Centered Header */
+  font-size: 9.5pt !important;
 }
 
-/* Align results to center to create natural space around values */
-.main-results-table td:nth-child(n + 3),
-.main-results-table th:nth-child(n + 3) {
-  text-align: center;
+/* Header Authority */
+.main-results-table th {
+  font-size: 10pt !important;
+  font-weight: bold !important;
+  border-bottom: 1px solid #000 !important;
 }
 
-/* Slightly smaller font for result data only to create more visual space */
-.main-results-table tbody td:nth-child(n + 3) {
-  font-size: 0.9em; /* Reduces font by ~1pt relative to the table base */
+/* Single-Line Integrity Policy */
+.main-results-table td:nth-child(n + 1) {
+  white-space: nowrap !important;
 }
 
-/* ========== COLS-1: Single sample (most spacious) ========== */
-.main-results-table.cols-1 {
-  font-size: 11pt; /* Increased from 10pt */
-}
-.main-results-table.cols-1 th:nth-child(1),
-.main-results-table.cols-1 td:nth-child(1) {
-  width: 40%;
-}
-.main-results-table.cols-1 th:nth-child(2),
-.main-results-table.cols-1 td:nth-child(2) {
-  width: 40%;
-}
-.main-results-table.cols-1 th:nth-child(3),
-.main-results-table.cols-1 td:nth-child(3) {
-  width: 20%;
+/* Technical superscripts (e.g., cm², m³) - Balanced for scientific clarity */
+.main-results-table sup {
+  font-size: 6pt;
+  vertical-align: super;
+  line-height: 0;
 }
 
-/* ========== COLS-2: Two samples ========== */
-.main-results-table.cols-2 {
-  font-size: 10.5pt; /* Increased from 9pt */
-}
-.main-results-table.cols-2 th,
-.main-results-table.cols-2 td {
-  padding: 5px 8px; /* Added padding to increase height */
-}
-.main-results-table.cols-2 th:nth-child(1),
-.main-results-table.cols-2 td:nth-child(1) {
-  width: 38%;
-}
-.main-results-table.cols-2 th:nth-child(2),
-.main-results-table.cols-2 td:nth-child(2) {
-  width: 27%;
-}
-.main-results-table.cols-2 thead tr:nth-child(2) th,
-.main-results-table.cols-2 tbody td:nth-child(n + 3) {
-  width: 17%;
+/* ESPC superscript - Ultra-compact for long strings (4 letters) */
+.main-results-table .espc-sup {
+  font-size: 4.5pt !important; /* Force ultra-small to prevent column overlap */
+  margin-left: 1.5px;
+  vertical-align: super;
+  line-height: 0;
+  font-weight: normal;
 }
 
-/* ========== COLS-3: Three samples ========== */
-.main-results-table.cols-3 {
-  font-size: 10pt; /* Increased from 9pt */
+/* ============================================================
+   ADAPTIVE RESULTS ENGINE (1-5 Samples)
+   Targeting cells directly to ensure typography overrides.
+   ============================================================ */
+
+/* --- LAYOUT: 1 SAMPLE (Luxurious 1/3 Spacing) --- */
+.main-results-table.cols-1 td:nth-child(1),
+.main-results-table.cols-1 th:nth-child(1) {
+  width: 33.4% !important;
+  font-size: 10pt !important;
 }
-.main-results-table.cols-3 th,
-.main-results-table.cols-3 td {
-  padding: 5px 4px; /* Increased vertical padding to 5px */
+.main-results-table.cols-1 td:nth-child(2),
+.main-results-table.cols-1 th:nth-child(2) {
+  width: 33.3% !important;
+  font-size: 10pt !important;
 }
-.main-results-table.cols-3 th:nth-child(1),
-.main-results-table.cols-3 td:nth-child(1) {
-  width: 32%;
-}
-.main-results-table.cols-3 th:nth-child(2),
-.main-results-table.cols-3 td:nth-child(2) {
-  width: 25%;
-}
-.main-results-table.cols-3 thead tr:nth-child(2) th,
-.main-results-table.cols-3 tbody td:nth-child(n + 3) {
-  width: 14.3%;
+.main-results-table.cols-1 td:nth-child(3),
+.main-results-table.cols-1 th:nth-child(3) {
+  width: 33.3% !important;
+  font-size: 10pt !important;
 }
 
-/* ========== COLS-4: Four samples ========== */
-.main-results-table.cols-4 {
-  font-size: 9.5pt; /* Increased from 8.5pt */
+/* --- LAYOUT: 2 SAMPLES (Balanced Data Entry) --- */
+.main-results-table.cols-2 td:nth-child(1),
+.main-results-table.cols-2 th:nth-child(1) {
+  width: 32% !important;
+  font-size: 10pt !important;
 }
-.main-results-table.cols-4 th,
+.main-results-table.cols-2 td:nth-child(2),
+.main-results-table.cols-2 th:nth-child(2) {
+  width: 28% !important;
+  font-size: 10pt !important;
+}
+.main-results-table.cols-2 td:nth-child(n + 3),
+.main-results-table.cols-2 th:nth-child(n + 3) {
+  width: 20% !important;
+  font-size: 10pt !important;
+}
+
+/* --- LAYOUT: 3 SAMPLES (Standard Technical Grid) --- */
+.main-results-table.cols-3 td:nth-child(1),
+.main-results-table.cols-3 th:nth-child(1) {
+  width: 32% !important;
+  font-size: 10pt !important;
+}
+.main-results-table.cols-3 td:nth-child(2),
+.main-results-table.cols-3 th:nth-child(2) {
+  width: 28% !important;
+  font-size: 10pt !important;
+}
+.main-results-table.cols-3 td:nth-child(n + 3),
+.main-results-table.cols-3 th:nth-child(n + 3) {
+  width: 13.33% !important;
+  font-size: 10pt !important;
+}
 .main-results-table.cols-4 td {
-  padding: 4px 3px; /* Increased vertical padding to 4px */
+  font-size: 9.5pt !important;
 }
-.main-results-table.cols-4 th:nth-child(1),
-.main-results-table.cols-4 td:nth-child(1) {
-  width: 34%; /* Increased for better gap handling */
-}
-.main-results-table.cols-4 th:nth-child(2),
-.main-results-table.cols-4 td:nth-child(2) {
-  width: 24%; /* Increased */
-}
-.main-results-table.cols-4 thead tr:nth-child(2) th,
-.main-results-table.cols-4 tbody td:nth-child(n + 3) {
-  width: 10.5%; /* Reduced results width */
-  white-space: nowrap; /* Prevent line breaks in results */
+.main-results-table.cols-4 td:nth-child(n + 3) {
+  width: 10.75% !important; /* Force exact distribution (43% / 4) */
+  padding-left: 3px !important;
+  padding-right: 3px !important;
 }
 
-/* ========== COLS-5: Five samples (maximum density) ========== */
-.main-results-table.cols-5 {
-  font-size: 9.5pt; /* Increased to 9.5pt from 8.5pt */
-  table-layout: fixed; /* Bypasses browser squishing content */
-  width: 100%;
-}
-.main-results-table.cols-5 th,
+/* 5-Sample Survival Mode: Explicit Cell Targeting & Width Lockdown */
 .main-results-table.cols-5 td {
-  padding: 4px 3px; /* Increased vertical padding to 4px */
-  overflow: hidden; /* Needed for fixed layout safety */
+  font-size: 9pt !important;
 }
-.main-results-table.cols-5 th:nth-child(1),
-.main-results-table.cols-5 td:nth-child(1) {
-  width: 30%; /* 30% for Param */
-}
-.main-results-table.cols-5 th:nth-child(2),
-.main-results-table.cols-5 td:nth-child(2) {
-  width: 25%; /* 25% for Method, totaling 55% */
-}
-.main-results-table.cols-5 thead tr:nth-child(2) th,
-.main-results-table.cols-5 tbody td:nth-child(n + 3) {
-  width: 9%; /* 5 columns * 9% = 45%. 55+45 = 100% exactly */
+.main-results-table.cols-5 td:nth-child(n + 3) {
+  width: 8.6% !important; /* Force exact 8.6% distribution (43% / 5) */
+  padding-left: 3px !important;
+  padding-right: 3px !important;
 }
 
-.results-section div.font-bold {
-  margin-bottom: 2px; /* Tighter gap to title */
+/* Fixed Typography Authority for Technical Columns (Overrides Adaptive) */
+.main-results-table td:nth-child(1),
+.main-results-table td:nth-child(2) {
+  font-size: 9.5pt !important;
+}
+
+/* Truncation Safety Net for Screen Preview */
+@media screen {
+  .main-results-table td:nth-child(2) {
+    max-width: 55mm;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.results-title {
   font-size: 11pt;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 4px;
 }
 
 .results-notes {
-  margin-top: 8px;
-  font-size: 8pt;
-  line-height: 1.3;
+  margin-top: 12px;
+  font-size: 8.5pt;
+  line-height: 1.4;
   text-align: left;
-  /* font-style: italic; */
 }
 
-.espc-sup {
-  font-size: 6pt;
-  margin-left: 2px;
+.results-notes div {
+  display: block;
 }
 
+/* ============================================================
+   RESULTS DISCLAIMER
+   ============================================================ */
 .results-disclaimer {
-  margin-top: 15px;
-  font-size: 10pt;
+  margin-top: 12px;
+  font-size: 9.5pt;
+  font-weight: normal;
   text-align: left;
 }
 
+/* ============================================================
+   SIGNATURE SECTION
+   ============================================================ */
 .signature-section {
   display: flex;
   justify-content: space-between;
-  margin-top: 40px; /* Increased from 15px to pull block safely down from the results */
+  margin-top: 40px;
   padding: 0 10mm;
 }
 
@@ -511,7 +648,7 @@ body {
 }
 
 .signature-space {
-  height: 70px; /* Room for handwritten signature, increased from 40px */
+  height: 65px;
   margin-bottom: 5px;
 }
 
@@ -523,208 +660,155 @@ body {
 
 .signatory-title {
   font-size: 9pt;
+  font-weight: normal;
   line-height: 1.2;
 }
 
+/* ============================================================
+   PLACEHOLDER SPACER
+   ============================================================ */
 .report-content-placeholder {
   display: block;
-  height: 5mm; /* Very small now as signs fill the space */
+  height: 4mm;
 }
 
-.report-footer {
-  margin-top: auto; /* Push to the very bottom */
-  margin-left: 0;
-  margin-right: 0;
-  padding-top: 0;
-}
+/* ============================================================
+   DENSITY PROFILES
+   Controls: spacing and margins ONLY.
+   NEVER sets font-size on table cells — that is cols-X only.
+   ============================================================ */
 
-.footer-top-note {
-  font-size: 10pt;
-  font-weight: bold;
-  padding: 0 0 2px 0; /* Align with container padding */
-}
-
-.footer-columns {
-  display: flex;
-  justify-content: space-between;
-  width: auto; /* Allow negative margins to stretch width naturally */
-  margin: 0 -15mm; /* Break out of container padding to reach edges */
-  font-size: 8pt;
-  line-height: 1.3;
-  border-top: 1px solid #000;
-  padding: 10px 15mm 0 15mm; /* Restore padding for text alignment */
-  font-weight: bold;
-}
-
-.footer-col {
-  flex: 1;
-  display: grid;
-  grid-template-columns: min-content auto; /* Independent colon alignment per column */
-  column-gap: 4px;
-  align-items: baseline;
-  align-content: start; /* Ensure rows stack at the top without extra spacing */
-}
-
-/* Specific gap for 3rd column */
-.footer-col:last-child {
-  padding-left: 20px;
-}
-
-.footer-row {
-  display: contents; /* Allows spans to participate in the grid */
-}
-
-.footer-label {
-  white-space: nowrap;
-}
-
-.footer-col-title {
-  grid-column: 1 / -1;
-  margin-bottom: 3px;
-  font-size: 9pt;
-  font-weight: bold;
-}
-
-/* Specific fix for Fisheries Information Center title gap */
-.third-col .footer-col-title {
-  margin-bottom: 0px !important;
-}
-
-.footer-bottom-note {
-  margin-top: 2px;
-  margin-left: -15mm; /* Break out of container padding to reach edges */
-  margin-right: -15mm; /* Break out of container padding to reach edges */
-  font-size: 9pt;
-  text-align: center;
-  border-top: 1px solid #000;
-  padding: 3px 15mm 0 15mm; /* Restore padding for text alignment */
-  font-weight: bold;
-}
-
-/* =========================================
-   DYNAMIC LAYOUT DENSITY PROFILES
-   ========================================= */
-
-/* SPARSE: 0-4 Rows (Max 11pt) */
-.layout-sparse {
-  font-size: 11pt;
-}
-.layout-sparse .main-results-table th,
-.layout-sparse .main-results-table td {
-  padding: 4px 6px;
-  font-size: 11pt;
-}
+/* SPARSE: 1–4 test rows */
 .layout-sparse .info-section {
-  margin: 20px 0;
-  font-size: 10.5pt;
+  margin: 14px 0 10px 0;
   line-height: 1.4;
 }
-.layout-sparse .sample-code-table,
-.layout-sparse .results-notes,
-.layout-sparse .results-disclaimer,
+.layout-sparse .sample-code-table {
+  font-size: 10pt;
+}
+.layout-sparse .results-notes {
+  font-size: 9pt;
+}
+.layout-sparse .results-disclaimer {
+  font-size: 10pt;
+}
 .layout-sparse .signatory-name {
-  font-size: 11pt;
+  font-size: 10pt;
 }
 .layout-sparse .signatory-title {
-  font-size: 10pt;
+  font-size: 9.5pt;
 }
-
-.layout-sparse .results-section div.font-bold {
-  font-size: 12pt;
+.layout-sparse .results-title {
+  font-size: 11pt !important;
 }
 .layout-sparse .signature-section {
-  margin-top: 50px; /* Further reduced for 250mm safety */
-}
-.layout-sparse .signature-space {
-  height: 60px; /* Further reduced for 250mm safety */
-}
-
-/* RELAXED: 5-8 Rows */
-.layout-relaxed {
-  font-size: 10.5pt;
-}
-.layout-relaxed .main-results-table th,
-.layout-relaxed .main-results-table td {
-  padding: 3px 6px;
-  font-size: 10.5pt;
-}
-.layout-relaxed .info-section {
-  margin: 12px 0;
-  font-size: 10pt;
-  line-height: 1.35;
-}
-.layout-relaxed .signature-section {
   margin-top: 55px;
 }
-
-/* COMPACT: 14+ Rows */
-.layout-compact {
-  font-size: 9pt;
-}
-.layout-compact .info-section {
-  margin: 3px 0 6px 0;
-  line-height: 1.15;
-  font-size: 9pt;
-}
-.layout-compact .main-results-table th,
-.layout-compact .main-results-table td {
-  padding: 1.5px 4px;
-  font-size: 8.5pt;
-  line-height: 1.05;
+.layout-sparse .signature-space {
+  height: 65px;
 }
 
-.layout-compact .signature-section {
+/* NORMAL: 5–8 test rows */
+.layout-normal .info-section {
+  margin: 8px 0;
+  line-height: 1.3;
+}
+.layout-normal .signature-section {
+  margin-top: 40px;
+}
+
+/* RELAXED: 9–12 test rows */
+.layout-relaxed .info-section {
+  margin: 6px 0;
+  line-height: 1.25;
+}
+.layout-relaxed .signature-section {
+  margin-top: 35px;
+}
+
+/* DENSE: 13–16 test rows */
+.layout-dense .info-section {
+  margin: 4px 0;
+  line-height: 1.2;
+}
+.layout-dense .signature-section {
   margin-top: 25px;
 }
+.layout-dense .signature-space {
+  height: 55px;
+}
+
+/* COMPACT: 17+ test rows */
+.layout-compact .info-section {
+  margin: 2px 0 4px 0;
+  line-height: 1.15;
+}
+.layout-compact .signature-section {
+  margin-top: 20px;
+}
+.layout-compact .signature-space {
+  height: 50px;
+}
+
 @media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
   body {
     background: none;
     padding: 0;
   }
+
   .report-container {
     box-shadow: none;
     width: 210mm !important;
-    height: 297mm !important; /* Strict A4 height guarantees footer hits the bottom line */
-    max-height: 297mm !important; /* Prevent any flexbox expansion */
-    overflow: hidden !important; /* Mathematically clips any stray pixel that triggers Chrome's blank trailing page bug */
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
     margin: 0 !important;
-    padding: 10mm 15mm 0 15mm !important;
     box-sizing: border-box !important;
     page-break-inside: avoid;
   }
 
-  /* CRITICAL FIX: nullify the 30px visual gap between pages in print */
   .report-container.page-break-after {
     margin-bottom: 0 !important;
   }
 
-  /* Let the base CSS margin-top: auto push the footer down to the 297mm boundary */
   .report-footer {
     margin-top: auto !important;
   }
 
-  /* Restore standard print spacing to prevent footer overflow */
   .signature-section {
     margin-top: 25px !important;
     margin-bottom: 0 !important;
   }
+
   .signature-space {
     height: 50px !important;
   }
 
-  /* Remove the visual-only placeholder gap in print */
   .report-content-placeholder {
     height: 0 !important;
-  }
-
-  /* Add slight lift to the bottom footer note only when printing */
-  .footer-bottom-note {
-    margin-bottom: 5px !important; /* Increased slightly for better visibility */
-    padding-bottom: 3px !important;
   }
 
   .no-print,
   .floating-print-btn {
     display: none !important;
+  }
+
+  .main-results-table {
+    border: 1px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .main-results-table thead tr:last-child th {
+    border-bottom: 1px solid #000 !important;
+  }
+
+  .main-results-table thead tr:first-child th[rowspan="2"] {
+    border-bottom: 1px solid #000 !important;
   }
 }

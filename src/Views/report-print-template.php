@@ -99,6 +99,18 @@ $reportDate = date('F d, Y');
         $sampleIsMultiple = $sampleDetails['is_multiple'] ?? false;
         $sampleIsSwab = $sampleDetails['is_swab'] ?? false;
 
+        // Signatories logic
+        $signatories = [];
+        if (!empty($savedReport['signatory_snapshot'])) {
+            $signatories = $savedReport['signatory_snapshot'];
+        } else {
+            // Preview mode: fetch from default signatories in reportData
+            $signatories = [
+                'left'  => $reportData['signatories']['defaults']['scientist'] ?? null,
+                'right' => $reportData['signatories']['defaults']['head'] ?? null
+            ];
+        }
+
         // Determine report type (accredited vs non_accredited)
         $reportType = $savedReport['report_type'] ?? $reportData['report_type'] ?? 'accredited';
         $isNonAccredited = ($reportType === 'non_accredited');
@@ -121,8 +133,8 @@ $reportDate = date('F d, Y');
         }
 
         // Date formatting
-        $samplingDate = !empty($sample['sample_collected_date']) ? date('F d, Y', strtotime($sample['sample_collected_date'])) : 'N/A';
-        $receiptDate = !empty($sample['received_date']) ? date('F d, Y', strtotime($sample['received_date'])) : 'N/A';
+        $samplingDate = !empty($sample['sample_collected_date']) ? date('M d, Y', strtotime($sample['sample_collected_date'])) : 'N/A';
+        $receiptDate = !empty($sample['received_date']) ? date('M d, Y', strtotime($sample['received_date'])) : 'N/A';
 
         $analysisStart = !empty($sample['analysis_start_date']) ? strtotime($sample['analysis_start_date']) : null;
         $analysisEnd = !empty($sample['analysis_end_date']) ? strtotime($sample['analysis_end_date']) : null;
@@ -130,16 +142,16 @@ $reportDate = date('F d, Y');
         $analysisDateStr = 'N/A';
         if ($analysisStart && $analysisEnd) {
             if (date('Y-m-d', $analysisStart) === date('Y-m-d', $analysisEnd)) {
-                $analysisDateStr = date('F d, Y', $analysisStart);
+                $analysisDateStr = date('M d, Y', $analysisStart);
             } elseif (date('Y-m', $analysisStart) === date('Y-m', $analysisEnd)) {
-                $analysisDateStr = date('F d', $analysisStart) . ' - ' . date('d, Y', $analysisEnd);
+                $analysisDateStr = date('M d', $analysisStart) . ' - ' . date('d, Y', $analysisEnd);
             } elseif (date('Y', $analysisStart) === date('Y', $analysisEnd)) {
-                $analysisDateStr = date('F d', $analysisStart) . ' - ' . date('F d, Y', $analysisEnd);
+                $analysisDateStr = date('M d', $analysisStart) . ' - ' . date('M d, Y', $analysisEnd);
             } else {
-                $analysisDateStr = date('F d, Y', $analysisStart) . ' - ' . date('F d, Y', $analysisEnd);
+                $analysisDateStr = date('M d, Y', $analysisStart) . ' - ' . date('M d, Y', $analysisEnd);
             }
         } elseif ($analysisStart) {
-            $analysisDateStr = date('F d, Y', $analysisStart);
+            $analysisDateStr = date('M d, Y', $analysisStart);
         }
     ?>
 
@@ -216,7 +228,7 @@ $reportDate = date('F d, Y');
             $needsPageBreak = !($isLastPageOfThisReport && $isLastReport);
             ?>
             <div class="report-container <?php echo $densityClass; ?><?php echo $needsPageBreak ? ' page-break-after' : ''; ?>">
-
+                <header class="report-header"></header>
 
                 <!-- Report Body -->
                 <main class="report-body">
@@ -225,62 +237,57 @@ $reportDate = date('F d, Y');
                     <div class="report-title">TEST REPORT</div>
 
                     <div class="report-meta">
-                        <div class="meta-row"><?php echo $reportDate; ?></div>
                         <?php
                         // Use stored report_number for saved reports (e.g. "26/014/001/I" or "26/014/001-A")
-                        // Fall back to sample_code + roman numeral for live previews
+                        // Fall back to sample_code for live previews
                         if (!empty($savedReport['report_number'])) {
                             $displaySampleCode = $savedReport['report_number'];
+                            // Strip internal -A and -NA suffixes from the visual display
+                            $displaySampleCode = preg_replace('/-NA$/', '', $displaySampleCode);
+                            $displaySampleCode = preg_replace('/-A$/', '', $displaySampleCode);
                         } else {
                             $displaySampleCode = $sample['sample_code'] ?? '';
-                            if ($layoutType === 'single' && $totalPages > 1) {
-                                $romanNumerals = [
-                                    1 => 'I',
-                                    2 => 'II',
-                                    3 => 'III',
-                                    4 => 'IV',
-                                    5 => 'V',
-                                    6 => 'VI',
-                                    7 => 'VII',
-                                    8 => 'VIII',
-                                    9 => 'IX',
-                                    10 => 'X',
-                                    11 => 'XI',
-                                    12 => 'XII',
-                                    13 => 'XIII',
-                                    14 => 'XIV',
-                                    15 => 'XV',
-                                    16 => 'XVI',
-                                    17 => 'XVII',
-                                    18 => 'XVIII',
-                                    19 => 'XIX',
-                                    20 => 'XX'
-                                ];
-                                $romanSuffix = $romanNumerals[$currentPage] ?? $currentPage;
-                                $displaySampleCode .= '/' . $romanSuffix;
-                            }
+                        }
+                        
+                        // Append Roman numeral if the report spans multiple pages
+                        // This applies to multi-page Combined reports AND live previews of Single reports
+                        if ($totalPages > 1) {
+                            $romanNumerals = [
+                                1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V',
+                                6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X',
+                                11 => 'XI', 12 => 'XII', 13 => 'XIII', 14 => 'XIV', 15 => 'XV',
+                                16 => 'XVI', 17 => 'XVII', 18 => 'XVIII', 19 => 'XIX', 20 => 'XX'
+                            ];
+                            $romanSuffix = $romanNumerals[$currentPage] ?? $currentPage;
+                            $displaySampleCode .= '/' . $romanSuffix;
                         }
                         ?>
                         <div class="meta-row"><span class="font-bold lab-ref">LAB Ref.:</span> <?php echo htmlspecialchars($displaySampleCode); ?></div>
+                        <div class="meta-row"><?php echo $reportDate; ?></div>
                     </div>
 
                     <div class="info-section">
                         <div class="info-left">
                             <div class="info-row">
-                                <span class="font-bold label">Customer :</span>
-                                <div class="info-details">
-                                    <span class="font-bold"><?php echo $customerName; ?>,</span><br>
-                                    <?php echo $customerAddress; ?>,<br>
-                                    <?php echo $customerCity; ?>
+                                <span class="font-bold label customer-section-label">Customer:</span>
+                                <div class="info-details customer-section-details">
+                                    <span class="customer-name"><?php echo $customerName; ?>,</span><br>
+                                    <span class="customer-address">
+                                        <?php
+                                        $fullAddress = trim(($customerAddress ?? '') . ', ' . ($customerCity ?? ''), ', ');
+                                        $addressParts = explode(',', $fullAddress);
+                                        echo implode(',<br>', array_map('trim', $addressParts));
+                                        ?>
+                                    </span>
                                 </div>
                             </div>
                         </div>
                         <div class="info-right">
                             <div class="info-row">
-                                <span class="font-bold label">Laboratory:</span>
-                                <div class="info-details">
-                                    Quality Control Laboratory<br>
-                                    (Microbiology unit)
+                                <span class="font-bold label lab-section-label">Laboratory:</span>
+                                <div class="info-details lab-section-details">
+                                    <span class="lab-name">Quality Control Laboratory</span><br>
+                                    <span class="lab-unit">(Microbiology unit)</span>
                                 </div>
                             </div>
                         </div>
@@ -289,7 +296,7 @@ $reportDate = date('F d, Y');
                     <div class="info-section sample-details">
                         <div class="info-left">
                             <div class="info-row">
-                                <span class="font-bold label">Samples :</span>
+                                <span class="font-bold label">Samples:</span>
                                 <div class="info-details">
                                     <?php if (count($pageSampleDescriptions) === 1): ?>
                                         <?php echo htmlspecialchars($pageSampleDescriptions[0]); ?>
@@ -317,10 +324,11 @@ $reportDate = date('F d, Y');
                                 <table class="sample-code-table">
                                     <?php foreach ($pageCodesTable as $codeRow): ?>
                                         <tr>
-                                            <td><?php echo $codeRow['index']; ?>.<?php echo htmlspecialchars($codeRow['name']); ?></td>
+                                            <td class="sample-code-bullet">&bull;</td>
+                                            <td class="sample-code-name"><?php echo htmlspecialchars($codeRow['name']); ?></td>
                                             <?php if ($codeRow['code'] !== null): ?>
-                                                <td>&nbsp;-&nbsp;</td>
-                                                <td><?php echo htmlspecialchars($codeRow['code']); ?></td>
+                                                <td class="sample-code-separator">&nbsp;-&nbsp;</td>
+                                                <td class="sample-code-value"><?php echo htmlspecialchars($codeRow['code']); ?></td>
                                             <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
@@ -329,16 +337,16 @@ $reportDate = date('F d, Y');
                         </div>
                         <div class="info-right">
                             <div class="info-row">
-                                <span class="label">Date of sampling &nbsp;&nbsp;&nbsp;&nbsp;:</span>
-                                <div class="info-details"><?php echo $samplingDate; ?></div>
+                                <span class="label date-label">Date of sampling:</span>
+                                <div class="info-details date-details"><?php echo $samplingDate; ?></div>
                             </div>
                             <div class="info-row">
-                                <span class="label">Receipt of sample &nbsp;&nbsp;&nbsp;:</span>
-                                <div class="info-details"><?php echo $receiptDate; ?></div>
+                                <span class="label date-label">Receipt of sample:</span>
+                                <div class="info-details date-details"><?php echo $receiptDate; ?></div>
                             </div>
                             <div class="info-row">
-                                <span class="label">Analysis of samples :</span>
-                                <div class="info-details"><?php echo $analysisDateStr; ?></div>
+                                <span class="label date-label">Analysis of samples:</span>
+                                <div class="info-details date-details"><?php echo $analysisDateStr; ?></div>
                             </div>
                         </div>
                     </div>
@@ -346,14 +354,14 @@ $reportDate = date('F d, Y');
                     <div class="info-section request-details">
                         <div class="info-left">
                             <div class="info-row">
-                                <span class="font-bold label">Customer's request :</span>
-                                <div class="info-details"><?php echo htmlspecialchars($pageCustomerRequest); ?></div>
+                                <span class="font-bold label">Customer's request:</span>
+                                <div class="info-details"><?php echo $pageCustomerRequest; ?></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="results-section">
-                        <div class="font-bold">Results:</div>
+                        <div class="results-title">Results:</div>
                         <?php
                         $itemCount = count($pageItems);
                         $colClass = 'cols-' . $itemCount;
@@ -394,7 +402,8 @@ $reportDate = date('F d, Y');
                                 $hasND = false;
                                 $hasAccredited = false;
                                 $hasESPC = false;
-                                $accreditedStandard = '';
+                                $accreditedStandard = $sample['active_certificate_name'] ?? 'Accredited Lab';
+                                $pageAbbreviations = []; // Collect used abbreviations for this page only
 
                                 foreach ($pageItems as $item) {
                                     if (empty($item['tests'])) continue;
@@ -404,10 +413,14 @@ $reportDate = date('F d, Y');
                                         $method = $test['method_name'] ?? '-';
                                         $key = md5($label . '::' . $method);
 
-                                        $is_accredited = $test['is_accredited'] ?? 0;
+                                         $is_accredited = $test['is_accredited'] ?? 0;
                                         if ($is_accredited && !$isNonAccredited) {
                                             $hasAccredited = true;
-                                            $accreditedStandard = $reportData['certificate']['certificate_number'] ?? 'Accredited Lab';
+                                        }
+
+                                        // Track used short names for footer definitions
+                                        if (!empty($test['short_name'])) {
+                                            $pageAbbreviations[$test['short_name']] = $test['parameter_name'];
                                         }
 
                                         if (!isset($uniqueTests[$key])) {
@@ -415,6 +428,7 @@ $reportDate = date('F d, Y');
                                                 'label' => $label,
                                                 'method' => $method,
                                                 'is_accredited' => $is_accredited,
+                                                'display_format' => $test['display_format'] ?? 'normal',
                                                 'results' => array_fill(0, $itemCount, '-') // Initialize exact number of blank columns
                                             ];
                                         }
@@ -461,19 +475,42 @@ $reportDate = date('F d, Y');
                                     <?php foreach ($uniqueTests as $row): ?>
                                         <tr>
                                             <td class="px-2">
-                                                <?php echo $row['label']; ?>
-                                                <?php if (!$isNonAccredited && $row['is_accredited']) echo '<sup>*</sup>'; ?>
+                                                <?php 
+                                                    $displayLabel = htmlspecialchars($row['label']);
+                                                    // Restore specific technical tags after escaping
+                                                    $displayLabel = str_replace(
+                                                        ['&lt;sup&gt;', '&lt;/sup&gt;', '&lt;sub&gt;', '&lt;/sub&gt;', '&lt;i&gt;', '&lt;/i&gt;', '&lt;em&gt;', '&lt;/em&gt;'],
+                                                        ['<sup>', '</sup>', '<sub>', '</sub>', '<i>', '</i>', '<em>', '</em>'],
+                                                        $displayLabel
+                                                    );
+                                                    
+                                                    if (($row['display_format'] ?? 'normal') === 'scientific') {
+                                                        $displayLabel = '<em>' . $displayLabel . '</em>';
+                                                    }
+                                                    echo $displayLabel;
+                                                    if (!$isNonAccredited && $row['is_accredited']) echo '<sup>*</sup>'; 
+                                                ?>
                                             </td>
-                                            <td class="px-2"><?php echo htmlspecialchars($row['method']); ?></td>
+                                            <td class="px-2">
+                                                <?php 
+                                                    $displayMethod = htmlspecialchars($row['method']);
+                                                    // Restore specific technical tags after escaping
+                                                    echo str_replace(
+                                                        ['&lt;sup&gt;', '&lt;/sup&gt;', '&lt;sub&gt;', '&lt;/sub&gt;', '&lt;i&gt;', '&lt;/i&gt;', '&lt;em&gt;', '&lt;/em&gt;'],
+                                                        ['<sup>', '</sup>', '<sub>', '</sub>', '<i>', '</i>', '<em>', '</em>'],
+                                                        $displayMethod
+                                                    );
+                                                ?>
+                                            </td>
                                             <?php for ($i = 0; $i < $itemCount; $i++): ?>
-                                                <td class="text-center"><?php echo $row['results'][$i]; ?></td>
+                                                 <td class="text-center"><?php echo str_replace('ESPC', '<sup class="espc-sup">ESPC</sup>', $row['results'][$i]); ?></td>
                                             <?php endfor; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
                         </table>
-                        <?php if ($hasND || $hasAccredited || $hasESPC): ?>
+                        <?php if ($hasND || $hasAccredited || $hasESPC || !empty($pageAbbreviations)): ?>
                             <div class="results-notes">
                                 <?php if ($hasND): ?>
                                     <div>ND - Not Detected</div>
@@ -482,30 +519,37 @@ $reportDate = date('F d, Y');
                                     <div>* - <?php echo htmlspecialchars($accreditedStandard); ?></div>
                                 <?php endif; ?>
                                 <?php if ($hasESPC): ?>
-                                    <div>ESPC - Estimated plate count</div>
+                                    <div class="espc-note">ESPC - Estimated plate count</div>
                                 <?php endif; ?>
+                                <?php 
+                                // Sort abbreviations alphabetically for a cleaner look
+                                ksort($pageAbbreviations);
+                                foreach ($pageAbbreviations as $abbr => $full): ?>
+                                    <div><?php echo htmlspecialchars($abbr); ?> - <?php echo htmlspecialchars($full); ?></div>
+                                <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </div>
 
                     <div class="results-disclaimer">
-                        Results of the analysis specifically refer to the samples submitted to NARA.
+                        Results of the analysis specifically refer to the samples <?php echo (!empty($sample['is_drawn_by_nara']) && $sample['is_drawn_by_nara'] == 1) ? 'drawn by' : 'submitted to'; ?> NARA.
                     </div>
 
                     <div class="signature-section">
+                        <?php foreach (['left', 'right'] as $pos): 
+                            $sig = $signatories[$pos] ?? null;
+                            if (!$sig) continue;
+                        ?>
                         <div class="signature-block">
                             <div class="signature-space"></div>
-                            <div class="signatory-name">P. Ginigaddarage</div>
-                            <div class="signatory-title">Senior Scientist</div>
-                            <div class="signatory-title">Post Harvest Technology Division</div>
-                            <div class="signatory-title">(Authorized signatory)</div>
+                            <div class="signatory-name"><?php echo htmlspecialchars($sig['full_name']); ?></div>
+                            <div class="signatory-title"><?php echo htmlspecialchars($sig['title']); ?></div>
+                            <div class="signatory-title"><?php echo htmlspecialchars($sig['division']); ?></div>
+                            <?php if (($sig['role_type'] ?? '') === 'scientist'): ?>
+                                <div class="signatory-title">(Authorized signatory)</div>
+                            <?php endif; ?>
                         </div>
-                        <div class="signature-block">
-                            <div class="signature-space"></div>
-                            <div class="signatory-name">Suseema Ariyarathna</div>
-                            <div class="signatory-title">Head/Senior Scientist</div>
-                            <div class="signatory-title">Post Harvest Technology Division</div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
 
                     <div class="report-content-placeholder">
@@ -513,7 +557,7 @@ $reportDate = date('F d, Y');
                     </div>
                 </main>
 
-
+                <footer class="report-footer"></footer>
             </div>
         <?php endfor; ?>
     <?php endforeach; ?>

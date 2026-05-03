@@ -123,6 +123,25 @@ class TestReportModel
         return $samples;
     }
 
+    /**
+     * Get the name of the currently active accreditation certificate.
+     * 
+     * @return string
+     */
+    public function getActiveCertificateName()
+    {
+        try {
+            $sql = "SELECT certificate_name FROM accreditation_certificates WHERE is_current = 1 AND is_deleted = 0 LIMIT 1";
+            $result = $this->conn->query($sql);
+            if ($row = $result->fetch_assoc()) {
+                return $row['certificate_name'];
+            }
+            return 'NARA Accreditation'; // Fallback
+        } catch (Exception $e) {
+            return 'NARA Accreditation';
+        }
+    }
+
     // ==================== REPORT DATA AGGREGATION ====================
 
     /** 
@@ -158,6 +177,9 @@ class TestReportModel
         if (!$header) {
             return null;
         }
+
+        // Load active certificate name
+        $header['active_certificate_name'] = $this->getActiveCertificateName();
 
         // 2. Load sample items with category info, container, and accreditation status
         $itemsSql = "SELECT 
@@ -211,7 +233,8 @@ class TestReportModel
             // Load tests with results for this item
             $item['tests'] = $this->getTestsForReport(
                 $item['sample_item_id'],
-                $item['base_category_id']
+                $item['base_category_id'],
+                $itemsResult->num_rows
             );
 
             $items[] = $item;
@@ -276,9 +299,10 @@ class TestReportModel
      *
      * @param int $sampleItemId
      * @param int|null $baseCategoryId
+     * @param int $itemCount Number of items in the report (for abbreviation logic)
      * @return array
      */
-    private function getTestsForReport($sampleItemId, $baseCategoryId)
+    private function getTestsForReport($sampleItemId, $baseCategoryId, $itemCount = 1)
     {
         $sql = "SELECT 
                     st.sample_test_id,
@@ -308,6 +332,7 @@ class TestReportModel
                     -- Category-resolved method (may differ from submitted)
                     pcm.method_id AS category_method_id,
                     tm_cat.method_name AS category_method,
+                    tm_cat.method_abbreviation AS category_method_abbr,
 
                     -- Results
                     str.result_id,
@@ -355,17 +380,34 @@ class TestReportModel
         $tests = [];
 
         while ($row = $result->fetch_assoc()) {
-            // Rename "Aerobic Plate Count" to "APC"
-            $pName = $row['parameter_name'];
-            $pName = str_ireplace('Aerobic Plate Count', 'APC', $pName);
-            $pName = str_ireplace('Aerobic plate count', 'APC', $pName);
-            $row['parameter_name'] = $pName;
+            // Handle common technical abbreviations automatically
+            $originalName = $row['parameter_name'];
+            if (empty($row['short_name'])) {
+                if (stripos($originalName, 'Aerobic Plate Count') !== false) $row['short_name'] = 'APC';
+                if (stripos($originalName, 'Escherichia coli') !== false) $row['short_name'] = 'E. coli';
+            }
 
-            // Use category-resolved method if available, else submitted method
-            $methodName = $row['category_method'] ?: $row['submitted_method'];
+            // Apply table-density abbreviations to the display name
+            if (stripos($originalName, 'Aerobic Plate Count') !== false) {
+                $row['parameter_name'] = str_ireplace('Aerobic Plate Count', 'APC', $originalName);
+            }
+            if (stripos($originalName, 'Escherichia coli') !== false) {
+                $row['parameter_name'] = str_ireplace('Escherichia coli', 'E. coli', $originalName);
+            }
+
+            // Logic for Method Abbreviation based on density
+            $fullMethod = $row['category_method'] ?: $row['submitted_method'];
+            $abbrMethod = $row['category_method_abbr'] ?? '';
+
+            $methodName = $fullMethod;
+            if ($itemCount >= 7) {
+                $methodName = $abbrMethod ?: $fullMethod;
+            } elseif ($itemCount >= 5) {
+                $methodName = ($abbrMethod && strlen($fullMethod) > 20) ? $abbrMethod : $fullMethod;
+            }
 
             // Build display label for parameter
-            $paramLabel = $this->buildParameterLabel($row);
+            $paramLabel = $this->buildParameterLabel($row, $itemCount);
 
             // Format result for display
             $resultDisplay = $this->formatResultForReport($row);
@@ -374,7 +416,9 @@ class TestReportModel
                 'sample_test_id'    => (int) $row['sample_test_id'],
                 'parameter_id'      => (int) $row['parameter_id'],
                 'parameter_code'    => $row['parameter_code'],
-                'parameter_name'    => $row['parameter_name'],
+                'parameter_name'    => $originalName, // Full Name for footer
+                'display_name'      => $row['parameter_name'], // Abbreviated for table
+                'short_name'        => $row['short_name'] ?? '',
                 'parameter_label'   => $paramLabel,
                 'display_format'    => $row['display_format'] ?: 'normal',
                 'variant_name'      => $row['variant_name'] ?: '',
@@ -397,9 +441,10 @@ class TestReportModel
         return $tests;
     }
 
-    private function buildParameterLabel($row)
+    private function buildParameterLabel($row, $itemCount = 1)
     {
-        $name = $row['parameter_name'];
+        // Use short_name if density is high (4+ columns)
+        $name = ($itemCount >= 4 && !empty($row['short_name'])) ? $row['short_name'] : $row['parameter_name'];
         $unit = $row['category_unit'] ?: '';
         $variant = $row['variant_name'] ?: '';
 
@@ -453,9 +498,12 @@ class TestReportModel
 
         $display = $row['result_display'] ?: $value ?: '—';
 
-        // Prepend ESPC if applicable
-        if ((int) ($row['has_espc'] ?? 0)) {
-            $display = $display . ' <sup class="espc-sup">ESPC</sup>';
+        // Aggressively remove all whitespace around 'x' or '×' for compact scientific notation
+        $display = preg_replace('/\s*([x×])\s*/u', '$1', $display);
+
+        // Append ESPC if applicable (Only if not already present in display)
+        if ((int) ($row['has_espc'] ?? 0) && strpos($display, 'ESPC') === false) {
+            $display = $display . '<sup class="espc-sup">ESPC</sup>';
         }
 
         return $display;
@@ -573,6 +621,7 @@ class TestReportModel
                 if (!isset($paramGroups[$pName])) {
                     $paramGroups[$pName] = [
                         'short_name' => $sName,
+                        'display_format' => $test['display_format'] ?? 'normal',
                         'variants'   => []
                     ];
                 }
@@ -589,23 +638,27 @@ class TestReportModel
         // 2. Format each parameter group
         $formattedParams = [];
         foreach ($paramGroups as $pName => $info) {
-            $label = $pName;
+            $label = htmlspecialchars($pName);
+            if ($info['display_format'] === 'scientific') {
+                $label = '<em>' . $label . '</em>';
+            }
 
             // Handle variants first
             if (!empty($info['variants'])) {
                 $vStr = '';
                 $count = count($info['variants']);
                 if ($count === 1) {
-                    $vStr = $info['variants'][0];
+                    $vStr = htmlspecialchars($info['variants'][0]);
                 } else {
-                    $last = array_pop($info['variants']);
-                    $vStr = implode(', ', $info['variants']) . ' and ' . $last;
+                    $escapedVariants = array_map('htmlspecialchars', $info['variants']);
+                    $last = array_pop($escapedVariants);
+                    $vStr = implode(', ', $escapedVariants) . ' and ' . $last;
                 }
                 $label .= ' (' . $vStr . ')';
             }
             // Only add short name if NO variants (to avoid double parentheses clutter)
             elseif ($info['short_name'] !== '') {
-                $label .= ' (' . $info['short_name'] . ')';
+                $label .= ' (' . htmlspecialchars($info['short_name']) . ')';
             }
 
             $formattedParams[] = $label;
@@ -834,20 +887,17 @@ class TestReportModel
             $rightId = !empty($data['signatory_right_id']) ? (int) $data['signatory_right_id'] : null;
             $generatedBy = (int) $data['generated_by'];
 
-            // Get report reference from sample
-            $refSql = "SELECT report_ref FROM samples WHERE sample_id = ?";
+            // Get report reference from sample and prefix with QC/
+            $refSql = "SELECT sample_code FROM samples WHERE sample_id = ?";
             $refStmt = $this->conn->prepare($refSql);
             $refStmt->bind_param('i', $sampleId);
             $refStmt->execute();
             $refRow = $refStmt->get_result()->fetch_assoc();
-            $reportNumber = $refRow['report_ref'] ?? 'TR-' . $sampleId;
+            $reportNumber = $refRow['sample_code'] ?? 'TR-' . $sampleId;
 
             // Build signatory snapshot
             $sigSnapshot = $this->conn->real_escape_string(''); // placeholder
             $sigSnapshot = $this->buildSignatorySnapshot($leftId, $rightId);
-
-            // Build full data snapshot for reprint
-            $reportData = $this->getReportData($sampleId);
 
             // Update analysis dates if provided
             if (!empty($data['analysis_start_date']) || !empty($data['analysis_end_date'])) {
@@ -863,6 +913,9 @@ class TestReportModel
                 $updateStmt->bind_param('ssii', $startDate, $endDate, $drawnByNara, $sampleId);
                 $updateStmt->execute();
             }
+
+            // Build full data snapshot for reprint (MUST BE DONE AFTER UPDATE)
+            $reportData = $this->getReportData($sampleId);
 
             // --- Enable Regeneration: Wipe ALL old reports for this sample ---
             $findOldReportSql = "SELECT report_id FROM final_test_reports WHERE sample_id = ?";
