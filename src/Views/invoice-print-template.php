@@ -94,53 +94,11 @@ if ($invoiceRowCount <= 5) {
     <div class="a4-page <?php echo $densityClass; ?>">
 
 
-
-
-
-        <!-- ══════════════════════════════════════════════
-       REFERENCE ROW  (My No. / Your No. / Date)
-  ══════════════════════════════════════════════ -->
-        <div class="ref-row">
-
-            <!-- My No. -->
-            <div class="ref-block">
-                <div class="ref-labels">
-                    <span>මගේ අංකය</span>
-                    <span>எனது இல</span>
-                    <span>My No.</span>
-                </div>
-                <div class="ref-bracket">}</div>
-            </div>
-
-            <!-- Your No. -->
-            <div class="ref-block">
-                <div class="ref-labels">
-                    <span>ඔබේ අංකය</span>
-                    <span>உமது இல.</span>
-                    <span>Your No.</span>
-                </div>
-                <div class="ref-bracket">}</div>
-            </div>
-
-            <div class="ref-block date-block">
-                <div class="ref-labels">
-                    <span>දිනය</span>
-                    <span>திகதி</span>
-                    <span>Date</span>
-                </div>
-                <div class="ref-bracket">}</div>
-                <div class="ref-value" id="currentDate">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-        </div><!-- /.ref-row -->
-
-
-        <!-- ══════════════════════════════════════════════
-       INVOICE TITLE
-  ══════════════════════════════════════════════ -->
+        <div style="text-align: right; margin-bottom: 5px;">
+            <strong>Date:</strong> <span id="currentDate"></span>
+        </div>
         <div class="invoice-title">INVOICE</div>
+
 
         <!-- ══════════════════════════════════════════════
        CUSTOMER + INVOICE META
