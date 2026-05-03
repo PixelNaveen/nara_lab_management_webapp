@@ -92,7 +92,7 @@ em {
    HEADER & FOOTER SPACERS (pre-printed letterhead)
    ============================================================ */
 .report-header {
-  height: 3.8cm;
+  height: 1.5in;
   width: 100%;
   display: block;
 }

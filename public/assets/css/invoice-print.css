@@ -58,7 +58,7 @@ body {
   width: 210mm;
   min-height: 297mm;
   background: #fff;
-  padding: 10mm 15mm 15mm 15mm;
+  padding: 2in 0.7in 30mm 0.7in;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35);
   position: relative;
   font-size: 11pt; /* Increased from 9.5pt */
@@ -210,7 +210,15 @@ body {
   font-weight: bold;
 }
 
-
+/* Precise Letterhead Date Positioning */
+.letterhead-date {
+  position: absolute;
+  top: 4.4cm; /* Exactly 4.4cm from the top edge */
+  right: 4.5cm; /* Exactly 4.5cm from the right edge */
+  font-size: 8pt; /* Exactly 8pt font */
+  margin: 0;
+  line-height: 1;
+}
 
 .date-request {
   font-size: 10pt;
@@ -225,12 +233,14 @@ body {
 /* ─── Title ─────────────────────────────────────────────────── */
 .invoice-title {
   text-align: center;
-  font-size: 12pt;
+  font-size: 14pt !important;
   font-weight: bold;
-  /* letter-spacing: 2px; */
-  margin: 7px 0 9px;
-  font-family: "Times New Roman", serif;
-  /* text-decoration: underline; */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 10px 0 5mm 0;
+  line-height: 1;
+  color: #000;
+  font-family: "Times New Roman", Times, serif;
 }
 
 /* ─── Customer + Invoice Info ────────────────────────────────── */
@@ -238,56 +248,58 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 35px; /* Maximum spacing for clarity */
 }
 
 .customer-block {
-  flex: 1;
+  flex: 3; /* Give more space to the customer side */
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: row; /* Side-by-side as in the screenshot */
+  gap: 12px;
 }
 
 .customer-block .customer-label {
   font-weight: 700;
-  font-size: 9.5pt;
+  font-size: 10pt;
   white-space: nowrap;
 }
 
 .customer-block .customer-details {
   display: flex;
   flex-direction: column;
+  white-space: nowrap; /* Prevent line breaks in the address lines */
 }
 
 .customer-block .customer-details .customer-name {
-  font-size: 9.5pt;
+  font-size: 10pt;
   font-weight: 700;
   line-height: normal;
 }
 
 .customer-block .customer-details .customer-address {
   font-size: 9.5pt;
-  line-height: 1.4;
-  margin-top: 1px;
+  line-height: 1.5;
+  margin-top: 2px;
 }
-
 .invoice-meta {
   text-align: right;
-  font-size: 9pt;
-  line-height: 1.8;
+  font-size: 10pt; /* Increased from 9pt to match report */
+  line-height: 1.3; /* Optimized vertical spacing */
+  flex: 0 0 auto; /* Prevent squeezing */
+  white-space: nowrap;
 }
 
 .invoice-meta p {
-  margin: 0;
+  margin: 0 0 2px 0;
 }
 
 .invoice-meta .division-line {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* ─── Date of Request ────────────────────────────────────────── */
 .date-request {
-  font-size: 9.5pt;
+  font-size: 10pt; /* Standardized to match report */
   font-weight: 700;
   margin-bottom: 8px;
 }
@@ -558,7 +570,7 @@ body {
     height: 297mm !important; /* Lock height strictly to A4 */
     max-height: 297mm !important; /* Prevent any flexbox expansion */
     overflow: hidden !important; /* Mathematically clips any stray pixel that triggers Chrome's blank trailing page bug */
-    padding-top: 12mm;
+    padding: 2in 0.7in 30mm 0.7in !important;
     margin: 0 !important;
     page-break-inside: avoid;
     page-break-after: avoid; /* Prevent browser from adding extra blank pages */
