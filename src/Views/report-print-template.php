@@ -209,13 +209,11 @@ $reportDate = date('F d, Y');
                 }
             }
             $rowCount = count($pageUniqueTests);
-
-            $densityClass = 'layout-normal';
-            if ($rowCount <= 4) {
+            if ($rowCount <= 3) {
                 $densityClass = 'layout-sparse';
-            } elseif ($rowCount <= 8) {
+            } elseif ($rowCount <= 6) {
                 $densityClass = 'layout-relaxed';
-            } elseif ($rowCount <= 13) {
+            } elseif ($rowCount <= 8) {
                 $densityClass = 'layout-normal';
             } else {
                 $densityClass = 'layout-compact';
@@ -227,7 +225,10 @@ $reportDate = date('F d, Y');
             $isLastReport = ($reportEntryIndex >= count($reportEntries) - 1);
             $needsPageBreak = !($isLastPageOfThisReport && $isLastReport);
             ?>
-            <div class="report-container <?php echo $densityClass; ?><?php echo $needsPageBreak ? ' page-break-after' : ''; ?>">
+            <?php
+            $tuningClass = ($rowCount >= 7) ? ' layout-minimum-tuning' : '';
+            ?>
+            <div class="report-container <?php echo $densityClass . $tuningClass; ?><?php echo $needsPageBreak ? ' page-break-after' : ''; ?>">
                 <header class="report-header"></header>
 
                 <!-- Report Body -->
@@ -371,7 +372,14 @@ $reportDate = date('F d, Y');
                         <div class="info-left">
                             <div class="info-row">
                                 <span class="font-bold label">Customer's request:</span>
-                                <div class="info-details"><?php echo $pageCustomerRequest; ?></div>
+                                <div class="info-details"><?php 
+                                    // Flexible regex to handle 1, 2, or 3 temperature variants
+                                    echo preg_replace(
+                                        '/Aerobic Plate Count \((at [^\)]+)\)/', 
+                                        'Aerobic Plate Count (APC) - $1', 
+                                        $pageCustomerRequest
+                                    ); 
+                                ?></div>
                             </div>
                         </div>
                     </div>
@@ -501,7 +509,15 @@ $reportDate = date('F d, Y');
                                                 );
 
                                                 if (($row['display_format'] ?? 'normal') === 'scientific') {
-                                                    $displayLabel = '<em>' . $displayLabel . '</em>';
+                                                    // Only italicize the name part, not the unit in parentheses
+                                                    if (strpos($displayLabel, '(') !== false) {
+                                                        $parts = explode('(', $displayLabel, 2);
+                                                        $name = trim($parts[0]);
+                                                        $unit = '(' . $parts[1];
+                                                        $displayLabel = '<em>' . $name . '</em> ' . $unit;
+                                                    } else {
+                                                        $displayLabel = '<em>' . $displayLabel . '</em>';
+                                                    }
                                                 }
                                                 echo $displayLabel;
                                                 if (!$isNonAccredited && $row['is_accredited']) echo '<sup>*</sup>';
@@ -526,7 +542,7 @@ $reportDate = date('F d, Y');
                                 <?php endif; ?>
                             </tbody>
                         </table>
-                        <?php if ($hasND || $hasAccredited || $hasESPC || !empty($pageAbbreviations)): ?>
+                        <?php if ($hasND || $hasAccredited || $hasESPC): ?>
                             <div class="results-notes">
                                 <?php if ($hasND): ?>
                                     <div>ND - Not Detected</div>
@@ -537,12 +553,6 @@ $reportDate = date('F d, Y');
                                 <?php if ($hasESPC): ?>
                                     <div class="espc-note">ESPC - Estimated plate count</div>
                                 <?php endif; ?>
-                                <?php
-                                // Sort abbreviations alphabetically for a cleaner look
-                                ksort($pageAbbreviations);
-                                foreach ($pageAbbreviations as $abbr => $full): ?>
-                                    <div><?php echo htmlspecialchars($abbr); ?> - <?php echo htmlspecialchars($full); ?></div>
-                                <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </div>
