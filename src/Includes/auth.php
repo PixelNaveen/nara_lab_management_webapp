@@ -24,8 +24,8 @@ header("Expires: 0");
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     //  CONFIGURE SESSION LIFETIME (Override server defaults)
-    // Set to 2 hours (7200 seconds) to match our custom inactivity logic
-    ini_set('session.gc_maxlifetime', 7200);
+    // Set to 40 minutes (2400 seconds) to match our custom inactivity logic
+    ini_set('session.gc_maxlifetime', 2400);
     ini_set('session.cookie_lifetime', 0); // Cookie expires when browser closes
     session_start();
 }

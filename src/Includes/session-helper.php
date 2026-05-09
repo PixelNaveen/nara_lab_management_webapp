@@ -7,14 +7,14 @@
 
 if (session_status() === PHP_SESSION_NONE) {
     //  CONFIGURE SESSION LIFETIME (Override server defaults)
-    ini_set('session.gc_maxlifetime', 7200);
+    ini_set('session.gc_maxlifetime', 2400);
     ini_set('session.cookie_lifetime', 0);
     session_start();
 }
 
 function checkSessionTimeout($isAjax = true)
 {
-    $sessionTimeout = 2 * 60 * 60; // 2 hours in seconds
+    $sessionTimeout = 40 * 60; // 40 minutes in seconds
 
     if (isset($_SESSION['last_activity'])) {
         if (time() - $_SESSION['last_activity'] > $sessionTimeout) {
