@@ -250,34 +250,7 @@ $reportDate = date('F d, Y');
                             $displaySampleCode = $sample['sample_code'] ?? '';
                         }
 
-                        // Append Roman numeral if the report spans multiple pages
-                        // This applies to multi-page Combined reports AND live previews of Single reports
-                        if ($totalPages > 1) {
-                            $romanNumerals = [
-                                1 => 'I',
-                                2 => 'II',
-                                3 => 'III',
-                                4 => 'IV',
-                                5 => 'V',
-                                6 => 'VI',
-                                7 => 'VII',
-                                8 => 'VIII',
-                                9 => 'IX',
-                                10 => 'X',
-                                11 => 'XI',
-                                12 => 'XII',
-                                13 => 'XIII',
-                                14 => 'XIV',
-                                15 => 'XV',
-                                16 => 'XVI',
-                                17 => 'XVII',
-                                18 => 'XVIII',
-                                19 => 'XIX',
-                                20 => 'XX'
-                            ];
-                            $romanSuffix = $romanNumerals[$currentPage] ?? $currentPage;
-                            $displaySampleCode .= '/' . $romanSuffix;
-                        }
+
                         ?>
                         <div class="meta-row"><span class="font-bold lab-ref">LAB Ref.:</span> <?php echo htmlspecialchars($displaySampleCode); ?></div>
                         <div class="meta-row"><?php echo $reportDate; ?></div>
@@ -288,14 +261,26 @@ $reportDate = date('F d, Y');
                             <div class="info-row">
                                 <span class="font-bold label customer-section-label">Customer:</span>
                                 <div class="info-details customer-section-details">
-                                    <span class="customer-name"><?php echo $customerName; ?>,</span><br>
-                                    <span class="customer-address">
-                                        <?php
-                                        $fullAddress = trim(($customerAddress ?? '') . ', ' . ($customerCity ?? ''), ', ');
-                                        $addressParts = explode(',', $fullAddress);
-                                        echo implode(',<br>', array_map('trim', $addressParts));
-                                        ?>
-                                    </span>
+                                    <div class="customer-name"><?php echo $customerName; ?></div>
+                                    <?php 
+                                    // Smart Address Wrapper: Break only at LAST comma if too long
+                                    $addr = $customerAddress;
+                                    $threshold = 45; 
+                                    if (strlen($addr) > $threshold) {
+                                        $lastCommaPos = strrpos($addr, ',');
+                                        if ($lastCommaPos !== false) {
+                                            $part1 = trim(substr($addr, 0, $lastCommaPos + 1));
+                                            $part2 = trim(substr($addr, $lastCommaPos + 1));
+                                            echo '<div class="customer-address">' . htmlspecialchars($part1) . '</div>';
+                                            echo '<div class="customer-address">' . htmlspecialchars($part2) . '</div>';
+                                        } else {
+                                            echo '<div class="customer-address">' . htmlspecialchars($addr) . '</div>';
+                                        }
+                                    } else {
+                                        echo '<div class="customer-address">' . htmlspecialchars($addr) . '</div>';
+                                    }
+                                    ?>
+                                    <div class="customer-address"><?php echo $customerCity; ?></div>
                                 </div>
                             </div>
                         </div>

@@ -984,9 +984,8 @@ class TestReportModel
                     $itemReportData['sample_details'] = $item['isolated_sample_details']
                         ?? $this->buildSampleDetailsText([$item]);
 
-                    // Report number suffix: /I, /II, /III...
-                    $suffix = $romanNumerals[$idx] ?? ($idx + 1);
-                    $itemReportNumber = $reportNumber . '/' . $suffix;
+                    // SEPARATE MODE: Use dash and standard number (e.g. -1, -2) instead of Roman Numerals
+                    $itemReportNumber = $reportNumber . '-' . ($idx + 1);
                     $itemSnapshot = json_encode($itemReportData, JSON_UNESCAPED_UNICODE);
 
                     $itemReportId = $this->insertSingleReport(
@@ -1005,91 +1004,78 @@ class TestReportModel
                     $generatedReportIds[] = $itemReportId;
                 }
             } else {
-                // ==================== COMBINED MODE ====================
-                // Detect mixed accreditation: split into 2 groups if mixed.
-                $accreditedItems = [];
-                $nonAccreditedItems = [];
-
+                // ==================== COMBINED MODE: DOUBLE-SPLIT LOGIC ====================
+                // 1. Group items by Category (Food, Water, Swab, etc.)
+                $categoryGroups = [];
                 foreach ($items as $item) {
-                    if ((int) ($item['is_slab_accredited'] ?? 0)) {
-                        $accreditedItems[] = $item;
-                    } else {
-                        $nonAccreditedItems[] = $item;
+                    $catName = $item['base_category_name'] ?: 'Other';
+                    if (!isset($categoryGroups[$catName])) {
+                        $categoryGroups[$catName] = [];
+                    }
+                    $categoryGroups[$catName][] = $item;
+                }
+
+                // 2. Further split each category group by Accreditation
+                $finalReportGroups = [];
+                foreach ($categoryGroups as $catName => $catItems) {
+                    $accItems = [];
+                    $nonAccItems = [];
+
+                    foreach ($catItems as $item) {
+                        if ((int)($item['is_slab_accredited'] ?? 0)) {
+                            $accItems[] = $item;
+                        } else {
+                            $nonAccItems[] = $item;
+                        }
+                    }
+
+                    if (!empty($accItems) && !empty($nonAccItems)) {
+                        // Mixed: Split this category into two reports
+                        $finalReportGroups[] = ['type' => 'accredited', 'items' => $accItems];
+                        $finalReportGroups[] = ['type' => 'non_accredited', 'items' => $nonAccItems];
+                    } elseif (!empty($accItems)) {
+                        $finalReportGroups[] = ['type' => 'accredited', 'items' => $accItems];
+                    } elseif (!empty($nonAccItems)) {
+                        $finalReportGroups[] = ['type' => 'non_accredited', 'items' => $nonAccItems];
                     }
                 }
 
-                $hasAcc = !empty($accreditedItems);
-                $hasNonAcc = !empty($nonAccreditedItems);
-                $isMixed = ($hasAcc && $hasNonAcc);
+                // 3. Generate Reports with Smart Roman Numeral numbering
+                $totalReports = count($finalReportGroups);
+                $romanNumerals = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI'];
 
-                if ($isMixed) {
-                    // --- Report 1: Accredited items only ---
-                    $accReportData = $reportData;
-                    $accReportData['items'] = $accreditedItems;
-                    $accReportData['report_type'] = 'accredited';
-                    $accReportData['logos'] = $this->getLogosForReport('accredited');
-                    $accReportData['customer_request'] = $this->buildCustomerRequestText($accreditedItems);
-                    $accReportData['sample_details'] = $this->buildSampleDetailsText($accreditedItems);
+                foreach ($finalReportGroups as $idx => $group) {
+                    $groupItems = $group['items'];
+                    $groupType = $group['type'];
 
-                    $accReportNumber = $reportNumber . '-A';
-                    $accSnapshot = json_encode($accReportData, JSON_UNESCAPED_UNICODE);
+                    // Prepare snapshot data
+                    $groupReportData = $reportData;
+                    $groupReportData['items'] = $groupItems;
+                    $groupReportData['report_type'] = $groupType;
+                    $groupReportData['logos'] = $this->getLogosForReport($groupType);
+                    $groupReportData['customer_request'] = $this->buildCustomerRequestText($groupItems);
+                    $groupReportData['sample_details'] = $this->buildSampleDetailsText($groupItems);
 
-                    $accReportId = $this->insertSingleReport(
-                        $sampleId,
-                        $accReportNumber,
-                        'accredited',
-                        $layoutType,
-                        $leftId,
-                        $rightId,
-                        $sigSnapshot,
-                        $accSnapshot,
-                        $generatedBy,
-                        $accreditedItems,
-                        $data['item_positions'] ?? []
-                    );
-                    $generatedReportIds[] = $accReportId;
+                    // Numbering Logic: Only add /I, /II if there is more than one report
+                    $itemReportNumber = $reportNumber;
+                    if ($totalReports > 1) {
+                        $suffix = $romanNumerals[$idx + 1] ?? ($idx + 1);
+                        $itemReportNumber .= '/' . $suffix;
+                    }
 
-                    // --- Report 2: Non-accredited items only ---
-                    $nonAccReportData = $reportData;
-                    $nonAccReportData['items'] = $nonAccreditedItems;
-                    $nonAccReportData['report_type'] = 'non_accredited';
-                    $nonAccReportData['logos'] = $this->getLogosForReport('non_accredited');
-                    $nonAccReportData['customer_request'] = $this->buildCustomerRequestText($nonAccreditedItems);
-                    $nonAccReportData['sample_details'] = $this->buildSampleDetailsText($nonAccreditedItems);
-
-                    $nonAccReportNumber = $reportNumber . '-NA';
-                    $nonAccSnapshot = json_encode($nonAccReportData, JSON_UNESCAPED_UNICODE);
-
-                    $nonAccReportId = $this->insertSingleReport(
-                        $sampleId,
-                        $nonAccReportNumber,
-                        'non_accredited',
-                        $layoutType,
-                        $leftId,
-                        $rightId,
-                        $sigSnapshot,
-                        $nonAccSnapshot,
-                        $generatedBy,
-                        $nonAccreditedItems,
-                        $data['item_positions'] ?? []
-                    );
-                    $generatedReportIds[] = $nonAccReportId;
-                } else {
-                    // --- Standard: all items in one report ---
-                    $reportType = $data['report_type'];
-                    $dataSnapshot = json_encode($reportData, JSON_UNESCAPED_UNICODE);
+                    $groupSnapshot = json_encode($groupReportData, JSON_UNESCAPED_UNICODE);
 
                     $reportId = $this->insertSingleReport(
                         $sampleId,
-                        $reportNumber,
-                        $reportType,
+                        $itemReportNumber,
+                        $groupType,
                         $layoutType,
                         $leftId,
                         $rightId,
                         $sigSnapshot,
-                        $dataSnapshot,
+                        $groupSnapshot,
                         $generatedBy,
-                        $items,
+                        $groupItems,
                         $data['item_positions'] ?? []
                     );
                     $generatedReportIds[] = $reportId;

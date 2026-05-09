@@ -1765,3 +1765,5 @@
 [2026-05-02 15:37:09] [SAFModel::generateSampleCode] Invalid sequence in form_number: 26/032/001 (expected 4 digits)
 [2026-05-03 08:12:33] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Escherichia coli + Coliforms + Aerobic Plate Count + Faecal Coliforms + Staphylococcus aureus) | Individual: Rs. 1625 | Combo: Rs. 1625 | Savings: Rs. 0 (0%)
 [2026-05-03 08:12:33] [TotalValidation] Total mismatch - Frontend: Rs. 2500, Backend: Rs. 1625, Diff: Rs. 875, Combos: 1
+[2026-05-09 10:04:37] [ComboSuccess] ✓ COMBOS APPLIED: 1 combos (Coliforms + Escherichia coli + Faecal Coliforms) | Individual: Rs. 8750 | Combo: Rs. 6375 | Savings: Rs. 2375 (27.1%)
+[2026-05-09 10:04:37] [TotalValidation] Total mismatch - Frontend: Rs. 8750, Backend: Rs. 6375, Diff: Rs. 2375, Combos: 1
